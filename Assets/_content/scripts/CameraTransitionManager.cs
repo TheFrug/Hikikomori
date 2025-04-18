@@ -39,4 +39,6 @@ public class CameraTransitionManager : MonoBehaviour
         cam3.Priority = (activeCam == cam3) ? 10 : 0;
     }
 
+    public void ShowPanel()
+
 }
