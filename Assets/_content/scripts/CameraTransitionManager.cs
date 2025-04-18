@@ -5,6 +5,7 @@ using Cinemachine;
 
 public class CameraTransitionManager : MonoBehaviour
 {
+    //Fill with virtual cameras
     [SerializeField]
     private CinemachineVirtualCamera cam1;
     [SerializeField]
