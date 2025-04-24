@@ -31,7 +31,6 @@ public class CameraTransitionManager : MonoBehaviour
 
     }
 
-
     public void SwitchCamera(CinemachineVirtualCamera activeCam)
     {
         cam1.Priority = (activeCam == cam1) ? 10 : 0;
@@ -40,5 +39,8 @@ public class CameraTransitionManager : MonoBehaviour
     }
 
     public void ShowPanel()
+    {
+
+    }
 
 }
