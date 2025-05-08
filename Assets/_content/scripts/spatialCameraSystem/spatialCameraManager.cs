@@ -46,7 +46,19 @@ public class spatialCameraManager : MonoBehaviour
     private IEnumerator WaitForAnimation(Animator animator, string animName)
     {
         isMoving = true;
+
+        // Wait a frame to let the animator update its state
+        yield return null;
+
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        float clipLength = stateInfo.length;
+
+        yield return new WaitForSeconds(clipLength);
+        isMoving = false;
+
+        /*
         yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length); // Assumes normalized time
         isMoving = false;
+        */
     }
 }
