@@ -17733,6 +17733,7 @@ MonoBehaviour:
   cam1Params: {fileID: 980810843}
   cam2Params: {fileID: 1760218725}
   cam3Params: {fileID: 1306635343}
+  isMoving: 0
 --- !u!4 &1828128201
 Transform:
   m_ObjectHideFlags: 0
