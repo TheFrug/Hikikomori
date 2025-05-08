@@ -28,7 +28,6 @@ public class CameraTransitionManager : MonoBehaviour
         {
             SwitchCamera(cam3);
         }
-
     }
 
     public void SwitchCamera(CinemachineVirtualCamera activeCam)
