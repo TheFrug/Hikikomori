@@ -1,165 +1,258 @@
-using System;
+/*
+Yarn Spinner is licensed to you under the terms found in the file LICENSE.md.
+*/
+
 using System.Collections.Generic;
 using System.Threading;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Yarn.Markup;
+using Yarn.Unity.Attributes;
+using TMPro;
 using Yarn.Unity;
+using System;
 
-public class CustomDialoguePresenter : DialoguePresenterBase
+#nullable enable
+
+namespace Yarn.Unity
 {
-    [Header("UI References")]
-    public TextMeshProUGUI characterNameText;
-    public TextMeshProUGUI dialogueText;
-    public Image backgroundImage; // optional - assign your background Image here
-
-    [Header("Character Colors")]
-    public Color defaultColor = Color.white;
-
-    private readonly Dictionary<string, Color> characterColors = new Dictionary<string, Color>
+    [HelpURL("https://docs.yarnspinner.dev/using-yarnspinner-with-unity/components/dialogue-view/line-view")]
+    public sealed class CustomDialoguePresenter : DialoguePresenterBase
     {
-        { "Goblin", Color.green },
-        { "Volition", Color.magenta },
-        { "Lady Kindly", Color.yellow }
-    };
+        [Space]
+        [MustNotBeNull]
+        public CanvasGroup? canvasGroup;
 
-    // Flag set when Continue button is pressed
-    private bool continueClicked = false;
+        [MustNotBeNull]
+        public TMP_Text? lineText;
 
-    public override YarnTask OnDialogueStartedAsync()
-    {
-        // make sure the presenter is visible when dialogue starts
-        gameObject.SetActive(true);
-        TryFixCanvasGroupVisibility();
-        if (characterNameText != null) { characterNameText.text = ""; }
-        if (dialogueText != null) { dialogueText.text = ""; }
-        return YarnTask.CompletedTask;
-    }
+        [Group("Character")]
+        [Label("Shows Name")]
+        public bool showCharacterNameInLineView = true;
 
-    public override YarnTask OnDialogueCompleteAsync()
-    {
-        gameObject.SetActive(false);
-        return YarnTask.CompletedTask;
-    }
+        [Group("Character")]
+        [ShowIf(nameof(showCharacterNameInLineView))]
+        [Label("Name field")]
+        [MustNotBeNullWhen(nameof(showCharacterNameInLineView), "A text field must be provided when Shows Name is set")]
+        public TMP_Text? characterNameText;
 
-    public override YarnTask RunLineAsync(LocalizedLine dialogueLine, LineCancellationToken cancellationToken)
-    {
-        Debug.Log($"[CustomDialoguePresenter] Got line: {dialogueLine.CharacterName}: {dialogueLine.TextWithoutCharacterName.Text}");
+        [Group("Character")]
+        [ShowIf(nameof(showCharacterNameInLineView))]
+        public GameObject? characterNameContainer = null;
 
-        // Basic sanity checks
-        if (characterNameText == null) Debug.LogError("[CustomDialoguePresenter] characterNameText is NOT assigned!");
-        if (dialogueText == null) Debug.LogError("[CustomDialoguePresenter] dialogueText is NOT assigned!");
-        if (characterNameText == null || dialogueText == null)
+        [Group("Fade")]
+        [Label("Fade UI")]
+        public bool useFadeEffect = true;
+
+        [Group("Fade")]
+        [ShowIf(nameof(useFadeEffect))]
+        public float fadeUpDuration = 0.25f;
+
+        [Group("Fade")]
+        [ShowIf(nameof(useFadeEffect))]
+        public float fadeDownDuration = 0.1f;
+
+        [Group("Automatically Advance Dialogue")]
+        public bool autoAdvance = false;
+
+        [Group("Automatically Advance Dialogue")]
+        [ShowIf(nameof(autoAdvance))]
+        [Label("Delay before advancing")]
+        public float autoAdvanceDelay = 1f;
+
+        [Group("Typewriter")]
+        public bool useTypewriterEffect = true;
+
+        [Group("Typewriter")]
+        [ShowIf(nameof(useTypewriterEffect))]
+        [Label("Letters per second")]
+        [Min(0)]
+        public int typewriterEffectSpeed = 60;
+
+        [Group("Typewriter")]
+        [ShowIf(nameof(useTypewriterEffect))]
+        [Label("Event Handler")]
+        [SerializeField] private List<ActionMarkupHandler> eventHandlers = new List<ActionMarkupHandler>();
+
+        private bool typewriterRunning = false;
+        private CancellationTokenSource? localHurryCts = null;
+        private bool continueClicked = false;
+
+        // Unified input handler
+        public void HandleAdvanceInput() {
+            if (typewriterRunning) {
+                localHurryCts?.Cancel();
+            } else if (!continueClicked) {
+                continueClicked = true;
+            }
+        }
+
+        public override YarnTask OnDialogueCompleteAsync()
         {
-            // Can't draw anything; return immediately so Yarn doesn't hang.
+            if (canvasGroup != null) canvasGroup.alpha = 0;
             return YarnTask.CompletedTask;
         }
 
-        // Ensure the presenter and its canvas group are visible
-        gameObject.SetActive(true);
-        TryFixCanvasGroupVisibility();
-
-        // Ensure TMP components are enabled and full-alpha
-        characterNameText.enabled = true;
-        dialogueText.enabled = true;
-
-        // Force alpha to 1 on both text components
-        var cn = characterNameText.color;
-        characterNameText.color = new Color(cn.r, cn.g, cn.b, 1f);
-        var ct = dialogueText.color;
-        dialogueText.color = new Color(ct.r, ct.g, ct.b, 1f);
-
-        // Put the text in
-        characterNameText.text = dialogueLine.CharacterName;
-        dialogueText.text = dialogueLine.TextWithoutCharacterName.Text;
-
-        // Apply color mapping
-        if (characterColors.TryGetValue(dialogueLine.CharacterName, out var color))
-            dialogueText.color = new Color(color.r, color.g, color.b, 1f);
-        else
-            dialogueText.color = new Color(defaultColor.r, defaultColor.g, defaultColor.b, 1f);
-
-        // Make sure background image is enabled if assigned
-        if (backgroundImage != null)
+        public override YarnTask OnDialogueStartedAsync()
         {
-            backgroundImage.enabled = true;
-            // If background image has zero alpha, force full alpha for debug
-            var bgCol = backgroundImage.color;
-            backgroundImage.color = new Color(bgCol.r, bgCol.g, bgCol.b, 1f);
+            if (canvasGroup != null) canvasGroup.alpha = 0;
+            return YarnTask.CompletedTask;
         }
 
-        // Debug important layout and visibility properties — paste these logs if still invisible
-        LogUIState();
-
-        // Reset continue flag for this line
-        continueClicked = false;
-
-        // Wait for continue button, keys, or Yarn requesting next-line.
-        return YarnTask.WaitUntil(
-            () =>
-                continueClicked
-                || Input.GetKeyDown(KeyCode.Space)
-                || Input.GetKeyDown(KeyCode.Return)
-                || cancellationToken.IsNextLineRequested,
-            cancellationToken.NextLineToken
-        );
-    }
-
-    // Hook this function up in the Continue button's OnClick() (drag the Line Presenter object, choose CustomDialoguePresenter -> OnContinueClicked)
-    public void OnContinueClicked()
-    {
-        continueClicked = true;
-    }
-
-    public override YarnTask<DialogueOption> RunOptionsAsync(DialogueOption[] options, CancellationToken cancellationToken)
-    {
-        Debug.LogWarning("Auto-selecting first option — RunOptionsAsync not fully implemented.");
-        return YarnTask.FromResult(options[0]);
-    }
-
-    // ---- Helpers ----
-
-    private void TryFixCanvasGroupVisibility()
-    {
-        // If there's a CanvasGroup on this or parent, ensure it's visible/interactive.
-        var cg = GetComponent<CanvasGroup>();
-        if (cg == null) cg = GetComponentInParent<CanvasGroup>();
-        if (cg != null)
+        private void Awake()
         {
-            cg.alpha = 1f;
-            cg.interactable = true;
-            cg.blocksRaycasts = true;
-        }
-        else
-        {
-            Debug.Log("[CustomDialoguePresenter] No CanvasGroup found on this object or parents.");
+            if (useTypewriterEffect)
+            {
+                var pauser = new PauseEventProcessor();
+                ActionMarkupHandlers.Insert(0, pauser);
+            }
+
+            if (characterNameContainer == null && characterNameText != null)
+                characterNameContainer = characterNameText.gameObject;
         }
 
-        // Also ensure the Canvas itself is enabled
-        var canvas = GetComponentInParent<Canvas>();
-        if (canvas != null)
+        private void Start()
         {
-            canvas.enabled = true;
-            Debug.Log($"[CustomDialoguePresenter] Found Canvas (renderMode={canvas.renderMode}, sortingOrder={canvas.sortingOrder}).");
+            ActionMarkupHandlers.AddRange(eventHandlers);
         }
-        else
-        {
-            Debug.Log("[CustomDialoguePresenter] No Canvas found in parents.");
-        }
-    }
 
-    private void LogUIState()
-    {
-        Debug.Log($"[CustomDialoguePresenter] activeInHierarchy={gameObject.activeInHierarchy}");
-        Debug.Log($"[CustomDialoguePresenter] characterNameText.enabled={characterNameText.enabled}, color={characterNameText.color}, font={(characterNameText.font != null ? characterNameText.font.name : "NULL")}");
-        Debug.Log($"[CustomDialoguePresenter] dialogueText.enabled={dialogueText.enabled}, color={dialogueText.color}, font={(dialogueText.font != null ? dialogueText.font.name : "NULL")}");
-        var rtName = characterNameText.rectTransform;
-        var rtText = dialogueText.rectTransform;
-        Debug.Log($"[CustomDialoguePresenter] nameRT anchoredPos={rtName.anchoredPosition}, size={rtName.sizeDelta}, lossyScale={rtName.lossyScale}");
-        Debug.Log($"[CustomDialoguePresenter] textRT anchoredPos={rtText.anchoredPosition}, size={rtText.sizeDelta}, lossyScale={rtText.lossyScale}");
-        if (backgroundImage != null)
+        private void Update()
         {
-            Debug.Log($"[CustomDialoguePresenter] backgroundImage.enabled={backgroundImage.enabled}, color={backgroundImage.color}");
+            var spacePressed = Input.GetKeyDown(KeyCode.Space);
+            var enterPressed = Input.GetKeyDown(KeyCode.Return);
+
+#if ENABLE_INPUT_SYSTEM
+            var ks = UnityEngine.InputSystem.Keyboard.current;
+            if (ks != null)
+            {
+                if (!spacePressed) spacePressed = ks.spaceKey.wasPressedThisFrame;
+                if (!enterPressed) enterPressed = ks.enterKey.wasPressedThisFrame || ks.numpadEnterKey.wasPressedThisFrame;
+            }
+#endif
+            if (spacePressed || enterPressed)
+            {
+                HandleAdvanceInput();
+            }
+        }
+
+        public void OnContinueClicked()
+        {
+            HandleAdvanceInput();
+        }
+
+        public override async YarnTask RunLineAsync(LocalizedLine line, LineCancellationToken token)
+        {
+            if (lineText == null)
+            {
+                Debug.LogError($"Line view does not have a text view. Skipping line {line.TextID} (\"{line.RawText}\")");
+                return;
+            }
+
+            MarkupParseResult text;
+
+            if (showCharacterNameInLineView)
+            {
+                if (characterNameText != null) characterNameText.text = line.CharacterName;
+                text = line.TextWithoutCharacterName;
+
+                if (line.Text.TryGetAttributeWithName("character", out var characterAttribute))
+                    text.Attributes.Add(characterAttribute);
+            }
+            else
+            {
+                characterNameContainer?.SetActive(false);
+                text = line.TextWithoutCharacterName;
+            }
+
+            lineText.text = text.Text;
+
+            if (characterNameText != null)
+            {
+                var speaker = line.CharacterName ?? "";
+                characterNameText.text = speaker;
+                switch (speaker)
+                {
+                    case "Goblin":
+                        characterNameText.color = lineText.color = Color.green;
+                        break;
+                    case "Kindly":
+                        characterNameText.color = lineText.color = Color.yellow;
+                        break;
+                    case "Volition":
+                        characterNameText.color = lineText.color = Color.magenta;
+                        break;
+                    default:
+                        characterNameText.color = lineText.color = Color.white;
+                        break;
+                }
+            }
+
+            if (useTypewriterEffect)
+            {
+                lineText.maxVisibleCharacters = 0;
+                foreach (var processor in ActionMarkupHandlers)
+                    processor.OnPrepareForLine(text, lineText);
+            }
+            else
+            {
+                lineText.maxVisibleCharacters = text.Text.Length;
+            }
+
+            if (canvasGroup != null)
+            {
+                if (useFadeEffect) await Effects.FadeAlphaAsync(canvasGroup, 0, 1, fadeDownDuration, token.HurryUpToken);
+                else canvasGroup.alpha = 1;
+            }
+
+            continueClicked = false;
+
+            if (useTypewriterEffect)
+            {
+                localHurryCts = CancellationTokenSource.CreateLinkedTokenSource(token.HurryUpToken);
+                typewriterRunning = true;
+
+                var typewriter = new BasicTypewriter()
+                {
+                    ActionMarkupHandlers = this.ActionMarkupHandlers,
+                    Text = this.lineText,
+                    CharactersPerSecond = this.typewriterEffectSpeed,
+                };
+
+                try
+                {
+                    await typewriter.RunTypewriter(text, localHurryCts.Token);
+                }
+                finally
+                {
+                    typewriterRunning = false;
+                    localHurryCts.Dispose();
+                    localHurryCts = null;
+                }
+            }
+
+            if (autoAdvance)
+            {
+                await YarnTask.Delay((int)(autoAdvanceDelay * 1000), token.NextLineToken).SuppressCancellationThrow();
+            }
+            else
+            {
+                await YarnTask.WaitUntil(() => continueClicked || token.NextLineToken.IsCancellationRequested, token.NextLineToken)
+                    .SuppressCancellationThrow();
+            }
+
+            foreach (var processor in ActionMarkupHandlers)
+                processor.OnLineWillDismiss();
+
+            if (canvasGroup != null)
+            {
+                if (useFadeEffect) await Effects.FadeAlphaAsync(canvasGroup, 1, 0, fadeDownDuration, token.HurryUpToken).SuppressCancellationThrow();
+                else canvasGroup.alpha = 0;
+            }
+        }
+
+        public override YarnTask<DialogueOption?> RunOptionsAsync(DialogueOption[] dialogueOptions, CancellationToken cancellationToken)
+        {
+            return YarnTask<DialogueOption?>.FromResult(null);
         }
     }
 }
