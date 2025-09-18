@@ -9900,8 +9900,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4fb9d3c8038d86942ad8a3d0eed67e35, type: 2}
+  m_sharedMaterial: {fileID: 8063581264641747483, guid: 4fb9d3c8038d86942ad8a3d0eed67e35, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -21808,7 +21808,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7262066351540048079, guid: 52571f68872914e24837210513edea1d, type: 3}
       propertyPath: m_Name
-      value: Dialogue System
+      value: UI + Dialogue System
       objectReference: {fileID: 0}
     - target: {fileID: 7985477256237130417, guid: 52571f68872914e24837210513edea1d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -23683,6 +23683,18 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgument
       value: 
       objectReference: {fileID: 1306635343}
+    - target: {fileID: 587304280071587646, guid: 023275530386bc445a03652f1d783cec, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    - target: {fileID: 587304280071587646, guid: 023275530386bc445a03652f1d783cec, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    - target: {fileID: 587304280071587646, guid: 023275530386bc445a03652f1d783cec, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1273096460332399933, guid: 023275530386bc445a03652f1d783cec, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -23714,6 +23726,18 @@ PrefabInstance:
     - target: {fileID: 1273096460332399933, guid: 023275530386bc445a03652f1d783cec, type: 3}
       propertyPath: m_SizeDelta.y
       value: 97.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1273096460332399933, guid: 023275530386bc445a03652f1d783cec, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1273096460332399933, guid: 023275530386bc445a03652f1d783cec, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1273096460332399933, guid: 023275530386bc445a03652f1d783cec, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1273096460332399933, guid: 023275530386bc445a03652f1d783cec, type: 3}
       propertyPath: m_LocalPosition.x

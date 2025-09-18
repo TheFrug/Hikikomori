@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 9cc22ffd0287d264d8d9fd5c9fe23fc9
+guid: 004e6be1d8053df43990bf23f385600b
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Digital-7 Italic
+  - Orbitron
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0
