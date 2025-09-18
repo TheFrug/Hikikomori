@@ -1,0 +1,5 @@
+﻿title: Markup_Test
+---
+Goblin: Hello! [dread]This sentence should be red[/dread]. Testing... 
+OK, [hype]this one should be green[/hype].
+===

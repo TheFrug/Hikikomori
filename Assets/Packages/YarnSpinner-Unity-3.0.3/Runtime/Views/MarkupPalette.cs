@@ -1,70 +1,24 @@
-/*
-Yarn Spinner is licensed to you under the terms found in the file LICENSE.md.
-*/
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Yarn.Unity.Attributes;
+using System.Text;
 
 namespace Yarn.Unity
 {
-    /// <summary>
-    /// Represents a collection of marker names and colours.
-    /// </summary>
-    /// <remarks>
-    /// This is intended to be used with the <see cref="LinePresenter"/>, and
-    /// also be a sample of using the markup system.
-    /// </remarks>
     [CreateAssetMenu(fileName = "NewPalette", menuName = "Yarn Spinner/Markup Palette", order = 102)]
     public sealed class MarkupPalette : ScriptableObject
     {
-        /// <summary>
-        /// Contains information describing the formatting style of text within
-        /// a named marker.
-        /// </summary>
         [System.Serializable]
         public struct BasicMarker
         {
-            /// <summary>
-            /// The name of the marker which can be used in text to indicate
-            /// specific formatting.
-            /// </summary>
             public string Marker;
-
-            /// <summary>
-            /// Indicates whethere or not the text associated with this marker should have a custom colour.
-            /// </summary>
             public bool CustomColor;
-
-            /// <summary>
-            /// The color to use for text associated with this marker.
-            /// </summary>
             [ShowIf(nameof(CustomColor))]
             public Color Color;
-
-            /// <summary>
-            /// Indicates whether the text associated with this marker should be
-            /// bolded.
-            /// </summary>
             public bool Boldened;
-
-            /// <summary>
-            /// Indicates whether the text associated with this marker should be
-            /// italicized.
-            /// </summary>
             public bool Italicised;
-
-            /// <summary>
-            /// Indicates whether the text associated with this marker should be
-            /// underlined.
-            /// </summary>
             public bool Underlined;
-
-            /// <summary>
-            /// Indicates whether the text associated with this marker should
-            /// have a strikethrough effect.
-            /// </summary>
             public bool Strikedthrough;
         }
 
@@ -77,23 +31,10 @@ namespace Yarn.Unity
             public int MarkerOffset;
         }
 
-        /// <summary>
-        /// A list containing all the color markers defined in this palette.
-        /// </summary>
         [UnityEngine.Serialization.FormerlySerializedAs("ColourMarkers")]
         public List<BasicMarker> BasicMarkers = new List<BasicMarker>();
         public List<CustomMarker> CustomMarkers = new List<CustomMarker>();
 
-        /// <summary>
-        /// Determines the colour for a particular marker inside this palette.
-        /// </summary>
-        /// <param name="Marker">The marker you want to get a colour
-        /// for.</param>
-        /// <param name="colour">The colour of the marker, or <see
-        /// cref="Color.black"/> if it doesn't exist in the <see
-        /// cref="MarkupPalette"/>.</param>
-        /// <returns><see langword="true"/> if the marker exists within this
-        /// palette; <see langword="false"/> otherwise.</returns>
         public bool ColorForMarker(string Marker, out Color colour)
         {
             foreach (var item in BasicMarkers)
@@ -110,40 +51,56 @@ namespace Yarn.Unity
 
         public bool PaletteForMarker(string markerName, out CustomMarker palette)
         {
-            // we first check if we have a marker of that name in the basic markers
+            // check basic markers first
             foreach (var item in BasicMarkers)
             {
                 if (item.Marker == markerName)
                 {
-                    System.Text.StringBuilder front = new();
-                    System.Text.StringBuilder back = new();
+                    StringBuilder front = new();
+                    StringBuilder back = new();
 
-                    // do we have a custom colour set?
                     if (item.CustomColor)
                     {
-                        front.AppendFormat("<color=#{0}>", ColorUtility.ToHtmlStringRGBA(item.Color));
+                        // Use RGB hex for fully opaque colours; use RGBA hex when alpha < 1.
+                        // If alpha is accidentally zero, warn and treat it as opaque (fallback to RGB)
+                        float alpha = item.Color.a;
+                        string hex;
+
+                        if (alpha <= 0.001f)
+                        {
+                            Debug.LogWarning($"MarkupPalette: Marker '{item.Marker}' has alpha == 0. Treating as opaque to avoid invisible text. If you want transparency, set the alpha intentionally in the palette.", this);
+                            hex = ColorUtility.ToHtmlStringRGB(item.Color); // drop alpha
+                        }
+                        else if (alpha >= 0.999f)
+                        {
+                            // fully opaque -> prefer #RRGGBB (6 chars)
+                            hex = ColorUtility.ToHtmlStringRGB(item.Color);
+                        }
+                        else
+                        {
+                            // semi-transparent -> include alpha (#RRGGBBAA)
+                            hex = ColorUtility.ToHtmlStringRGBA(item.Color);
+                        }
+
+                        front.AppendFormat("<color=#{0}>", hex);
                         back.Append("</color>");
                     }
 
-                    // do we need to bold it?
                     if (item.Boldened)
                     {
                         front.Append("<b>");
                         back.Append("</b>");
                     }
-                    // do we need to italicise it?
                     if (item.Italicised)
                     {
                         front.Append("<i>");
                         back.Append("</i>");
                     }
-                    // do we need to underline it?
                     if (item.Underlined)
                     {
                         front.Append("<u>");
                         back.Append("</u>");
                     }
-                    // do we need to strikethrough it?
                     if (item.Strikedthrough)
                     {
                         front.Append("<s>");
@@ -161,7 +118,7 @@ namespace Yarn.Unity
                 }
             }
 
-            // we now check if we have one in the format markers
+            // custom markers (start/end strings) next
             foreach (var item in CustomMarkers)
             {
                 if (item.Marker == markerName)
@@ -171,8 +128,6 @@ namespace Yarn.Unity
                 }
             }
 
-            // we don't have anything for this marker
-            // so we return false and a default marker
             palette = new();
             return false;
         }

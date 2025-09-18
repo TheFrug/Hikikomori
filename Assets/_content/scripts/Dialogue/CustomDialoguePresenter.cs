@@ -170,22 +170,25 @@ namespace Yarn.Unity
             {
                 var speaker = line.CharacterName ?? "";
                 characterNameText.text = speaker;
+
+                // Color only the nameplate, not the body text
                 switch (speaker)
                 {
                     case "Goblin":
-                        characterNameText.color = lineText.color = Color.green;
+                        characterNameText.color = Color.green;
                         break;
                     case "Kindly":
-                        characterNameText.color = lineText.color = Color.yellow;
+                        characterNameText.color = Color.yellow;
                         break;
                     case "Volition":
-                        characterNameText.color = lineText.color = Color.magenta;
+                        characterNameText.color = Color.magenta;
                         break;
                     default:
-                        characterNameText.color = lineText.color = Color.white;
+                        characterNameText.color = Color.white;
                         break;
                 }
             }
+
 
             if (useTypewriterEffect)
             {
