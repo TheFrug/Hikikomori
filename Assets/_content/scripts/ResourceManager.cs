@@ -17,6 +17,8 @@ public class ResourceManager : MonoBehaviour
     public TMP_Text stressText;
     public int maxStress = 100;
     private int currentStress;
+    private int stressThreshold = 40;
+    private bool stressedOut = false;
 
     [Header("Spoons")]
     public Slider spoonBar;
@@ -38,6 +40,7 @@ public class ResourceManager : MonoBehaviour
     {
         DebugControls();
         UpdateUI();
+        checkStress();
     }
 
     void SetupBars()
@@ -82,5 +85,20 @@ public class ResourceManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Alpha5)) currentSpoons = Mathf.Max(0, currentSpoons - 1);
         if (Input.GetKeyDown(KeyCode.Alpha6)) currentSpoons = Mathf.Min(maxSpoons, currentSpoons + 1);
+    }
+
+    void checkStress()
+    {
+        if ((currentStress >= stressThreshold) && (!stressedOut))
+        {
+            Debug.Log("Hiki is stressed out! Current stress levels (" + currentStress + ") excedes Hiki's functional limit of 40.");
+            stressedOut = true;
+        }
+
+        if ((stressedOut) && (currentStress < stressThreshold))
+        {
+            Debug.Log("Hiki is no longer stressed out");
+            stressedOut = false;
+        }
     }
 }
