@@ -1,37 +1,39 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class ClockManager : MonoBehaviour
 {
-    [Header("Clock Settings")]
+    [Header("UI References")]
     public TMP_Text clockText;
-    public int startHour = 14; // 2:00 PM
-    public int startMinute = 0;
-    public float realSecondsPerGameTick = 6f; // every 6 seconds
-    public int minutesPerTick = 10;           // advance 10 minutes per tick
+    public Button pauseButton;
+    public Button playButton;
+    public Button fastForwardButton;
 
-    private int currentHour;
-    private int currentMinute;
+    [Header("Clock Settings")]
+    public float realSecondsPerGameTick = 6f;
+    public int minutesPerTick = 10;
+
+    private System.TimeSpan currentTime;
     private float timer;
-
     private bool isPaused = false;
-    private float speedMultiplier = 1f; // 1x = normal, 2x = fast-forward
+    private float speedMultiplier = 1f;
+
+    private Color defaultColor = Color.white;
+    private Color activeColor = Color.green;
 
     void Start()
     {
-        currentHour = startHour;
-        currentMinute = startMinute;
-        UpdateClockUI();
+        currentTime = new System.TimeSpan(14, 0, 0); // start 2:00pm
+        UpdateClockDisplay();
+        HighlightButton(playButton); // start as "playing"
     }
 
     void Update()
     {
-        DebugControls(); // Always check input
-
-        if (isPaused) return; // Only stop time progression
+        if (isPaused) return;
 
         timer += Time.deltaTime * speedMultiplier;
-
         if (timer >= realSecondsPerGameTick)
         {
             timer = 0f;
@@ -39,77 +41,69 @@ public class ClockManager : MonoBehaviour
         }
     }
 
-
-    void AdvanceTime(int minutesToAdd)
+    private void AdvanceTime(int minutes)
     {
-        currentMinute += minutesToAdd;
+        currentTime = currentTime.Add(System.TimeSpan.FromMinutes(minutes));
+        if (currentTime.Hours >= 24)
+            currentTime = currentTime.Subtract(System.TimeSpan.FromHours(24));
 
-        while (currentMinute >= 60)
-        {
-            currentMinute -= 60;
-            currentHour++;
-        }
-
-        if (currentHour >= 24)
-            currentHour -= 24; // wrap around midnight
-
-        UpdateClockUI();
+        UpdateClockDisplay();
     }
 
-    void UpdateClockUI()
+    private void UpdateClockDisplay()
     {
-        if (clockText != null)
-        {
-            string suffix = currentHour >= 12 ? "PM" : "AM";
-            int displayHour = currentHour % 12;
-            if (displayHour == 0) displayHour = 12;
+        string amPm = currentTime.Hours >= 12 ? "pm" : "am";
+        int displayHour = currentTime.Hours % 12;
+        if (displayHour == 0) displayHour = 12;
 
-            // Four-digit formatting (e.g., 02:00 PM instead of 2:00 PM)
-            clockText.text = string.Format("{0:00}:{1:00} {2}", displayHour, currentMinute, suffix);
-        }
+        clockText.text = string.Format("{0:00}:{1:00}{2}", displayHour, currentTime.Minutes, amPm);
     }
 
-    // Debug controls for testing
-    void DebugControls()
-    {
-        if (Input.GetKeyDown(KeyCode.P)) PauseClock();
-        if (Input.GetKeyDown(KeyCode.O)) PlayClock();
-        if (Input.GetKeyDown(KeyCode.F)) FastForward(2f); // 2x speed
-        if (Input.GetKeyDown(KeyCode.N)) NormalSpeed();
-    }
-
+    // ==== BUTTON METHODS ====
     public void PauseClock()
     {
         isPaused = true;
-        Debug.Log("Clock paused at " + GetFormattedTime());
+        speedMultiplier = 1f; // ensure pause always clears fast-forward
+        Debug.Log("Clock paused");
+        HighlightButton(pauseButton);
     }
 
     public void PlayClock()
     {
         isPaused = false;
-        Debug.Log("Clock resumed at " + GetFormattedTime());
-    }
-
-    public void FastForward(float multiplier)
-    {
-        isPaused = false;
-        speedMultiplier = multiplier;
-        Debug.Log("Clock fast-forwarding at " + multiplier + "x speed. Current time: " + GetFormattedTime());
-    }
-
-    public void NormalSpeed()
-    {
         speedMultiplier = 1f;
-        isPaused = false;
-        Debug.Log("Clock running at normal speed. Current time: " + GetFormattedTime());
+        Debug.Log("Clock playing at normal speed");
+        HighlightButton(playButton);
     }
 
-    private string GetFormattedTime()
+    public void FastForwardClock()
     {
-        string suffix = currentHour >= 12 ? "PM" : "AM";
-        int displayHour = currentHour % 12;
-        if (displayHour == 0) displayHour = 12;
+        if (!isPaused && speedMultiplier == 2f)
+        {
+            // Already in fast forward → back to normal play
+            speedMultiplier = 1f;
+            Debug.Log("Fast Forward OFF → Normal speed");
+            HighlightButton(playButton);
+        }
+        else
+        {
+            // Enter fast forward
+            isPaused = false;
+            speedMultiplier = 2f;
+            Debug.Log("Fast Forward ON");
+            HighlightButton(fastForwardButton);
+        }
+    }
 
-        return string.Format("{0:00}:{1:00} {2}", displayHour, currentMinute, suffix);
+    // ==== HIGHLIGHT HANDLER ====
+    private void HighlightButton(Button activeButton)
+    {
+        // reset all
+        playButton.image.color = defaultColor;
+        pauseButton.image.color = defaultColor;
+        fastForwardButton.image.color = defaultColor;
+
+        // set active
+        activeButton.image.color = activeColor;
     }
 }
