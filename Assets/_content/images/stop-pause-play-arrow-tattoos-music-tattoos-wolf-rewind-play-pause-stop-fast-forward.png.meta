@@ -1,0 +1,270 @@
+fileFormatVersion: 2
+guid: 38e7cd9cdaf76e24b97e9309fb93120a
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 12
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Server
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_10
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 343
+        width: 168
+        height: 172
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ac8cd81f697c06c4292e4dc2a559b18f
+      internalID: 2029739012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_11
+      rect:
+        serializedVersion: 2
+        x: 190
+        y: 343
+        width: 168
+        height: 172
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b54788df65e157648ac3e826da83ce1e
+      internalID: 1428440020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_12
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 342
+        width: 168
+        height: 172
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 47a5ca6757de43743b23ac7421d7ed62
+      internalID: 104153476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_13
+      rect:
+        serializedVersion: 2
+        x: 494
+        y: 345
+        width: 168
+        height: 172
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 35f3ceccdd478cf4cb54a4f049377ebb
+      internalID: 1962179026
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_14
+      rect:
+        serializedVersion: 2
+        x: 672
+        y: 342
+        width: 168
+        height: 172
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 17bdeab043944e643bf80de9d4a6f630
+      internalID: 316624323
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_0: 1860629999
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_1: 692970881
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_10: 2029739012
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_11: 1428440020
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_12: 104153476
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_13: 1962179026
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_14: 316624323
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_15: -832356285
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_16: 822160299
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_17: -1527729688
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_18: 2135436863
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_19: 485893319
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_2: 2026186844
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_20: 1256824002
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_21: 56930402
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_22: 827407933
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_23: 256840614
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_24: -599451477
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_3: -614470549
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_4: -1480472040
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_5: -2055016093
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_6: 954210228
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_7: -139509572
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_8: -1897473016
+      stop-pause-play-arrow-tattoos-music-tattoos-wolf-rewind-play-pause-stop-fast-forward_9: 1765301244
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
