@@ -26,6 +26,10 @@ public class ResourceManager : MonoBehaviour
     public int maxSpoons = 10;
     private int currentSpoons;
 
+    [Header("Cash")]
+    public int cash = 20;
+    public int cashNeededForRent = 100;
+
     void Start()
     {
         // Initialize
