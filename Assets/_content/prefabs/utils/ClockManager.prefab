@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &5058838860029216890
+--- !u!1 &4068469865864995820
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,22 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 7630645440062100242}
-  - component: {fileID: 3410478400280318337}
+  - component: {fileID: 1424825743401319575}
+  - component: {fileID: 7414221059423672630}
   m_Layer: 0
-  m_Name: ResourceManager
+  m_Name: ClockManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7630645440062100242
+--- !u!4 &1424825743401319575
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5058838860029216890}
+  m_GameObject: {fileID: 4068469865864995820}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -32,26 +32,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3410478400280318337
+--- !u!114 &7414221059423672630
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5058838860029216890}
+  m_GameObject: {fileID: 4068469865864995820}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa92a6fd5e232ab47894a4c49ff42067, type: 3}
+  m_Script: {fileID: 11500000, guid: e20f93511a48b9144b47866819e98163, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hungerBar: {fileID: 0}
-  hungerText: {fileID: 0}
-  maxHunger: 100
-  stressBar: {fileID: 0}
-  stressText: {fileID: 0}
-  maxStress: 100
-  spoonBar: {fileID: 0}
-  spoonText: {fileID: 0}
-  maxSpoons: 10
-  cash: 20
-  cashNeededForRent: 100
+  clockText: {fileID: 0}
+  pauseButton: {fileID: 0}
+  playButton: {fileID: 0}
+  fastForwardButton: {fileID: 0}
+  realSecondsPerGameTick: 6
+  minutesPerTick: 10
