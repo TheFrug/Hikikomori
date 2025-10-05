@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5017668b7b4300e488c71bcfd87b5ab0, type: 3}
   m_Name: Cook Meal
   m_EditorClassIdentifier: 
-  actionName: Cook a Meal
-  description: I miss mom's cooking
+  behaviorName: Cook Meal
+  behaviorDescription: I miss mom's cooking
   isToggle: 0
   durationMinutes: 60
   spoonsCost: 2
+  hideSpoonsCost: 0
   hungerImpact: -30
   cashCost: 0
   icon: {fileID: 0}

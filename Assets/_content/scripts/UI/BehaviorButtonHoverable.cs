@@ -15,7 +15,7 @@ public class BehaviorButtonHoverable : MonoBehaviour, IPointerEnterHandler, IPoi
         behaviorData = data;
         tooltip = tooltipPanel;
         parentPanel = panel;
-        label.text = behaviorData.actionName;
+        label.text = behaviorData.behaviorName;
 
         // Hook up button click to parentPanel
         var btn = GetComponent<Button>();

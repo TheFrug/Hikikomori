@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5017668b7b4300e488c71bcfd87b5ab0, type: 3}
   m_Name: GO OUTSIDE
   m_EditorClassIdentifier: 
-  actionName: GO OUTSIDE
-  description: Imagine... touching grass
+  behaviorName: GO OUTSIDE
+  behaviorDescription: You know you should.
   isToggle: 0
   durationMinutes: 0
   spoonsCost: 10

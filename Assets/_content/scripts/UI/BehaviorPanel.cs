@@ -114,7 +114,7 @@ public class BehaviorPanel : MonoBehaviour
     /// </summary>
     public void OnBehaviorClicked(BehaviorData data)
     {
-        Debug.Log($"Behavior clicked: {data?.actionName ?? "null"}");
+        Debug.Log($"Behavior clicked: {data?.behaviorName ?? "null"}");
         // TODO: Set the active behavior, start running it, apply costs etc.
     }
 }

@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5017668b7b4300e488c71bcfd87b5ab0, type: 3}
   m_Name: Take a Nap
   m_EditorClassIdentifier: 
-  actionName: Take a Nap
-  description: Less time awake means less time thinking
+  behaviorName: Take a Nap
+  behaviorDescription: More time asleep means less time thinking.
   isToggle: 0
   durationMinutes: 90
   spoonsCost: 0
+  hideSpoonsCost: 0
   hungerImpact: 10
   cashCost: 0
   icon: {fileID: 0}
