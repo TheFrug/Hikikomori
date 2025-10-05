@@ -77,9 +77,9 @@ public class TooltipPanel : MonoBehaviour
             timeText.text = ""; // leave blank
 
         // Spoons
-        if (data.spoonsCost < 0)
+        if (data.hideSpoonsCost)
             spoonsText.text = "Spoons: ???";
-        else if (data.spoonsCost > 0)
+        else if (!data.hideSpoonsCost)
             spoonsText.text = $"Spoons: {data.spoonsCost}";
         else
             spoonsText.text = ""; // blank if zero

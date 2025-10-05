@@ -16,7 +16,8 @@ MonoBehaviour:
   description: Be a good pig and clean your sty
   isToggle: 0
   durationMinutes: 90
-  spoonsCost: 0
+  spoonsCost: 2
+  hideSpoonsCost: 1
   hungerImpact: 10
   cashCost: 0
   icon: {fileID: 0}

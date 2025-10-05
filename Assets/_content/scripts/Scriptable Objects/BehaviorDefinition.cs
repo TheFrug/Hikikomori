@@ -12,8 +12,8 @@ public class BehaviorData : ScriptableObject
     public int durationMinutes = 30;            // used when isToggle == false
 
     [Header("Costs / Impacts")]
-    [Tooltip("-1 = unknown/???")]
     public int spoonsCost = 0;                  // -1 => "???"
+    public bool hideSpoonsCost = false;
     public int hungerImpact = 0;                // + means increases hunger; - reduces hunger
     [Tooltip("-1 = none")]
     public float cashCost = -1f;                // -1 => none
