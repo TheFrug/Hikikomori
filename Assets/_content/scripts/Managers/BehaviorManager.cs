@@ -118,30 +118,52 @@ public class BehaviorManager : MonoBehaviour
         else
         {
             int totalMinutes = Mathf.Max(1, data.durationMinutes);
-            float interval = secondsPerGameMinute;
+            secondsPerGameMinute = clockManager.realSecondsPerGameTick / clockManager.minutesPerTick;
 
-            // Calculate deltas
-            float hungerDeltaPerMinute = (float)data.hungerImpact / totalMinutes;
-            float cashDeltaPerMinute = (float)data.cashCost / totalMinutes;
+            // --- Gradual Update Setup ---
+            int totalHungerChange = Mathf.RoundToInt(data.hungerImpact);
+            int totalCashChange = Mathf.RoundToInt(data.cashCost);
+            int hungerSteps = Mathf.Abs(totalHungerChange);
+            int cashSteps = Mathf.Abs(totalCashChange);
+            int totalSteps = Mathf.Max(hungerSteps, cashSteps, 1);
 
-            for (int minute = 0; minute < totalMinutes; minute++)
+            float minutesPerStep = (float)totalMinutes / totalSteps;
+
+            Debug.Log($"Running behavior '{data.behaviorName}' for {totalMinutes} min with {totalSteps} steps (~{minutesPerStep:F2} min per step)");
+
+            float elapsedMinutes = 0f;
+            int step = 0;
+
+            while (elapsedMinutes < totalMinutes)
             {
-                float elapsed = 0f;
-
-                // Wait until one in-game minute passes, respecting clock state
-                while (elapsed < 1f)
+                // Respect pause state
+                if (clockManager.CurrentState == ClockManager.ClockState.Paused)
                 {
-                    if (clockManager.CurrentState == ClockManager.ClockState.Paused)
-                    {
-                        yield return null; // wait until unpaused
-                        continue;
-                    }
-
-                    elapsed += Time.deltaTime * clockManager.TimeScaleMultiplier / secondsPerGameMinute;
                     yield return null;
+                    continue;
                 }
 
-                resourceManager.ModifyResources(0, hungerDeltaPerMinute, cashDeltaPerMinute);
+                // Advance elapsed time based on clock speed
+                elapsedMinutes += Time.deltaTime * clockManager.TimeScaleMultiplier / secondsPerGameMinute;
+
+                // When enough in-game minutes have passed, apply one tick
+                if (elapsedMinutes >= (step + 1) * minutesPerStep)
+                {
+                    step++;
+
+                    int hungerDelta = 0;
+                    int cashDelta = 0;
+
+                    if (step <= hungerSteps)
+                        hungerDelta = (totalHungerChange > 0) ? +1 : -1;
+
+                    if (step <= cashSteps)
+                        cashDelta = (totalCashChange > 0) ? +1 : -1;
+
+                    resourceManager.ModifyResources(0, hungerDelta, cashDelta);
+                }
+
+                yield return null;
             }
 
             // Spend spoons at the end
@@ -150,7 +172,6 @@ public class BehaviorManager : MonoBehaviour
             isBusy = false;
             currentBehavior = null;
             StartDefaultBehavior();
-
         }
     }
 
