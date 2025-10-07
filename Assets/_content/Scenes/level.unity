@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 0.5
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.3225292, g: 0.3600378, b: 0.41749644, a: 0.5}
+  m_IndirectSpecularColor: {r: 0.32252967, g: 0.36003828, b: 0.41749734, a: 0.5}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -23620,6 +23620,22 @@ PrefabInstance:
       propertyPath: kitchenButton
       value: 
       objectReference: {fileID: 1315057227531857328}
+    - target: {fileID: 5924500622192138893, guid: 55fc836061b67c74b957a45b1e154edc, type: 3}
+      propertyPath: behaviorManager
+      value: 
+      objectReference: {fileID: 1977713293}
+    - target: {fileID: 5924500622192138893, guid: 55fc836061b67c74b957a45b1e154edc, type: 3}
+      propertyPath: bedroomBehaviors.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5924500622192138893, guid: 55fc836061b67c74b957a45b1e154edc, type: 3}
+      propertyPath: bedroomBehaviors.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: 6e850be11124b5141971238b303dc0f0, type: 2}
+    - target: {fileID: 5924500622192138893, guid: 55fc836061b67c74b957a45b1e154edc, type: 3}
+      propertyPath: bedroomBehaviors.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: 8da27216544f8de4aa0d38c1d33c40d0, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

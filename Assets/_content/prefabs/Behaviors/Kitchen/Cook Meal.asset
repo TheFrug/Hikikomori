@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorName: Cook Meal
   behaviorDescription: I miss mom's cooking
+  isDefault: 0
   isToggle: 0
   durationMinutes: 60
   spoonsCost: 2

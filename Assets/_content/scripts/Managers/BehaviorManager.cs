@@ -24,6 +24,7 @@ public class BehaviorManager : MonoBehaviour
         StartDefaultBehavior();
     }
 
+    /* TryStartBehavior()
     // --- Public API for Buttons ---
     public void TryStartBehavior(BehaviorData data) // Never called
     {
@@ -46,23 +47,32 @@ public class BehaviorManager : MonoBehaviour
 
         StartBehavior(data);
     }
+    */
 
     // --- Main Behavior Flow ---
-    private void StartBehavior(BehaviorData data)
+    public void StartBehavior(BehaviorData data)
     {
-        // Stop current behavior (including infinite default)
-        if (behaviorRoutine != null)
-            StopCoroutine(behaviorRoutine);
+        if (isBusy)
+            {
+                tooltipPanel?.ShowBusyMessage("Hiki is busy!");
+                return;
+            }
 
-        currentBehavior = data;
-        isBusy = true;
+            if (data == null)
+            {
+                Debug.LogWarning("No behavior data provided!");
+                return;
+            }
 
-        Debug.Log($"Starting behavior: {data.behaviorName}");
+            // Stop current behavior (including infinite default)
+            if (behaviorRoutine != null)
+                StopCoroutine(behaviorRoutine);
 
-        if (data.isDefault)
-            Debug.LogWarning("Starting a default behavior manually—usually not needed.");
+            currentBehavior = data;
+            isBusy = true;
 
-        behaviorRoutine = StartCoroutine(RunBehavior(data));
+            Debug.Log($"Starting behavior: {data.behaviorName}");
+            behaviorRoutine = StartCoroutine(RunBehavior(data));
     }
 
     private IEnumerator RunBehavior(BehaviorData data) //Called ONCE by StartDefaultBehavior(), NEVER called by StartBehavior()
@@ -73,42 +83,74 @@ public class BehaviorManager : MonoBehaviour
             yield break;
         }
 
+        float secondsPerGameMinute = clockManager.realSecondsPerGameTick / clockManager.minutesPerTick;
+
         if (data.isDefault)
         {
             Debug.Log($"Running default behavior indefinitely: {data.behaviorName}");
 
-            while (isBusy && currentBehavior == data) // Never happens because StartDefaultBehavior sets isBusy to false
+            while (currentBehavior == data)
             {
-                resourceManager.ModifyResources(
-                    data.spoonsCost * secondsPerGameMinute,
-                    data.hungerImpact * secondsPerGameMinute,
-                    data.cashCost * secondsPerGameMinute
-                );
+                float elapsed = 0f;
 
-                yield return new WaitForSeconds(secondsPerGameMinute);
+                // Wait until one in-game minute passes, respecting clock state
+                while (elapsed < 1f)
+                {
+                    if (clockManager.CurrentState == ClockManager.ClockState.Paused)
+                    {
+                        yield return null; // paused → do nothing
+                        continue;
+                    }
+
+                    elapsed += Time.deltaTime * clockManager.TimeScaleMultiplier / secondsPerGameMinute;
+                    yield return null;
+                }
+
+                // Apply per-minute resource updates
+                resourceManager.ModifyResources(
+                    data.spoonsCost,
+                    data.hungerImpact,
+                    data.cashCost
+                );
             }
         }
+
         else
         {
             int totalMinutes = Mathf.Max(1, data.durationMinutes);
             float interval = secondsPerGameMinute;
 
             // Calculate deltas
-            float spoonDeltaPerMinute = (float)data.spoonsCost / totalMinutes;
             float hungerDeltaPerMinute = (float)data.hungerImpact / totalMinutes;
             float cashDeltaPerMinute = (float)data.cashCost / totalMinutes;
 
             for (int minute = 0; minute < totalMinutes; minute++)
             {
-                resourceManager.ModifyResources(spoonDeltaPerMinute, hungerDeltaPerMinute, cashDeltaPerMinute);
-                yield return new WaitForSeconds(interval);
+                float elapsed = 0f;
+
+                // Wait until one in-game minute passes, respecting clock state
+                while (elapsed < 1f)
+                {
+                    if (clockManager.CurrentState == ClockManager.ClockState.Paused)
+                    {
+                        yield return null; // wait until unpaused
+                        continue;
+                    }
+
+                    elapsed += Time.deltaTime * clockManager.TimeScaleMultiplier / secondsPerGameMinute;
+                    yield return null;
+                }
+
+                resourceManager.ModifyResources(0, hungerDeltaPerMinute, cashDeltaPerMinute);
             }
 
+            // Spend spoons at the end
+            resourceManager.ModifyResources(data.spoonsCost, 0, 0);
             Debug.Log($"Finished behavior: {data.behaviorName}");
             isBusy = false;
             currentBehavior = null;
-
             StartDefaultBehavior();
+
         }
     }
 

@@ -22,10 +22,20 @@ public class ClockManager : MonoBehaviour
     private Color defaultColor = Color.white;
     private Color activeColor = Color.green;
 
+    public enum ClockState { Paused, Normal, FastForward }
+
+    public ClockState CurrentState { get; private set; } = ClockState.Normal;
+    public float TimeScaleMultiplier => speedMultiplier;
+
+    // Optional: Event that fires every tick
+    public delegate void ClockTickEvent();
+    public event ClockTickEvent OnTick;
+
     void Start()
     {
         currentTime = new System.TimeSpan(14, 0, 0); // start 2:00pm
         UpdateClockDisplay();
+        OnTick?.Invoke();
         HighlightButton(playButton); // start as "playing"
     }
 
@@ -48,6 +58,7 @@ public class ClockManager : MonoBehaviour
             currentTime = currentTime.Subtract(System.TimeSpan.FromHours(24));
 
         UpdateClockDisplay();
+        OnTick?.Invoke();
     }
 
     private void UpdateClockDisplay()
@@ -64,35 +75,27 @@ public class ClockManager : MonoBehaviour
     {
         isPaused = true;
         speedMultiplier = 1f; // ensure pause always clears fast-forward
-        Debug.Log("Clock paused");
+        CurrentState = ClockState.Paused;
         HighlightButton(pauseButton);
+        Debug.Log("Clock paused");
     }
 
     public void PlayClock()
     {
         isPaused = false;
         speedMultiplier = 1f;
-        Debug.Log("Clock playing at normal speed");
+        CurrentState = ClockState.Normal;
         HighlightButton(playButton);
+        Debug.Log("Clock playing at normal speed");
     }
 
     public void FastForwardClock()
     {
-        if (!isPaused && speedMultiplier == 2f)
-        {
-            // Already in fast forward → back to normal play
-            speedMultiplier = 1f;
-            Debug.Log("Fast Forward OFF → Normal speed");
-            HighlightButton(playButton);
-        }
-        else
-        {
-            // Enter fast forward
-            isPaused = false;
-            speedMultiplier = 2f;
-            Debug.Log("Fast Forward ON");
-            HighlightButton(fastForwardButton);
-        }
+        isPaused = false;
+        speedMultiplier = (speedMultiplier == 2f) ? 1f : 2f;
+        CurrentState = (speedMultiplier == 2f) ? ClockState.FastForward : ClockState.Normal;
+        HighlightButton(speedMultiplier == 2f ? fastForwardButton : playButton);
+        Debug.Log($"Fast Forward {(speedMultiplier == 2f ? "ON" : "OFF")} (Speed x{speedMultiplier})");
     }
 
     // ==== HIGHLIGHT HANDLER ====

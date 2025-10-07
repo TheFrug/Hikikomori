@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Watch Anime
   m_EditorClassIdentifier: 
   behaviorName: Watch Anime
-  behaviorDescription: More time asleep means less time thinking.
+  behaviorDescription: I'll never forgive the Japanese for inventing Anime!
   isDefault: 0
   isToggle: 0
-  durationMinutes: 90
-  spoonsCost: 0
+  durationMinutes: 20
+  spoonsCost: 1
   hideSpoonsCost: 0
   hungerImpact: 10
   cashCost: 0

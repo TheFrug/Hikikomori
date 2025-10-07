@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorName: Buy Takeout
   behaviorDescription: Brown food delivered right to your door!
+  isDefault: 0
   isToggle: 0
   durationMinutes: 30
   spoonsCost: 0
   hideSpoonsCost: 0
   hungerImpact: -25
-  cashCost: 10
+  cashCost: 20
   icon: {fileID: 0}

@@ -6,6 +6,9 @@ public enum RoomType { Bedroom, Kitchen, Hallway }
 
 public class BehaviorPanel : MonoBehaviour
 {
+    [Header("References")]
+    public BehaviorManager behaviorManager;
+
     [Header("Room buttons")]
     public Button bedroomButton;
     public Button kitchenButton;
@@ -115,7 +118,14 @@ public class BehaviorPanel : MonoBehaviour
     /// </summary>
     public void OnBehaviorClicked(BehaviorData data) // I don't know how this is getting added to the buttons, but the debug message appears so ???
     {
+        if (behaviorManager == null)
+        {
+            Debug.LogError("BehaviorManager reference missing on BehaviorPanel!");
+            return;
+        }
+
         Debug.Log($"Behavior clicked: {data?.behaviorName ?? "null"}");
+        behaviorManager.StartBehavior(data);
         // TODO: Set the active behavior, start running it, apply costs etc.
     }
 }

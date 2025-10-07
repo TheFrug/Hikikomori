@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorName: Clean Room
   behaviorDescription: Clean your sty like a good pig
+  isDefault: 0
   isToggle: 0
   durationMinutes: 90
   spoonsCost: 2

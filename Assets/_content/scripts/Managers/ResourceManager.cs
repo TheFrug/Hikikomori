@@ -108,26 +108,25 @@ public class ResourceManager : MonoBehaviour
 
     public void ModifyResources(float spoonDelta, float hungerDelta, float cashDelta)
     {
-        Debug.Log("Running ModifyResources()");
+        //Debug.Log("Running ModifyResources()");
         // --- SPOONS ---
         if (spoonDelta != 0)
         {
-            currentSpoons = Mathf.RoundToInt(currentSpoons + spoonDelta);
+            currentSpoons = Mathf.RoundToInt(currentSpoons - spoonDelta);
             currentSpoons = Mathf.Clamp(currentSpoons, 0, maxSpoons);
         }
 
         // --- HUNGER ---
         if (hungerDelta != 0)
         {
-            currentHunger = Mathf.RoundToInt(currentHunger + hungerDelta);
+            currentHunger = Mathf.RoundToInt(currentHunger - hungerDelta);
             currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger);
         }
 
         // --- CASH ---
         if (cashDelta != 0)
         {
-            cash += Mathf.RoundToInt(cashDelta);
-            // Cash can go negative — no clamp
+            cash -= Mathf.RoundToInt(cashDelta);
         }
 
         // (Optional) Stress adjustments could be added later here
