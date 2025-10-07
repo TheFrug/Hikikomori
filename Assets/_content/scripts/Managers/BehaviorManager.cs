@@ -25,8 +25,9 @@ public class BehaviorManager : MonoBehaviour
     }
 
     // --- Public API for Buttons ---
-    public void TryStartBehavior(BehaviorData data)
+    public void TryStartBehavior(BehaviorData data) // Never called
     {
+        Debug.Log("Running method: TryStartBehavior(" + data + ")");
         if (isBusy)
         {
             if (tooltipPanel != null)
@@ -64,7 +65,7 @@ public class BehaviorManager : MonoBehaviour
         behaviorRoutine = StartCoroutine(RunBehavior(data));
     }
 
-    private IEnumerator RunBehavior(BehaviorData data)
+    private IEnumerator RunBehavior(BehaviorData data) //Called ONCE by StartDefaultBehavior(), NEVER called by StartBehavior()
     {
         if (resourceManager == null)
         {
@@ -76,7 +77,7 @@ public class BehaviorManager : MonoBehaviour
         {
             Debug.Log($"Running default behavior indefinitely: {data.behaviorName}");
 
-            while (isBusy && currentBehavior == data)
+            while (isBusy && currentBehavior == data) // Never happens because StartDefaultBehavior sets isBusy to false
             {
                 resourceManager.ModifyResources(
                     data.spoonsCost * secondsPerGameMinute,

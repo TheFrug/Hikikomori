@@ -21,8 +21,8 @@ public class BehaviorButtonHoverable : MonoBehaviour, IPointerEnterHandler, IPoi
         var btn = GetComponent<Button>();
         if (btn != null)
         {
-            btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => parentPanel.OnBehaviorClicked(behaviorData));
+            btn.onClick.RemoveAllListeners(); // Is this necessary?
+            btn.onClick.AddListener(() => parentPanel.OnBehaviorClicked(behaviorData)); // Adds OnBehaviorClicked() to the OnClick() event
         }
     }
 
@@ -30,7 +30,7 @@ public class BehaviorButtonHoverable : MonoBehaviour, IPointerEnterHandler, IPoi
     {
         if (tooltip != null && behaviorData != null)
         {
-            tooltip.Show(behaviorData);
+            tooltip.Show(behaviorData); // Shows toolTip with info from Configure
         }
     }
 

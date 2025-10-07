@@ -17,8 +17,8 @@ MonoBehaviour:
   isDefault: 1
   isToggle: 0
   durationMinutes: 60
-  spoonsCost: 0
+  spoonsCost: 1
   hideSpoonsCost: 1
-  hungerImpact: 0
+  hungerImpact: 1
   cashCost: -1
   icon: {fileID: 0}

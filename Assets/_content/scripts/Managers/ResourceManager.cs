@@ -108,6 +108,7 @@ public class ResourceManager : MonoBehaviour
 
     public void ModifyResources(float spoonDelta, float hungerDelta, float cashDelta)
     {
+        Debug.Log("Running ModifyResources()");
         // --- SPOONS ---
         if (spoonDelta != 0)
         {
