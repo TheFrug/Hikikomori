@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Yarn.Unity;
 
 public class BehaviorManager : MonoBehaviour
 {
@@ -18,11 +19,16 @@ public class BehaviorManager : MonoBehaviour
     [Header("Settings")]
     public float secondsPerGameMinute = 0.1f;
 
+    [Header("Yarn Integration")]
+    public DialogueRunner dialogueRunner;
+
     private BehaviorData currentBehavior; // Keeps track of what is happening
     private bool isBusy = false; // Determines if current behavior is interruptible
     private Coroutine behaviorRoutine;
 
     private Queue<BehaviorData> behaviorQueue = new Queue<BehaviorData>();
+    private HashSet<BehaviorData.BehaviorYarnTrigger> triggeredMidpoints = new HashSet<BehaviorData.BehaviorYarnTrigger>();
+
 
     void Start()
     {
@@ -88,6 +94,24 @@ public class BehaviorManager : MonoBehaviour
         behaviorRoutine = StartCoroutine(RunBehavior(data));
     }
 
+    private void StartDefaultBehavior()
+    {
+        if (defaultBehavior == null)
+        {
+            Debug.LogWarning("No default behavior assigned!");
+            return;
+        }
+
+        Debug.Log($"Defaulting to: {defaultBehavior.behaviorName}");
+
+        if (behaviorRoutine != null)
+            StopCoroutine(behaviorRoutine);
+
+        isBusy = false;
+        currentBehavior = defaultBehavior;
+        behaviorRoutine = StartCoroutine(RunBehavior(defaultBehavior));
+    }
+
     private IEnumerator RunBehavior(BehaviorData data) //Called ONCE by StartDefaultBehavior(), NEVER called by StartBehavior()
     {
         if (resourceManager == null)
@@ -127,7 +151,6 @@ public class BehaviorManager : MonoBehaviour
                 );
             }
         }
-
         else
         {
             int totalMinutes = Mathf.Max(1, data.durationMinutes);
@@ -144,6 +167,7 @@ public class BehaviorManager : MonoBehaviour
 
             Debug.Log($"Running behavior '{data.behaviorName}' for {totalMinutes} min with {totalSteps} steps (~{minutesPerStep:F2} min per step)");
 
+            TriggerYarnFor(data, BehaviorData.BehaviorYarnTrigger.TriggerTime.OnStart);
             float elapsedMinutes = 0f;
             int step = 0;
 
@@ -176,9 +200,11 @@ public class BehaviorManager : MonoBehaviour
                     resourceManager.ModifyResources(0, hungerDelta, cashDelta);
                 }
 
+                CheckForMidpointTriggers(data, elapsedMinutes, totalMinutes);
+
                 yield return null;
             }
-
+            TriggerYarnFor(data, BehaviorData.BehaviorYarnTrigger.TriggerTime.OnEnd);
             // Spend spoons at the end
             resourceManager.ModifyResources(data.spoonsCost, 0, 0);
             Debug.Log($"Finished behavior: {data.behaviorName}");
@@ -219,6 +245,58 @@ public class BehaviorManager : MonoBehaviour
         Debug.Log($"Queued behavior: {data.behaviorName}. It will start at the next tick.");
     }
 
+
+    // --- Yarn Integration ---
+    private void TriggerYarnFor(BehaviorData data, BehaviorData.BehaviorYarnTrigger.TriggerTime triggerType)
+    {
+        if (data.yarnTrigger == null || dialogueRunner == null)
+            return;
+
+        foreach (var trigger in data.yarnTrigger)
+        {
+            if (trigger.triggerTime == triggerType && !string.IsNullOrEmpty(trigger.yarnNodeName))
+            {
+                Debug.Log($"Triggering Yarn node '{trigger.yarnNodeName}' for {triggerType} of {data.behaviorName}");
+                StartCoroutine(RunYarnNode(trigger.yarnNodeName));
+            }
+        }
+    }
+
+    private void CheckForMidpointTriggers(BehaviorData data, float elapsedMinutes, float totalMinutes)
+    {
+        if (data.yarnTrigger == null)
+            return;
+
+        foreach (var trigger in data.yarnTrigger)
+        {
+            if (trigger.triggerTime == BehaviorData.BehaviorYarnTrigger.TriggerTime.OnMidpoint)
+            {
+                float targetMinute = trigger.triggerMinute > 0 ? trigger.triggerMinute : totalMinutes / 2f;
+                if (elapsedMinutes >= targetMinute && !triggeredMidpoints.Contains(trigger))
+                {
+                    triggeredMidpoints.Add(trigger);
+                    StartCoroutine(RunYarnNode(trigger.yarnNodeName));
+                }
+            }
+        }
+    }
+
+    private IEnumerator RunYarnNode(string nodeName)
+    {
+        if (clockManager != null)
+            clockManager.PauseClock();
+
+        dialogueRunner.StartDialogue(nodeName);
+
+        // Wait until Yarn finishes
+        while (dialogueRunner.IsDialogueRunning)
+            yield return null;
+
+        if (clockManager != null)
+            clockManager.PlayClock();
+    }
+
+    // --- Clock Tick System ---
     private void HandleClockTick()
     {
         //Debug.Log($"HandleClockTick(): waitingForNextTick={waitingForNextTick}, queueCount={behaviorQueue.Count}, isBusy={isBusy}, currentBehavior={(currentBehavior==null? "null": currentBehavior.behaviorName)}");
@@ -238,23 +316,5 @@ public class BehaviorManager : MonoBehaviour
             Debug.Log("Clock tick found no queued behavior. Returning to default idle.");
             StartDefaultBehavior();
         }
-    }
-
-    private void StartDefaultBehavior()
-    {
-        if (defaultBehavior == null)
-        {
-            Debug.LogWarning("No default behavior assigned!");
-            return;
-        }
-
-        Debug.Log($"Defaulting to: {defaultBehavior.behaviorName}");
-
-        if (behaviorRoutine != null)
-            StopCoroutine(behaviorRoutine);
-
-        isBusy = false;
-        currentBehavior = defaultBehavior;
-        behaviorRoutine = StartCoroutine(RunBehavior(defaultBehavior));
     }
 }

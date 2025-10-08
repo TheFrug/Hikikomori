@@ -17901,6 +17901,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2501668591283756950, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
   m_PrefabInstance: {fileID: 4696146176409352581}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1567567710 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5990024711220244728, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
+  m_PrefabInstance: {fileID: 4696146176409352581}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bec29c0a230741bdac901dba8da47ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1570391345
 GameObject:
   m_ObjectHideFlags: 0
@@ -22301,6 +22312,7 @@ MonoBehaviour:
   tooltipPanel: {fileID: 1549155102}
   defaultBehavior: {fileID: 11400000, guid: b3f087cc1cda5f44ebc569e9fd5c686f, type: 2}
   secondsPerGameMinute: 0.1
+  dialogueRunner: {fileID: 1567567710}
 --- !u!1001 &1979555601
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -24264,6 +24276,18 @@ PrefabInstance:
     - target: {fileID: 5990024711220244728, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
       propertyPath: startNode
       value: Start
+      objectReference: {fileID: 0}
+    - target: {fileID: 5990024711220244728, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
+      propertyPath: onNodeComplete.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5990024711220244728, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
+      propertyPath: onNodeComplete.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5990024711220244728, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
+      propertyPath: onNodeComplete.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6036438553950410688, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size

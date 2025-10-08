@@ -22,3 +22,7 @@ MonoBehaviour:
   hungerImpact: 10
   cashCost: 0
   icon: {fileID: 0}
+  yarnTrigger:
+  - yarnNodeName: Doomscrolling
+    triggerTime: 0
+    triggerMinute: 0

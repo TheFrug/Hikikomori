@@ -16,9 +16,13 @@ MonoBehaviour:
   behaviorDescription: More time asleep means less time thinking.
   isDefault: 0
   isToggle: 0
-  durationMinutes: 90
+  durationMinutes: 20
   spoonsCost: 0
   hideSpoonsCost: 0
   hungerImpact: 10
   cashCost: 0
   icon: {fileID: 0}
+  yarnTrigger:
+  - yarnNodeName: Test
+    triggerTime: 1
+    triggerMinute: 10
