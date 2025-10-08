@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewBehavior", menuName = "Hiki/Behavior", order = 1)]
@@ -5,7 +6,7 @@ public class BehaviorData : ScriptableObject
 {
     [Header("Basic")]
     public string behaviorName = "New Action";
-    [TextArea(2,4)] public string behaviorDescription = "Short fun behavior Description.";
+    [TextArea(2, 4)] public string behaviorDescription = "Short fun behavior Description.";
     public bool isDefault = false;
 
     [Header("Time")]
@@ -21,4 +22,15 @@ public class BehaviorData : ScriptableObject
 
     [Header("Visuals")]
     public Sprite icon;
+
+    public List<BehaviorYarnTrigger> yarnTrigger;
+
+    [System.Serializable]
+    public class BehaviorYarnTrigger
+    {
+        public string yarnNodeName;
+        public enum TriggerTime { OnStart, OnMidpoint, OnEnd }
+        public TriggerTime triggerTime;
+        public float triggerMinute; // optional override for custom minute marks
+    }
 }

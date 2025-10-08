@@ -22,3 +22,7 @@ MonoBehaviour:
   hungerImpact: -25
   cashCost: 20
   icon: {fileID: 0}
+  yarnTrigger:
+  - yarnNodeName: 
+    triggerTime: 0
+    triggerMinute: 0

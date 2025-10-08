@@ -1,9 +1,12 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
 public class BehaviorManager : MonoBehaviour
 {
+    private bool waitingForNextTick = false;
+
     [Header("References")]
     public ResourceManager resourceManager;
     public ClockManager clockManager;
@@ -15,13 +18,23 @@ public class BehaviorManager : MonoBehaviour
     [Header("Settings")]
     public float secondsPerGameMinute = 0.1f;
 
-    private BehaviorData currentBehavior;
-    private bool isBusy = false;
+    private BehaviorData currentBehavior; // Keeps track of what is happening
+    private bool isBusy = false; // Determines if current behavior is interruptible
     private Coroutine behaviorRoutine;
+
+    private Queue<BehaviorData> behaviorQueue = new Queue<BehaviorData>();
 
     void Start()
     {
+        if (clockManager != null){
+            clockManager.OnTick += HandleClockTick;
+        }
         StartDefaultBehavior();
+    }
+    void OnDestroy()
+    {
+        if (clockManager != null)
+            clockManager.OnTick -= HandleClockTick;
     }
 
     /* TryStartBehavior()
@@ -53,26 +66,26 @@ public class BehaviorManager : MonoBehaviour
     public void StartBehavior(BehaviorData data)
     {
         if (isBusy)
-            {
-                tooltipPanel?.ShowBusyMessage("Hiki is busy!");
-                return;
-            }
+        {
+            tooltipPanel?.ShowBusyMessage("Hiki is busy!");
+            return;
+        }
 
-            if (data == null)
-            {
-                Debug.LogWarning("No behavior data provided!");
-                return;
-            }
+        if (data == null)
+        {
+            Debug.LogWarning("No behavior data provided!");
+            return;
+        }
 
-            // Stop current behavior (including infinite default)
-            if (behaviorRoutine != null)
-                StopCoroutine(behaviorRoutine);
+        // Stop current behavior (including infinite default)
+        if (behaviorRoutine != null)
+            StopCoroutine(behaviorRoutine);
 
-            currentBehavior = data;
-            isBusy = true;
+        currentBehavior = data;
+        isBusy = true;
 
-            Debug.Log($"Starting behavior: {data.behaviorName}");
-            behaviorRoutine = StartCoroutine(RunBehavior(data));
+        Debug.Log($"Starting behavior: {data.behaviorName}");
+        behaviorRoutine = StartCoroutine(RunBehavior(data));
     }
 
     private IEnumerator RunBehavior(BehaviorData data) //Called ONCE by StartDefaultBehavior(), NEVER called by StartBehavior()
@@ -171,6 +184,58 @@ public class BehaviorManager : MonoBehaviour
             Debug.Log($"Finished behavior: {data.behaviorName}");
             isBusy = false;
             currentBehavior = null;
+            StartDefaultBehavior();
+        }
+    }
+
+    public void QueueBehavior(BehaviorData data)
+    {
+        Debug.Log($"QueueBehavior(): isBusy={isBusy}, behaviour={data?.behaviorName}");
+        if (data == null)
+        {
+            Debug.LogWarning("Tried to queue a null behavior!");
+            return;
+        }
+
+        // If Hiki is idle, start immediately
+        if (!isBusy)
+        {
+            Debug.Log($"No active behavior — starting {data.behaviorName} immediately.");
+            StartBehavior(data);
+            return;
+        }
+
+        // Only one queued behavior allowed
+        if (behaviorQueue.Count > 0)
+        {
+            Debug.Log($"Behavior queue already has one task ({behaviorQueue.Peek().behaviorName}). Ignoring new queue request.");
+            tooltipPanel?.ShowBusyMessage("Hiki already has something planned!");
+            return;
+        }
+
+        // Add to queue
+        behaviorQueue.Enqueue(data);
+        waitingForNextTick = true;
+        Debug.Log($"Queued behavior: {data.behaviorName}. It will start at the next tick.");
+    }
+
+    private void HandleClockTick()
+    {
+        //Debug.Log($"HandleClockTick(): waitingForNextTick={waitingForNextTick}, queueCount={behaviorQueue.Count}, isBusy={isBusy}, currentBehavior={(currentBehavior==null? "null": currentBehavior.behaviorName)}");
+
+        // Only trigger queued behaviors on tick boundaries
+        if (waitingForNextTick && behaviorQueue.Count > 0 && !isBusy)
+        {
+            var nextBehavior = behaviorQueue.Dequeue();
+            waitingForNextTick = false;
+
+            Debug.Log($"Clock tick triggered queued behavior: {nextBehavior.behaviorName}");
+            StartBehavior(nextBehavior);
+        }
+        // If no queued task and Hiki is idle, return to default
+        else if (!isBusy && behaviorQueue.Count == 0 && currentBehavior != defaultBehavior)
+        {
+            Debug.Log("Clock tick found no queued behavior. Returning to default idle.");
             StartDefaultBehavior();
         }
     }

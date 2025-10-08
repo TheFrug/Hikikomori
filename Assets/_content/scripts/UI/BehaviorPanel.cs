@@ -125,7 +125,6 @@ public class BehaviorPanel : MonoBehaviour
         }
 
         Debug.Log($"Behavior clicked: {data?.behaviorName ?? "null"}");
-        behaviorManager.StartBehavior(data);
-        // TODO: Set the active behavior, start running it, apply costs etc.
+        behaviorManager.QueueBehavior(data);
     }
 }
