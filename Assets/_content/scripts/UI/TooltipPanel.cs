@@ -6,6 +6,9 @@ using UnityEngine.UI;
 public class TooltipPanel : MonoBehaviour
 {
     [Header("UI")]
+    // NOTE: keep this GameObject as the root that holds this script.
+    // 'panel' should be the visual tooltip card (child). If you assigned the same GameObject,
+    // this code will handle that safely by toggling children instead of deactivating the host.
     public GameObject panel;
     public TMP_Text titleText;
     public TMP_Text descText;
@@ -27,9 +30,20 @@ public class TooltipPanel : MonoBehaviour
 
     void Awake()
     {
+        // IMPORTANT: ensure we don't accidentally deactivate the GameObject that holds this component.
+        // If 'panel' was set to the same GameObject, we won't deactivate that GameObject anymore.
         if (panel != null)
         {
-            panel.SetActive(false);
+            // If panel is the same object as this component's GameObject, we will toggle children instead.
+            if (panel == this.gameObject)
+            {
+                // ensure children are initially inactive (visual content)
+                SetPanelChildrenActive(false);
+            }
+            else
+            {
+                panel.SetActive(false);
+            }
 
             var cg = panel.GetComponent<CanvasGroup>();
             if (cg == null) cg = panel.AddComponent<CanvasGroup>();
@@ -48,7 +62,13 @@ public class TooltipPanel : MonoBehaviour
 
     void Update()
     {
-        if (panel == null || !panel.activeSelf) return;
+        // only move the tooltip visual panel (not the message text) when it's visible
+        if (panel == null)
+            return;
+
+        // if the visual panel is not active, nothing to update
+        bool isVisualActive = IsPanelVisualActive();
+        if (!isVisualActive) return;
 
         Vector2 mousePos = Input.mousePosition;
         Vector2 newPos = mousePos + offset;
@@ -89,13 +109,18 @@ public class TooltipPanel : MonoBehaviour
         cashText.text = data.cashCost > 0 ? $"Cost: ${data.cashCost:0.00}" : "";
 
         if (iconImage != null) iconImage.sprite = data.icon;
-        panel.SetActive(true);
+
+        // show visuals without deactivating this GameObject
+        SetPanelVisualActive(true);
     }
 
     public void Hide()
     {
         if (panel == null) return;
-        panel.SetActive(false);
+
+        // If a busy message is running, don't disable the host object (that would kill coroutines).
+        // Instead hide visual children so the tooltip disappears but coroutine(s) can continue.
+        SetPanelVisualActive(false);
     }
 
     string FormatDuration(int minutes)
@@ -119,9 +144,12 @@ public class TooltipPanel : MonoBehaviour
     {
         if (messageText == null) return;
 
-        StopAllCoroutines(); // cancel any previous animations
+        if (messageRoutine != null)
+            StopCoroutine(messageRoutine);
+
         messageText.text = msg;
-        messageText.alpha = 1f;
+        // ensure visible immediately
+        messageGroup.alpha = 1f;
 
         // Position near mouse
         Vector3 mousePos = Input.mousePosition;
@@ -132,8 +160,13 @@ public class TooltipPanel : MonoBehaviour
 
     private IEnumerator FadeAndFloat(string msg)
     {
+        messageText.enabled = true;
         messageText.text = msg;
-        messageGroup.alpha = 1f;
+        if (messageGroup != null)
+        {
+            messageGroup.alpha = 1f;
+            messageGroup.blocksRaycasts = false;
+        }
 
         Vector2 startPos = (Vector2)Input.mousePosition + offset;
         Vector2 endPos = startPos + new Vector2(0, floatDistance);
@@ -143,7 +176,7 @@ public class TooltipPanel : MonoBehaviour
         while (elapsed < fadeDuration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / fadeDuration;
+            float t = Mathf.Clamp01(elapsed / fadeDuration);
 
             messageText.transform.position = Vector2.Lerp(startPos, endPos, t);
             messageGroup.alpha = Mathf.Lerp(1f, 0f, t);
@@ -152,5 +185,58 @@ public class TooltipPanel : MonoBehaviour
 
         messageText.text = "";
         messageGroup.alpha = 0f;
+        messageText.enabled = false;
+        messageRoutine = null;
+    }
+
+
+    // ---- helper helpers ----
+    bool IsPanelVisualActive()
+    {
+        if (panel == null) return false;
+        if (panel != this.gameObject) return panel.activeSelf;
+        // If panel == host, check if any child is active (visual)
+        foreach (Transform t in panel.transform)
+        {
+            if (t.gameObject.activeSelf) return true;
+        }
+        return false;
+    }
+
+    void SetPanelVisualActive(bool active)
+    {
+        if (panel == null) return;
+
+        // Toggle root Image (the background)
+        var rootImage = panel.GetComponent<Image>();
+        if (rootImage != null)
+            rootImage.enabled = active;
+
+        if (panel != this.gameObject)
+        {
+            panel.SetActive(active);
+            return;
+        }
+
+        // If the user assigned the same GameObject to `panel` (common), avoid deactivating the host.
+        // Toggle children instead, but do NOT touch messageText (which may be sibling/child).
+        foreach (Transform child in panel.transform)
+        {
+            if (messageText != null && child.gameObject == messageText.gameObject)
+                continue;
+
+            // If the child is the background panel that you keep as a child of the message,
+            // you might want to exclude it here too. Adjust as needed.
+            child.gameObject.SetActive(active);
+        }
+    }
+
+    void SetPanelChildrenActive(bool active)
+    {
+        if (panel == null) return;
+        foreach (Transform child in panel.transform)
+        {
+            child.gameObject.SetActive(active);
+        }
     }
 }

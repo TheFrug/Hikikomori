@@ -114,6 +114,9 @@ public class BehaviorManager : MonoBehaviour
 
     private IEnumerator RunBehavior(BehaviorData data) //Called ONCE by StartDefaultBehavior(), NEVER called by StartBehavior()
     {
+        
+        triggeredMidpoints.Clear();
+
         if (resourceManager == null)
         {
             Debug.LogError("ResourceManager not assigned to BehaviorManager!");
@@ -257,7 +260,7 @@ public class BehaviorManager : MonoBehaviour
             if (trigger.triggerTime == triggerType && !string.IsNullOrEmpty(trigger.yarnNodeName))
             {
                 Debug.Log($"Triggering Yarn node '{trigger.yarnNodeName}' for {triggerType} of {data.behaviorName}");
-                StartCoroutine(RunYarnNode(trigger.yarnNodeName));
+                StartCoroutine(RunYarnNode(trigger.yarnNodeName, trigger.pauseClock));
             }
         }
     }
@@ -275,15 +278,15 @@ public class BehaviorManager : MonoBehaviour
                 if (elapsedMinutes >= targetMinute && !triggeredMidpoints.Contains(trigger))
                 {
                     triggeredMidpoints.Add(trigger);
-                    StartCoroutine(RunYarnNode(trigger.yarnNodeName));
+                    StartCoroutine(RunYarnNode(trigger.yarnNodeName, trigger.pauseClock));
                 }
             }
         }
     }
 
-    private IEnumerator RunYarnNode(string nodeName)
+    private IEnumerator RunYarnNode(string nodeName, bool pauseClock = true)
     {
-        if (clockManager != null)
+        if (pauseClock && clockManager != null)
             clockManager.PauseClock();
 
         dialogueRunner.StartDialogue(nodeName);

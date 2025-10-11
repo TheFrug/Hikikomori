@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Yarn.Unity;
 
 public class ClockManager : MonoBehaviour
 {
@@ -71,6 +72,7 @@ public class ClockManager : MonoBehaviour
     }
 
     // ==== BUTTON METHODS ====
+    [YarnCommand("PauseClock")]
     public void PauseClock()
     {
         isPaused = true;
@@ -80,6 +82,7 @@ public class ClockManager : MonoBehaviour
         Debug.Log("Clock paused");
     }
 
+    [YarnCommand("PlayClock")]
     public void PlayClock()
     {
         isPaused = false;

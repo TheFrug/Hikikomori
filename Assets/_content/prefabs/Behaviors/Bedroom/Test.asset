@@ -15,8 +15,8 @@ MonoBehaviour:
   behaviorName: Test
   behaviorDescription: To see if resources are being spent
   isDefault: 0
-  isToggle: 0
   durationMinutes: 10
+  isToggle: 0
   spoonsCost: 3
   hideSpoonsCost: 0
   hungerImpact: 50
@@ -26,3 +26,4 @@ MonoBehaviour:
   - yarnNodeName: Doomscrolling
     triggerTime: 2
     triggerMinute: 0
+    pauseClock: 1

@@ -10,8 +10,8 @@ public class BehaviorData : ScriptableObject
     public bool isDefault = false;
 
     [Header("Time")]
-    public bool isToggle = false;               // toggle = player-controlled (no fixed time)
     public int durationMinutes = 30;            // used when isToggle == false
+    public bool isToggle = false;               // toggle = player-controlled (no fixed time)
 
     [Header("Costs / Impacts")]
     public int spoonsCost = 0;
@@ -32,5 +32,6 @@ public class BehaviorData : ScriptableObject
         public enum TriggerTime { OnStart, OnMidpoint, OnEnd }
         public TriggerTime triggerTime;
         public float triggerMinute; // optional override for custom minute marks
+        public bool pauseClock;
     }
 }

@@ -1,5 +1,7 @@
 ﻿title: Markup_Test
 ---
+//<<PauseClock ClockManager>>
 Goblin: Hello! [dread]This sentence should be red[/dread]. Testing... 
+//<<PlayClock ClockManager>>
 OK, [hype]this one should be green[/hype].
 ===

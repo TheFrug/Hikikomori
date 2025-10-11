@@ -15,8 +15,8 @@ MonoBehaviour:
   behaviorName: Take a Nap
   behaviorDescription: More time asleep means less time thinking.
   isDefault: 0
-  isToggle: 0
   durationMinutes: 20
+  isToggle: 0
   spoonsCost: 0
   hideSpoonsCost: 0
   hungerImpact: 10
@@ -26,3 +26,4 @@ MonoBehaviour:
   - yarnNodeName: Test
     triggerTime: 1
     triggerMinute: 10
+    pauseClock: 1
