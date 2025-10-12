@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Yarn.Unity;
 
 public enum RoomType { Bedroom, Kitchen, Hallway }
 
@@ -19,8 +20,8 @@ public class BehaviorPanel : MonoBehaviour
     public Color activeColor = new Color(0.0f, 0.8f, 0.2f); // Sims-like green
 
     [Header("Button grid")]
-    public Transform gridParent;                   // content transform for GridLayoutGroup
-    public GameObject behaviorButtonPrefab;        // prefab with BehaviorButton component
+    public Transform gridParent;
+    public GameObject behaviorButtonPrefab;
 
     [Header("Data")]
     public List<BehaviorData> bedroomBehaviors;
@@ -30,34 +31,32 @@ public class BehaviorPanel : MonoBehaviour
     [Header("UI helpers")]
     public TooltipPanel tooltip;
 
-    [HideInInspector]
-    public RoomType currentRoom = RoomType.Bedroom;
+    [HideInInspector] public RoomType currentRoom = RoomType.Bedroom;
 
-    List<GameObject> spawnedButtons = new List<GameObject>();
+    private List<GameObject> spawnedButtons = new List<GameObject>();
 
     void Start()
     {
-        // wire room buttons (you can also assign these in inspector OnClick)
         if (bedroomButton != null) bedroomButton.onClick.AddListener(OnBedroomClicked);
         if (kitchenButton != null) kitchenButton.onClick.AddListener(OnKitchenClicked);
         if (hallwayButton != null) hallwayButton.onClick.AddListener(OnHallwayClicked);
 
-        SelectRoom(RoomType.Bedroom); // default start
+        SelectRoom(RoomType.Bedroom);
     }
 
-    // These methods run SelectRoom
+    // Room button click handlers
     public void OnBedroomClicked() => SelectRoom(RoomType.Bedroom);
     public void OnKitchenClicked() => SelectRoom(RoomType.Kitchen);
     public void OnHallwayClicked() => SelectRoom(RoomType.Hallway);
 
     public void SelectRoom(RoomType room)
     {
-        currentRoom = room; 
+        currentRoom = room;
         UpdateRoomHighlights();
         PopulateGridForRoom(room);
     }
 
-    void UpdateRoomHighlights() // Sets selected room button to highlight color, resets other two room buttons
+    void UpdateRoomHighlights()
     {
         if (bedroomButton != null) bedroomButton.image.color = defaultColor;
         if (kitchenButton != null) kitchenButton.image.color = defaultColor;
@@ -66,20 +65,19 @@ public class BehaviorPanel : MonoBehaviour
         switch (currentRoom)
         {
             case RoomType.Bedroom:
-                if (bedroomButton != null) bedroomButton.image.color = activeColor;
+                bedroomButton.image.color = activeColor;
                 break;
             case RoomType.Kitchen:
-                if (kitchenButton != null) kitchenButton.image.color = activeColor;
+                kitchenButton.image.color = activeColor;
                 break;
             case RoomType.Hallway:
-                if (hallwayButton != null) hallwayButton.image.color = activeColor;
+                hallwayButton.image.color = activeColor;
                 break;
         }
     }
 
     void PopulateGridForRoom(RoomType room)
     {
-        // clear existing
         foreach (var go in spawnedButtons) Destroy(go);
         spawnedButtons.Clear();
         tooltip?.Hide();
@@ -87,22 +85,22 @@ public class BehaviorPanel : MonoBehaviour
         List<BehaviorData> list = GetListForRoom(room);
         if (list == null) list = new List<BehaviorData>();
 
-        // limit to the number of cells you have (2x3 = 6). Grid layout handles layout.
         int maxSlots = 6;
-        for (int i = 0; i < Mathf.Min(list.Count, maxSlots); i++) // For each BehaviorData in the list
+        for (int i = 0; i < Mathf.Min(list.Count, maxSlots); i++)
         {
             var data = list[i];
-            var go = Instantiate(behaviorButtonPrefab, gridParent, false); // Creates BehaviorButton
-            var bb = go.GetComponent<BehaviorButtonHoverable>(); // Drills to accesses BehaviorButtonHoverable component
-            if (bb != null) bb.Configure(data, tooltip, this); // Run Configure() on each button to fill with relevant data
-            spawnedButtons.Add(go);
+            var go = Instantiate(behaviorButtonPrefab, gridParent, false);
+            var bb = go.GetComponent<BehaviorButtonHoverable>();
+            if (bb != null)
+            {
+                bb.Configure(data, tooltip, this);
+                spawnedButtons.Add(go);
+            }
         }
-
-        // If you want empty placeholders for remaining cells, instantiate disabled placeholders here.
     }
 
-    List<BehaviorData> GetListForRoom(RoomType r) // I don't entirely know how this works
-    {                                             // I think this chooses which list of behaviors is loaded based on the room
+    List<BehaviorData> GetListForRoom(RoomType r)
+    {
         return r switch
         {
             RoomType.Bedroom => bedroomBehaviors,
@@ -112,11 +110,7 @@ public class BehaviorPanel : MonoBehaviour
         };
     }
 
-    /// <summary>
-    /// Called when a behavior button is clicked.
-    /// Right now it just logs — replace with applying behavior effects to resources.
-    /// </summary>
-    public void OnBehaviorClicked(BehaviorData data) // I don't know how this is getting added to the buttons, but the debug message appears so ???
+    public void OnBehaviorClicked(BehaviorData data)
     {
         if (behaviorManager == null)
         {
@@ -126,5 +120,61 @@ public class BehaviorPanel : MonoBehaviour
 
         Debug.Log($"Behavior clicked: {data?.behaviorName ?? "null"}");
         behaviorManager.QueueBehavior(data);
+    }
+
+    /// <summary>
+    /// Reconfigures all visible buttons (use after a global state change).
+    /// </summary>
+    public void RefreshButtonLocks()
+    {
+        foreach (var go in spawnedButtons)
+        {
+            var bb = go.GetComponent<BehaviorButtonHoverable>();
+            if (bb != null)
+                bb.Reconfigure(tooltip, this); // NEW safe reconfigure call
+        }
+    }
+
+    // --- Utility --- //
+    public BehaviorButtonHoverable FindButtonByName(string name)
+    {
+        foreach (var go in spawnedButtons)
+        {
+            var bb = go.GetComponent<BehaviorButtonHoverable>();
+            if (bb != null && bb.GetBehaviorName().Equals(name, System.StringComparison.OrdinalIgnoreCase))
+                return bb;
+        }
+        return null;
+    }
+
+    // --- YARN COMMAND: UnlockBehavior --- //
+    [YarnCommand("UnlockBehavior")]
+    public void UnlockBehavior(string behaviorName)
+    {
+        Debug.Log($"[Yarn] Attempting to unlock behavior: {behaviorName}");
+
+        // First: see if button is currently visible in the active room
+        var btn = FindButtonByName(behaviorName);
+        if (btn != null)
+        {
+            btn.Unlock();
+            Debug.Log($"[Yarn] Unlocked behavior '{behaviorName}' (visible in {currentRoom}).");
+            return;
+        }
+
+        // Otherwise: update BehaviorData directly (for persistence)
+        foreach (var list in new[] { bedroomBehaviors, kitchenBehaviors, hallwayBehaviors })
+        {
+            var data = list.Find(d => d.behaviorName.Equals(behaviorName, System.StringComparison.OrdinalIgnoreCase));
+            if (data != null)
+            {
+                data.startsLocked = false;
+                BehaviorUnlockManager.Instance?.Unlock(data.behaviorName);
+                Debug.Log($"[Yarn] Unlocked '{behaviorName}' in data; will appear unlocked when room is revisited.");
+                return;
+            }
+        }
+
+        Debug.LogWarning($"[Yarn] No behavior named '{behaviorName}' found to unlock.");
     }
 }

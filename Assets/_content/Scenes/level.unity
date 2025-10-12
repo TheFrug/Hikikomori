@@ -5399,6 +5399,50 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5894368367912830983, guid: 55fc836061b67c74b957a45b1e154edc, type: 3}
   m_PrefabInstance: {fileID: 3182740620157300891}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &422026661
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 422026662}
+  - component: {fileID: 422026663}
+  m_Layer: 0
+  m_Name: BehaviorUnlockManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &422026662
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 422026661}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1268163971}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &422026663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 422026661}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39d514cf67429c74abe37e985becf467, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &426268202
 GameObject:
   m_ObjectHideFlags: 0
@@ -14931,6 +14975,7 @@ Transform:
   - {fileID: 1977713292}
   - {fileID: 7222479791536004444}
   - {fileID: 769667424}
+  - {fileID: 422026662}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1268914374
@@ -23610,7 +23655,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5849495009681557276, guid: 55fc836061b67c74b957a45b1e154edc, type: 3}
       propertyPath: m_Name
-      value: Behavior Panel
+      value: BehaviorPanel
       objectReference: {fileID: 0}
     - target: {fileID: 5894368367912830983, guid: 55fc836061b67c74b957a45b1e154edc, type: 3}
       propertyPath: m_Pivot.x
@@ -23775,7 +23820,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5586159256668638151, guid: 468808ea170094d49a0c5455c2b8db28, type: 3}
       propertyPath: m_Name
-      value: Clock Panel
+      value: ClockPanel
       objectReference: {fileID: 0}
     - target: {fileID: 5693631741646367090, guid: 468808ea170094d49a0c5455c2b8db28, type: 3}
       propertyPath: m_AnchorMax.y
@@ -24204,6 +24249,10 @@ PrefabInstance:
     - target: {fileID: 3613460289722146758, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
       propertyPath: m_Name
       value: Hallway Camera Button
+      objectReference: {fileID: 0}
+    - target: {fileID: 3708391869663329953, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
+      propertyPath: m_Name
+      value: ResourcePanel
       objectReference: {fileID: 0}
     - target: {fileID: 4254222250457792375, guid: c8b6646c31dba294fb084dbfa62625b6, type: 3}
       propertyPath: m_AnchorMax.x
@@ -24729,9 +24778,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 963041100}
     - target: {fileID: 7414221059423672630, guid: 4bfb8a493c360294da7a07a3d3316cc0, type: 3}
+      propertyPath: minutesPerTick
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7414221059423672630, guid: 4bfb8a493c360294da7a07a3d3316cc0, type: 3}
       propertyPath: fastForwardButton
       value: 
       objectReference: {fileID: 1475762090}
+    - target: {fileID: 7414221059423672630, guid: 4bfb8a493c360294da7a07a3d3316cc0, type: 3}
+      propertyPath: realSecondsPerGameTick
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

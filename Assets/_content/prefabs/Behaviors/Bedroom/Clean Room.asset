@@ -12,17 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5017668b7b4300e488c71bcfd87b5ab0, type: 3}
   m_Name: Clean Room
   m_EditorClassIdentifier: 
-  behaviorName: Clean Room
-  behaviorDescription: Clean your sty like a good pig
+  behaviorName: Clean the Desk
+  behaviorDescription: Clean your puter, pig
   isDefault: 0
-  isToggle: 0
+  startsLocked: 0
   durationMinutes: 90
+  isToggle: 0
   spoonsCost: 2
   hideSpoonsCost: 1
   hungerImpact: 10
   cashCost: 0
   icon: {fileID: 0}
   yarnTrigger:
-  - yarnNodeName: Markup_Test
+  - yarnNodeName: Clean_the_desk
     triggerTime: 0
     triggerMinute: 0
+    pauseClock: 0

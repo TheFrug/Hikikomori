@@ -8,6 +8,7 @@ public class BehaviorData : ScriptableObject
     public string behaviorName = "New Action";
     [TextArea(2, 4)] public string behaviorDescription = "Short fun behavior Description.";
     public bool isDefault = false;
+    public bool startsLocked;
 
     [Header("Time")]
     public int durationMinutes = 30;            // used when isToggle == false

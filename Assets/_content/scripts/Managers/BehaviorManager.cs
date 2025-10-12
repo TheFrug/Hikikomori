@@ -284,6 +284,16 @@ public class BehaviorManager : MonoBehaviour
         }
     }
 
+    // -- Behavior Locking System --
+    private HashSet<string> unlockedBehaviors = new HashSet<string>();
+    public bool IsBehaviorUnlocked(BehaviorData data)
+    {
+        if (data == null) return false;
+        if (!data.startsLocked) return true; // always unlocked by default
+        return unlockedBehaviors.Contains(data.behaviorName);
+    }
+
+
     private IEnumerator RunYarnNode(string nodeName, bool pauseClock = true)
     {
         if (pauseClock && clockManager != null)

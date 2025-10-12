@@ -12,8 +12,8 @@ public class ClockManager : MonoBehaviour
     public Button fastForwardButton;
 
     [Header("Clock Settings")]
-    public float realSecondsPerGameTick = 6f;
-    public int minutesPerTick = 10;
+    public float realSecondsPerGameTick = 3f;
+    public int minutesPerTick = 5;
 
     private System.TimeSpan currentTime;
     private float timer;

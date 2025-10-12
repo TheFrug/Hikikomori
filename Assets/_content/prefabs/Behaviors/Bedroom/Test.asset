@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5017668b7b4300e488c71bcfd87b5ab0, type: 3}
   m_Name: Test
   m_EditorClassIdentifier: 
-  behaviorName: Test
+  behaviorName: OnEnd
   behaviorDescription: To see if resources are being spent
   isDefault: 0
   durationMinutes: 10
