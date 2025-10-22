@@ -62,31 +62,47 @@ public class TooltipPanel : MonoBehaviour
 
     void Update()
     {
-        // only move the tooltip visual panel (not the message text) when it's visible
-        if (panel == null)
-            return;
+        if (panel == null) return;
+        if (!IsPanelVisualActive()) return;
 
-        // if the visual panel is not active, nothing to update
-        bool isVisualActive = IsPanelVisualActive();
-        if (!isVisualActive) return;
+        SetTooltipPosition(Input.mousePosition);
+    }
 
-        Vector2 mousePos = Input.mousePosition;
-        Vector2 newPos = mousePos + offset;
+    private void SetTooltipPosition(Vector2 screenPos)
+    {
+        var canvas = GetComponentInParent<Canvas>();
+        if (canvas == null || panelRect == null) return;
 
-        if (panelRect != null)
-        {
-            float width = panelRect.rect.width;
-            float height = panelRect.rect.height;
-            float screenWidth = Screen.width;
-            float screenHeight = Screen.height;
+        // Convert from screen to local canvas coordinates
+        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            canvasRect,
+            screenPos + offset,
+            canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera,
+            out localPoint
+        );
 
-            if (newPos.x + width > screenWidth)
-                newPos.x = mousePos.x - width - Mathf.Abs(offset.x);
-            if (newPos.y - height < 0)
-                newPos.y = height;
-        }
+        // Clamp the position so the tooltip never leaves the canvas bounds
+        Vector2 size = panelRect.sizeDelta;
+        Vector2 pivot = panelRect.pivot;
 
-        panel.transform.position = newPos;
+        // Convert the panel's size into half-extents to make clamping easier
+        float halfWidth = size.x * (1f - pivot.x);
+        float halfHeight = size.y * pivot.y;
+
+        // Calculate the min and max allowed anchored positions
+        float minX = -canvasRect.rect.width / 2f + halfWidth;
+        float maxX = canvasRect.rect.width / 2f - (size.x * pivot.x);
+        float minY = -canvasRect.rect.height / 2f + (size.y * (1f - pivot.y));
+        float maxY = canvasRect.rect.height / 2f - halfHeight;
+
+        // Clamp within the canvas bounds
+        localPoint.x = Mathf.Clamp(localPoint.x, minX, maxX);
+        localPoint.y = Mathf.Clamp(localPoint.y, minY, maxY);
+
+        // Apply final anchored position
+        panelRect.anchoredPosition = localPoint;
     }
 
     // === Tooltip Content ===

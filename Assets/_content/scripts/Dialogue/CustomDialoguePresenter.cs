@@ -74,6 +74,8 @@ namespace Yarn.Unity
         [Label("Event Handler")]
         [SerializeField] private List<ActionMarkupHandler> eventHandlers = new List<ActionMarkupHandler>();
 
+        //public DialogueBoxSizer dialogueBoxSizer;
+
         private bool typewriterRunning = false;
         private CancellationTokenSource? localHurryCts = null;
         private bool continueClicked = false;
@@ -165,6 +167,7 @@ namespace Yarn.Unity
             }
 
             lineText.text = text.Text;
+            //dialogueBoxSizer.UpdateBackgroundSizeForText();
 
             if (characterNameText != null)
             {
