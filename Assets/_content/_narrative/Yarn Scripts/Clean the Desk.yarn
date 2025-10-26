@@ -3,5 +3,10 @@
 You look at your desk, cluttered with takeout boxes, empty styrafoam cups, and crumbs.
 You slowly sweep the accumulated garbage into a trash bag, paying attention to not sweep your keyboard off in the process.
 <<UnlockBehavior BehaviorPanel "Watch Anime">>
-Goblin: Don't worry! He's not dead. Its this awesome new thing we found.
+
+<<if IsNameRevealed("Goblin")>>
+<<GetVoiceDisplayName("Goblin")>>: Don't worry! He's not dead. It’s this awesome new thing we found.
+<<else>>
+<<GetVoiceDisplayName("Goblin")>>: Don't worry! He's not dead. It’s this awesome new thing we found.
+<<endif>>
 ===
