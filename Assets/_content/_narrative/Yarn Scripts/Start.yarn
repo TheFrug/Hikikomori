@@ -1,10 +1,13 @@
 ﻿title: Start
 ---
-Goblin: Wakey-wakeyyyyyyyyy
-Goblin: ...
-Goblin: WAKE UP, LAZY-ASS!
+<<declare $Goblin = "???">>
+<<set $Goblin = GetPartDisplayName("Goblin")>>
+
+{$Goblin}: Wakey-wakeyyyyyyyyy
+{$Goblin}: ...
+{$Goblin}: WAKE UP, LAZY-ASS!
 -> Volition: *GASP* I'm awake!
-    Goblin: About damn time!
+    {$Goblin}: About damn time!
 -> Volition: Five more minutes, please...
-    Goblin: Jeez, you suck at waking up.
+    {$Goblin}: Jeez, you suck at waking up.
 ===

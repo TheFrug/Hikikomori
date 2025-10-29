@@ -9,15 +9,16 @@ public class FamilyManager : MonoBehaviour
     public static FamilyManager Instance { get; private set; }
 
     [System.Serializable]
-    public class partInfo
+    public class PartInfo
     {
         public string key;
         public string realName;
         public bool nameRevealed;
+        public float bond;
     }
 
     [Header("parts")]
-    public List<partInfo> parts = new List<partInfo>();
+    public List<PartInfo> parts = new List<PartInfo>();
 
     private void Awake()
     {
@@ -30,6 +31,8 @@ public class FamilyManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+// --- Core Logic ---
+
     public bool IsNameRevealed(string key)
     {
         var part = parts.Find(p => p.key == key);
@@ -38,19 +41,21 @@ public class FamilyManager : MonoBehaviour
 
     public string GetDisplayName(string key)
     {
-        var part = parts.Find(v => v.key == key);
+        Debug.Log("Getting Display name for" + key);
+        var part = parts.Find(p => p.key == key);
         if (part == null)
             return "???";
 
         if (part.nameRevealed)
             return part.realName;
 
-        return GenerateGrawlix(key);
+        return "???";
+        //return GenerateGrawlix(key);
     }
 
     public void RevealName(string key)
     {
-        var part = parts.Find(v => v.key == key);
+        var part = parts.Find(p => p.key == key);
         if (part != null)
             part.nameRevealed = true;
     }
@@ -67,30 +72,45 @@ public class FamilyManager : MonoBehaviour
         return sb.ToString();
     }
 
-    void Start()
+    public void AddBond(string key, float amount)
     {
-        // Register Yarn functions/commands if a DialogueRunner is present
-        DialogueRunner runner = FindObjectOfType<DialogueRunner>();
-        if (runner != null)
+        var part = parts.Find(p => p.key == key);
+        if (part == null)
         {
-            // IsNameRevealed(key) -> bool
-            // Uses generic AddFunction<string, bool>
-            runner.AddFunction<string, bool>("IsNameRevealed", (string key) =>
-            {
-                return Instance != null && Instance.IsNameRevealed(key);
-            });
-
-            // GetVoiceDisplayName(key) -> string
-            runner.AddFunction<string, string>("GetVoiceDisplayName", (string key) =>
-            {
-                return Instance != null ? Instance.GetDisplayName(key) : key;
-            });
-
-            // optional command to reveal a voice from yarn: <<RevealVoiceName "Goblin">>
-            runner.AddCommandHandler<string>("RevealVoiceName", (string key) =>
-            {
-                Instance?.RevealName(key);
-            });
+            Debug.LogWarning($"No family member found with key '{key}' to add bond.");
+            return;
         }
+
+        part.bond += amount;
+        Debug.Log($"Bond with {key} increased by {amount}. New value: {part.bond}");
+
+        // TODO: [FX] Trigger particle animation of this family member's color
+        // (e.g., ParticleSystem.Play() or spawn a prefab at Dialogue UI position)
     }
+
+    // --- Yarn Setup ---
+    private void Start() {
+        var runner = FindObjectOfType<DialogueRunner>();
+        if (runner == null) return;
+
+        // Register functions that RETURN values:
+        runner.AddFunction<string, string>("GetPartDisplayName", key => GetDisplayName(key));
+        runner.AddFunction<string, bool>("IsNameRevealed", key => IsNameRevealed(key));
+    }
+
+    // --- Yarn Commands ---
+
+    [YarnCommand("reveal_name")]
+    public static void Yarn_RevealName(string key)
+    {
+        Instance?.RevealName(key);
+    }
+
+    [YarnCommand("add_bond")]
+    public static void Yarn_AddBond(string key, float amount)
+    {
+        Instance?.AddBond(key, amount);
+    }
+
+
 }
