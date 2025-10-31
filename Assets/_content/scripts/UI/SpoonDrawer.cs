@@ -1,51 +1,71 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class SpoonDrawer : MonoBehaviour
 {
     [Header("References")]
-    public RectTransform drawerArea;  // UI panel representing the drawer
-    public GameObject spoonPrefab;    // UI spoon prefab
-    public RectTransform spoonParent; // optional parent for spawned spoons
+    public RectTransform drawerArea;  
+    public GameObject spoonPrefab;    
+    public RectTransform spoonParent; 
 
     [Header("Settings")]
     public int maxSpoons = 10;
 
+    public static SpoonDrawer Instance { get; private set; }
+
     private void Awake()
     {
+        Instance = this;
+
         if (spoonParent == null)
             spoonParent = GetComponent<RectTransform>();
     }
 
     public void RefreshDrawer(int spoonCount)
     {
-        // Clear existing spoons
+        if (spoonParent == null)
+        {
+            Debug.LogWarning("SpoonDrawer: No spoonParent assigned.");
+            return;
+        }
+
+        ClearSpoons();
+
+        SpawnSpoons(spoonCount);
+    }
+
+    private void ClearSpoons()
+    {
+        List<GameObject> toDestroy = new List<GameObject>();
+
         foreach (Transform child in spoonParent)
-            Destroy(child.gameObject);
+            if (child.name.ToLower().Contains("spoon"))
+                toDestroy.Add(child.gameObject);
 
-        RectTransform drawerRect = drawerArea;
+        foreach (var obj in toDestroy)
+            Destroy(obj);
+    }
 
-        // Get actual pixel-space bounds inside the parent canvas
-        Vector2 size = drawerRect.rect.size;
-        float halfWidth = size.x * 0.5f;
-        float halfHeight = size.y * 0.5f;
+    private void SpawnSpoons(int count)
+    {
+        Vector2 size = drawerArea.rect.size;
+        float padding = 70f; // adjust as needed
+        float halfWidth = size.x * 0.5f - padding;
+        float halfHeight = size.y * 0.5f - padding;
+        float minDistance = Mathf.Min(size.x, size.y) / (count + 2);
 
-        // Keep track of used positions so they don’t overlap too tightly
         List<Vector2> usedPositions = new List<Vector2>();
-        float minDistance = Mathf.Min(size.x, size.y) / (spoonCount + 2); // auto-spread spacing
 
-        for (int i = 0; i < spoonCount; i++)
+        for (int i = 0; i < count; i++)
         {
             Vector2 pos;
             int safety = 0;
 
-            // find a position not too close to existing spoons
             do
             {
                 pos = new Vector2(
-                    Random.Range(-halfWidth * 0.9f, halfWidth * 0.9f),
-                    Random.Range(-halfHeight * 0.9f, halfHeight * 0.9f)
+                    Random.Range(-halfWidth, halfWidth),
+                    Random.Range(-halfHeight, halfHeight)
                 );
                 safety++;
             }
@@ -53,15 +73,26 @@ public class SpoonDrawer : MonoBehaviour
 
             usedPositions.Add(pos);
 
-            // Instantiate and place
             GameObject spoon = Instantiate(spoonPrefab, spoonParent);
-            RectTransform spoonRect = spoon.GetComponent<RectTransform>();
+            spoon.name = $"Spoon_{i}";
 
+            RectTransform spoonRect = spoon.GetComponent<RectTransform>();
             spoonRect.anchoredPosition = pos;
-            spoonRect.localRotation = Quaternion.Euler(0, 0, Random.Range(-180f, 180f));
+
+            // Limit rotation to -30 to 30 degrees
+            spoonRect.localRotation = Quaternion.Euler(0, 0, Random.Range(-30f, 30f));
+
+            // Slight scale variation
             spoonRect.localScale = Vector3.one * Random.Range(0.9f, 1.1f);
 
-            Debug.Log($"Spoon {i} at {spoonRect.anchoredPosition}, drawer size {size}");
+            // Initialize spoon behavior
+            if (spoon.TryGetComponent<spoonBehavior>(out var behavior))
+            {
+                behavior.insideDrawer = true;
+                behavior.restPosition = spoonRect.anchoredPosition;
+            }
+
+            Debug.Log($"Spoon {i} spawned at {pos}");
         }
     }
 }

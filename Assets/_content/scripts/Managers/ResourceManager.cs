@@ -26,7 +26,7 @@ public class ResourceManager : MonoBehaviour
     [Header("Spoons")]
     public SpoonDrawer spoonDrawer;
     public int maxSpoons = 10;
-    private int currentSpoons;
+    public int currentSpoons;
 
     [Header("Cash")]
     public int cash = 20;
@@ -149,7 +149,6 @@ public class ResourceManager : MonoBehaviour
         }
     }
 
-
     // --- Core Logic ---
     public void LoadDailySpoons()
     {
@@ -164,6 +163,12 @@ public class ResourceManager : MonoBehaviour
         if (uiInitialized && spoonDrawer != null)
             spoonDrawer.RefreshDrawer(currentSpoons);
     }
+
+    public int GetCurrentSpoons()
+    {
+        return currentSpoons;
+    }
+
 
     public void ModifyResources(float spoonDelta, float hungerDelta, float cashDelta)
     {
