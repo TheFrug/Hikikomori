@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using Yarn.Unity;
+using TMPro;
+using ProjectHiki.UI;
 
 public class FamilyManager : MonoBehaviour
 {
@@ -15,6 +17,11 @@ public class FamilyManager : MonoBehaviour
         public string realName;
         public bool nameRevealed;
         public float bond;
+
+        [Header("Visuals")]
+        public Color baseColor = Color.gray;
+        public TMP_FontAsset font;
+        public AnimationCurve bondToSaturation; // 0-1 curve mapping - Why does this exist?
     }
 
     [Header("parts")]
@@ -28,10 +35,28 @@ public class FamilyManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
     }
 
-// --- Core Logic ---
+    // --- Core Logic ---
+
+    public Color GetBubbleColor(string key)
+    {
+        var part = parts.Find(p => p.key == key);
+        if (part == null) return Color.white;
+        var intensity = part.bondToSaturation.Evaluate(part.bond); // THIS DOESN'T WORK - Assets\_content\scripts\Managers\FamilyManager.cs(45,30): error CS1061: 'FamilyManager.PartInfo' does not contain a definition for 'bondToSaturation' and no accessible extension method 'bondToSaturation' accepting a first argument of type 'FamilyManager.PartInfo' could be found (are you missing a using directive or an assembly reference?)
+        var c = part.baseColor;
+        c = Color.Lerp(Color.gray, c, intensity);
+        return c;
+    }
+
+    public TMP_FontAsset GetFontAsset(string key)
+    {
+        var part = parts.Find(p => p.key == key);
+        if (part != null && part.font != null)
+            return part.font;
+        return null;
+    }
 
     public bool IsNameRevealed(string key)
     {
@@ -112,5 +137,9 @@ public class FamilyManager : MonoBehaviour
         Instance?.AddBond(key, amount);
     }
 
-
+    [YarnCommand("RandomThought")]
+    public static void Yarn_RandomThought(string key, string text) {
+        var style = Instance.GetBubbleColor(key);
+        ThoughtBubbleView.Instance.SpawnThought(key, text);
+    }
 }

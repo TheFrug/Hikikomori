@@ -15,7 +15,7 @@ public class BehaviorUnlockManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
     }
 
     public bool IsUnlocked(string behaviorName) => unlockedBehaviors.Contains(behaviorName);
