@@ -21,7 +21,11 @@ public class FamilyManager : MonoBehaviour
         [Header("Visuals")]
         public Color baseColor = Color.gray;
         public TMP_FontAsset font;
-        public AnimationCurve bondToSaturation; // 0-1 curve mapping - Why does this exist?
+        public AnimationCurve bondToSaturation = AnimationCurve.Linear(0f, 0f, 1f, 1f); // 0-1 curve mapping
+
+        [Header("Bond mapping")]
+        [Tooltip("Maximum bond value used to normalize 'bond' into 0..1 for colour saturation. Adjust to your game's scale.")]
+        public float bondMax = 10f;
     }
 
     [Header("parts")]
@@ -44,10 +48,25 @@ public class FamilyManager : MonoBehaviour
     {
         var part = parts.Find(p => p.key == key);
         if (part == null) return Color.white;
-        var intensity = part.bondToSaturation.Evaluate(part.bond); // THIS DOESN'T WORK - Assets\_content\scripts\Managers\FamilyManager.cs(45,30): error CS1061: 'FamilyManager.PartInfo' does not contain a definition for 'bondToSaturation' and no accessible extension method 'bondToSaturation' accepting a first argument of type 'FamilyManager.PartInfo' could be found (are you missing a using directive or an assembly reference?)
-        var c = part.baseColor;
-        c = Color.Lerp(Color.gray, c, intensity);
-        return c;
+
+        // Normalize bond (whole number) into 0..1 based on part.bondMax
+        float normalizedBond = 0f;
+        if (part.bondMax > 0f)
+            normalizedBond = Mathf.Clamp01(part.bond / part.bondMax);
+        else
+            normalizedBond = 0f;
+
+        // Evaluate saturation modifier from the curve (curve expects 0..1 input)
+        float saturationValue = part.bondToSaturation.Evaluate(normalizedBond);
+
+        // Take the part's baseColor, convert to HSV, set saturation from curve,
+        // then convert back to RGB. This keeps hue and value but changes saturation.
+        Color.RGBToHSV(part.baseColor, out float h, out float s, out float v);
+
+        s = Mathf.Clamp01(saturationValue);
+
+        Color result = Color.HSVToRGB(h, s, v);
+        return result;
     }
 
     public TMP_FontAsset GetFontAsset(string key)

@@ -1,0 +1,9 @@
+﻿title: GoblinThought
+---
+<<declare $voice = "Goblin">>
+{$voice}: You really think that was a good idea?
+<<wait 3.0>>
+{$voice}: Probably not.
+<<wait 2.0>>
+{$voice}: Heh... we’ll see.
+===
