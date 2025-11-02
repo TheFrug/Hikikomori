@@ -1,10 +1,11 @@
 ﻿title: InnerDialogue_Truth
 ---
-Truth: You’ve come far... but you’re still hiding something.
+<<declare $voice2 = "Lady">>
+{$voice2}: You’ve come far... but you’re still hiding something.
 -> “I’m not hiding anything.” 
-    Truth: Lies are heavier when you believe them.
+    {$voice2}: Lies are heavier when you believe them.
 -> “Maybe you’re right.”
-    Truth: Then why keep walking in circles?
+    {$voice2}: Then why keep walking in circles?
 -> [silent]
-    Truth: Silence isn’t peace.
+    {$voice2}: Silence isn’t peace.
 ===

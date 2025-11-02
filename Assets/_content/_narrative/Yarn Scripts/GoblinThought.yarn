@@ -1,9 +1,9 @@
 ﻿title: GoblinThought
 ---
-<<declare $voice = "Goblin">>
-{$voice}: You really think that was a good idea?
+<<set $Goblin = GetPartDisplayName("Goblin")>>
+{$Goblin}: You really think that was a good idea?
 <<wait 3.0>>
-{$voice}: Probably not.
+{$Goblin}: Probably not.
 <<wait 2.0>>
-{$voice}: Heh... we’ll see.
+{$Goblin}: Heh... we’ll see.
 ===

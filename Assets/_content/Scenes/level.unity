@@ -1598,7 +1598,7 @@ MonoBehaviour:
   parts:
   - key: Goblin
     realName: Goblin
-    nameRevealed: 1
+    nameRevealed: 0
     bond: 5
     baseColor: {r: 0.2783019, g: 1, b: 0.37210622, a: 1}
     font: {fileID: 0}
@@ -4467,16 +4467,28 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8271486773429580707, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: startNode
-      value: Start
+      value: Doomscrolling
       objectReference: {fileID: 0}
     - target: {fileID: 8271486773429580707, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: dialoguePresenters.Array.size
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 8271486773429580707, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
-      propertyPath: dialoguePresenters.Array.data[3]
+      propertyPath: dialoguePresenters.Array.data[0]
       value: 
       objectReference: {fileID: 1711412772}
+    - target: {fileID: 8271486773429580707, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+      propertyPath: dialoguePresenters.Array.data[1]
+      value: 
+      objectReference: {fileID: 574345805}
+    - target: {fileID: 8271486773429580707, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+      propertyPath: dialoguePresenters.Array.data[2]
+      value: 
+      objectReference: {fileID: 845667790}
+    - target: {fileID: 8271486773429580707, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+      propertyPath: dialoguePresenters.Array.data[3]
+      value: 
+      objectReference: {fileID: 882184218}
     - target: {fileID: 8384586460534667002, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: dialogueBoxSizer
       value: 
@@ -8176,6 +8188,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1092768723}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!114 &574345805 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4263775562767663691, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+  m_PrefabInstance: {fileID: 304256885}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61503eb6a998a4af68e0dcbec4aad8cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &592918273
 GameObject:
   m_ObjectHideFlags: 0
@@ -10906,6 +10929,17 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 828104973}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &845667790 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3855685123065405352, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+  m_PrefabInstance: {fileID: 304256885}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0cd0d0412ea34813959f8ddaf02a6eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &860907592
 GameObject:
   m_ObjectHideFlags: 0
@@ -11617,6 +11651,17 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 875865139}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &882184218 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8384586460534667002, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+  m_PrefabInstance: {fileID: 304256885}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8fdb08fe67949b4caeaa8bb38532f9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &914374263
 GameObject:
   m_ObjectHideFlags: 0
@@ -19983,6 +20028,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 472d4000b8969664caa31d92af8a0edd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentMode: 0
   thoughtBubblePrefab: {fileID: 7977267178336539615, guid: a847c1b2ee72e974891a750c28cce8de, type: 3}
   bubbleContainer: {fileID: 1099309904}
   defaultLifetime: 3
