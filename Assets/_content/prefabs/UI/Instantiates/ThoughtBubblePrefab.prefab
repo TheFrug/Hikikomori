@@ -99,8 +99,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -410,6 +410,11 @@ MonoBehaviour:
   bodyText: {fileID: 4881512364914016212}
   background: {fileID: 1273846881808756762}
   namePanel: {fileID: 6701538441915450040}
+  padding: {x: 30, y: 30}
+  minWidth: 250
+  maxWidth: 500
+  minHeight: 75
+  maxHeight: 400
 --- !u!225 &2163664826057180004
 CanvasGroup:
   m_ObjectHideFlags: 0

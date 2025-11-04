@@ -1,11 +1,14 @@
 ﻿title: Doomscrolling
 ---
-Volition: What is he doing?
-Goblin: Don't worry! He's not dead. Its this awesome new thing we found.
-Goblin: I heard its called 'Doomscrolling'
-Volition: Doomscrolling... I see...
-Volition: Is he learning anything?
-Goblin: Right now he's learning what happens when you submerge an entire brisket in tobasco.
-Volition: What happens?
-Goblin: It ruins the brisket.
+<<set $Goblin = GetPartDisplayName("Goblin")>>
+<<set $Lady = GetPartDisplayName("Lady")>>
+
+{$Lady}: What is he doing?
+{$Goblin}: Don't worry! He's not dead. Its this awesome new thing we found.
+{$Goblin}: I heard its called 'Doomscrolling'
+{$Lady}: Doomscrolling... I see...
+{$Lady}: Is he learning anything?
+{$Goblin}: Right now he's learning what happens when you submerge an entire brisket in tobasco.
+{$Lady}: What happens?
+{$Goblin}: It ruins the brisket.
 ===

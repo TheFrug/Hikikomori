@@ -27,6 +27,13 @@ namespace ProjectHiki.UI
         private float fadeEdge = 0.35f;
         private ThoughtBubbleView? owner = null;
 
+        [Header("Auto-sizing")]
+        [SerializeField] private Vector2 padding = new Vector2(30f, 20f);
+        [SerializeField] private float minWidth = 250f;
+        [SerializeField] private float maxWidth = 500f;
+        [SerializeField] private float minHeight = 75f;
+        [SerializeField] private float maxHeight = 300f;
+
         private void Awake()
         {
             if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
@@ -52,6 +59,7 @@ namespace ProjectHiki.UI
             bodyText.text = text ?? string.Empty;
             if (font != null) bodyText.font = font;
             if (background != null) background.color = color;
+            ResizeToFitText();
 
             // Name setup (depends on FamilyManager)
             bool showName = false;
@@ -141,6 +149,48 @@ namespace ProjectHiki.UI
         {
             StopAllCoroutines();
             owner?.RecycleBubble(this.gameObject);
+        }
+
+        private void ResizeToFitText()
+        {
+            if (bodyText == null || rect == null)
+                return;
+
+            // Force layout and ensure TMP knows what area it's wrapping inside
+            bodyText.enableWordWrapping = true;
+            bodyText.ForceMeshUpdate();
+
+            // Measure with an approximate width limit to calculate multiline height correctly
+            float availableWidth = Mathf.Clamp(rect.rect.width, minWidth, maxWidth);
+            Vector2 preferred = bodyText.GetPreferredValues(bodyText.text, availableWidth, Mathf.Infinity);
+
+            // Apply padding and clamp final dimensions
+            float width = Mathf.Clamp(preferred.x + padding.x, minWidth, maxWidth);
+            float height = Mathf.Clamp(preferred.y + padding.y, minHeight, maxHeight);
+
+            // Apply to rects
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+
+            if (background != null)
+            {
+                var bgRect = background.rectTransform;
+                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+            }
+
+            // If the nameplate is visible, push it slightly below the top
+            if (namePanel != null && namePanel.activeSelf)
+            {
+                var nameRect = namePanel.GetComponent<RectTransform>();
+                if (nameRect != null)
+                {
+                    nameRect.anchoredPosition = new Vector2(
+                        nameRect.anchoredPosition.x,
+                        -height * 0.5f + nameRect.rect.height * 0.5f - 10f
+                    );
+                }
+            }
         }
     }
 }
