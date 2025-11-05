@@ -120,15 +120,25 @@ namespace ProjectHiki.UI
             float total = Mathf.Max(0.01f, lifetime);
             float edge = Mathf.Clamp01(fadeEdge);
 
+            // randomize lateral drift amplitude and direction
+            float swayAmplitude = UnityEngine.Random.Range(10f, 25f);
+            float swayFrequency = UnityEngine.Random.Range(0.8f, 1.4f);
+            float swayPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+
             while (elapsed < total)
             {
-                elapsed += Time.unscaledDeltaTime; // UI ignores Time.timeScale
+                elapsed += Time.unscaledDeltaTime; // UI unaffected by time scale
                 float t = Mathf.Clamp01(elapsed / total);
 
-                // Smooth rise
-                rect.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
+                // vertical motion
+                float newY = Mathf.Lerp(startPos.y, endPos.y, t);
 
-                // Fade in/out curve
+                // side-to-side float (sinusoidal)
+                float swayX = Mathf.Sin((elapsed * swayFrequency) + swayPhase) * swayAmplitude;
+
+                rect.anchoredPosition = new Vector2(startPos.x + swayX, newY);
+
+                // fade in/out curve
                 float alpha;
                 if (elapsed < edge) alpha = Mathf.Clamp01(elapsed / edge);
                 else if (elapsed > (total - edge)) alpha = Mathf.Clamp01((total - elapsed) / edge);
@@ -137,10 +147,9 @@ namespace ProjectHiki.UI
 
                 yield return null;
             }
-
-            // Return to pool via owner
-            owner?.RecycleBubble(this.gameObject);
+            owner?.RecycleBubble(gameObject);
         }
+
 
         /// <summary>
         /// Immediately stop animation and return to owner pool.

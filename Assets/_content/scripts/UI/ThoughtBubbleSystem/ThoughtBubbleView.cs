@@ -18,11 +18,10 @@ namespace ProjectHiki.UI
     {
         public static ThoughtBubbleView Instance { get; private set; } = null!;
 
-        // Two distinct Yarn dialogue modes
         public enum ThoughtMode
         {
-            Automatic,   // timed fades, <<wait>> pacing
-            Interactive  // player input and options
+            Automatic,
+            Interactive
         }
 
         [Header("Mode Control")]
@@ -42,16 +41,19 @@ namespace ProjectHiki.UI
         [Header("Pooling")]
         [SerializeField] private int initialPoolSize = 6;
         [SerializeField] private int maxPoolSize = 40;
-
         private readonly Queue<GameObject> pool = new();
-        [SerializeField] private int maxSimultaneous = 12;
         private readonly List<GameObject> activeBubbles = new();
+        [SerializeField] private int maxSimultaneous = 12;
 
-        [SerializeField] private OptionItem optionButtonPrefab;  
-        [SerializeField] private RectTransform optionContainer;
-
+        [Header("Interactive Options")]
+        [SerializeField] private OptionItem optionButtonPrefab = null!;
+        [SerializeField] private RectTransform optionContainer = null!;
         private List<OptionItem> activeOptions = new();
-        private YarnTaskCompletionSource<DialogueOption?> optionSelectionSource;
+        private YarnTaskCompletionSource<DialogueOption?> optionSelectionSource = null!;
+
+        [Header("Debug Thought assets (assign in inspector)")]
+        [SerializeField] private Thought goblinThought = null!;
+        [SerializeField] private Thought innerThought = null!;
 
         private void Awake()
         {
@@ -63,16 +65,9 @@ namespace ProjectHiki.UI
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            if (thoughtBubblePrefab == null)
+            if (thoughtBubblePrefab == null || bubbleContainer == null)
             {
-                Debug.LogError($"{nameof(ThoughtBubbleView)} needs a Thought Bubble Prefab assigned.", this);
-                enabled = false;
-                return;
-            }
-
-            if (bubbleContainer == null)
-            {
-                Debug.LogError($"{nameof(ThoughtBubbleView)} needs a bubble container RectTransform assigned.", this);
+                Debug.LogError($"{nameof(ThoughtBubbleView)} requires prefab and container assigned.", this);
                 enabled = false;
                 return;
             }
@@ -85,12 +80,7 @@ namespace ProjectHiki.UI
         }
 
         #region Mode Handling
-        public void SetMode(ThoughtMode mode)
-        {
-            currentMode = mode;
-            Debug.Log($"[ThoughtBubbleView] Mode set to {mode}");
-        }
-
+        public void SetMode(ThoughtMode mode) => currentMode = mode;
         public ThoughtMode GetMode() => currentMode;
         #endregion
 
@@ -131,10 +121,7 @@ namespace ProjectHiki.UI
                 Destroy(go);
         }
 
-        private void StopAllCoroutinesOnInstance(GameObject instance)
-        {
-            // placeholder for later per-instance coroutine control
-        }
+        private void StopAllCoroutinesOnInstance(GameObject instance) { }
 
         public void RecycleBubble(GameObject instance)
         {
@@ -148,7 +135,7 @@ namespace ProjectHiki.UI
         }
         #endregion
 
-        #region Public API + Yarn Command
+        #region SpawnThought (string-based)
         [YarnCommand("SpawnThought")]
         public static void YarnSpawnThought(string speakerKey, string text, float? lifetime = null, float? rise = null)
         {
@@ -166,12 +153,60 @@ namespace ProjectHiki.UI
             {
                 var oldest = activeBubbles[0];
                 activeBubbles.RemoveAt(0);
-                StopCoroutine(AnimateAndRecycle(oldest));
                 RecycleImmediate(oldest);
             }
 
             var instance = PoolGet();
             ConfigureAndStart(instance, speakerKey, text, lifetime ?? defaultLifetime, rise ?? riseDistance);
+        }
+        #endregion
+
+        #region SpawnThought (ScriptableObject-based)
+        // Uses only yarnNodeName from the Thought asset. DOES NOT touch YarnProject.
+        public void SpawnThought(Thought thought)
+        {
+            if (thought == null)
+            {
+                Debug.LogWarning("[ThoughtBubbleView] Tried to spawn null Thought asset!");
+                return;
+            }
+
+            // Use explicit Thought.ThoughtType enum reference to avoid naming confusions
+            SetMode(thought.type == Thought.ThoughtType.Automatic ? ThoughtMode.Automatic : ThoughtMode.Interactive);
+
+            if (thought.type == Thought.ThoughtType.Automatic)
+            {
+                // Simple bubble preview
+                SpawnThought(thought.speakerKey, thought.previewText, thought.lifetime, thought.riseDistance);
+            }
+            else
+            {
+                // Interactive: ensure a DialogueRunner is present and register this presenter, then start node.
+                var runner = FindObjectOfType<DialogueRunner>();
+                if (runner == null)
+                {
+                    Debug.LogWarning("[ThoughtBubbleView] No DialogueRunner in scene!");
+                    return;
+                }
+
+                // Ensure this presenter is added to the runner's presenters
+                var presenters = new List<DialoguePresenterBase>(runner.DialoguePresenters);
+                if (!presenters.Contains(this))
+                {
+                    presenters.Add(this);
+                    runner.DialoguePresenters = presenters;
+                }
+
+                if (string.IsNullOrEmpty(thought.yarnNodeName))
+                {
+                    Debug.LogWarning("[ThoughtBubbleView] Thought has no yarnNodeName specified.");
+                    return;
+                }
+
+                // Start the indicated node. (Assumes the DialogueRunner has access to the node
+                // via its project/program already. We DO NOT try to swap yarn project here.)
+                runner.StartDialogue(thought.yarnNodeName);
+            }
         }
         #endregion
 
@@ -196,17 +231,18 @@ namespace ProjectHiki.UI
             var rt = instance.GetComponent<RectTransform>();
             if (rt != null)
             {
+                // Add a small randomized horizontal offset for floatiness (yOffset requested stored here as local var)
+                float yOffset = UnityEngine.Random.Range(-12f, 12f);
                 float y;
-
                 if (currentMode == ThoughtMode.Interactive)
                 {
                     // Stack upward from base (like a dialogue log)
-                    y = spawnBaseY + (activeBubbles.Count * (rt.rect.height + stackingSpacing));
+                    y = spawnBaseY + (activeBubbles.Count * (rt.rect.height + stackingSpacing)) + yOffset;
                 }
                 else
                 {
                     // Stack downward (floaty thought bubble style)
-                    y = spawnBaseY - (activeBubbles.Count * (rt.rect.height + stackingSpacing));
+                    y = spawnBaseY - (activeBubbles.Count * (rt.rect.height + stackingSpacing)) + yOffset;
                 }
 
                 rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
@@ -216,65 +252,12 @@ namespace ProjectHiki.UI
             if (bubble != null)
             {
                 if (currentMode == ThoughtMode.Interactive)
-                {
-                    // Dialogue bubbles stay visible indefinitely and don’t rise/fade
                     bubble.Initialize(text, bubbleColor, font, name, Mathf.Infinity, 0f, 0f, this);
-                }
                 else
-                {
-                    // Thought bubbles fade and rise as normal
                     bubble.Initialize(text, bubbleColor, font, name, lifetime, rise, fadeEdgeTime, this);
-                }
-            }
-            else
-            {
-                // Fallback animation path
-                StartCoroutine(AnimateAndRecycle(instance, lifetime, rise));
             }
 
             activeBubbles.Add(instance);
-        }
-
-
-        private IEnumerator AnimateAndRecycle(GameObject instance, float lifetime = -1f, float rise = -1f)
-        {
-            if (instance == null) yield break;
-
-            var cg = instance.GetComponent<CanvasGroup>();
-            var rt = instance.GetComponent<RectTransform>();
-
-            if (lifetime <= 0) lifetime = defaultLifetime;
-            if (rise <= 0) rise = riseDistance;
-
-            if (cg != null) cg.alpha = 0f;
-            float elapsed = 0f;
-            float total = lifetime;
-            float half = fadeEdgeTime;
-
-            Vector2 startPos = rt != null ? rt.anchoredPosition : Vector2.zero;
-            Vector2 endPos = startPos + Vector2.up * rise;
-
-            while (elapsed < total)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / total);
-
-                if (rt != null)
-                    rt.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
-
-                if (cg != null)
-                {
-                    float alpha;
-                    if (elapsed < half) alpha = Mathf.Clamp01(elapsed / half);
-                    else if (elapsed > (total - half)) alpha = Mathf.Clamp01((total - elapsed) / half);
-                    else alpha = 1f;
-                    cg.alpha = alpha;
-                }
-
-                yield return null;
-            }
-
-            RecycleImmediate(instance);
         }
 
         private void RecycleImmediate(GameObject instance)
@@ -292,54 +275,61 @@ namespace ProjectHiki.UI
         #endregion
 
         #if UNITY_EDITOR
-                private void Update()
+        private void Update()
+        {
+            // Restore your debug keys using the Thought assets you assign in inspector.
+            if (Input.GetKeyDown(KeyCode.T))
+                SpawnThought("Goblin", "This is a test thought line!");
+            if (Input.GetKeyDown(KeyCode.Y))
+                SpawnThought("Lady", "This is a test thought line!", 5, 700);
+
+            // --- Debug Yarn triggers using Thought assets ---
+            if (Input.GetKeyDown(KeyCode.Alpha7))
+            {
+                var runner = FindObjectOfType<DialogueRunner>();
+                if (runner != null)
                 {
-                    if (Input.GetKeyDown(KeyCode.T))
-                        SpawnThought("Goblin", "This is a test thought line!");
-                    if (Input.GetKeyDown(KeyCode.Y))
-                        SpawnThought("Lady", "This is a test thought line!", 5, 700);
+                    Debug.Log("[Debug] Running Goblin Thought (via Thought asset)");
+                    SetMode(ThoughtMode.Automatic);
 
-                    // --- Debug Yarn triggers ---
-                    if (Input.GetKeyDown(KeyCode.Alpha7))
+                    var presenters = new List<DialoguePresenterBase>(runner.DialoguePresenters);
+                    if (!presenters.Contains(this))
                     {
-                        var runner = FindObjectOfType<DialogueRunner>();
-                        if (runner != null)
-                        {
-                            Debug.Log("[Debug] Running Yarn script: GoblinThought (Automatic)");
-                            SetMode(ThoughtMode.Automatic);
-
-                            var presenters = new List<DialoguePresenterBase>(runner.DialoguePresenters);
-                            if (!presenters.Contains(this))
-                            {
-                                presenters.Add(this);
-                                runner.DialoguePresenters = presenters;
-                            }
-
-                            runner.StartDialogue("GoblinThought");
-                        }
-                        else Debug.LogWarning("No DialogueRunner found in scene!");
+                        presenters.Add(this);
+                        runner.DialoguePresenters = presenters;
                     }
 
-                    if (Input.GetKeyDown(KeyCode.Alpha8))
-                    {
-                        var runner = FindObjectOfType<DialogueRunner>();
-                        if (runner != null)
-                        {
-                            Debug.Log("[Debug] Running Yarn script: InnerDialogue_Truth (Interactive)");
-                            SetMode(ThoughtMode.Interactive);
-
-                            var presenters = new List<DialoguePresenterBase>(runner.DialoguePresenters);
-                            if (!presenters.Contains(this))
-                            {
-                                presenters.Add(this);
-                                runner.DialoguePresenters = presenters;
-                            }
-
-                            runner.StartDialogue("InnerDialogue_Truth");
-                        }
-                        else Debug.LogWarning("No DialogueRunner found in scene!");
-                    }
+                    if (goblinThought != null)
+                        SpawnThought(goblinThought);
+                    else
+                        Debug.LogWarning("[ThoughtBubbleView] goblinThought asset not assigned in inspector.");
                 }
+                else Debug.LogWarning("No DialogueRunner found in scene!");
+            }
+
+            if (Input.GetKeyDown(KeyCode.Alpha8))
+            {
+                var runner = FindObjectOfType<DialogueRunner>();
+                if (runner != null)
+                {
+                    Debug.Log("[Debug] Running Inner Thought (Interactive) via Thought asset");
+                    SetMode(ThoughtMode.Interactive);
+
+                    var presenters = new List<DialoguePresenterBase>(runner.DialoguePresenters);
+                    if (!presenters.Contains(this))
+                    {
+                        presenters.Add(this);
+                        runner.DialoguePresenters = presenters;
+                    }
+
+                    if (innerThought != null)
+                        SpawnThought(innerThought);
+                    else
+                        Debug.LogWarning("[ThoughtBubbleView] innerThought asset not assigned in inspector.");
+                }
+                else Debug.LogWarning("No DialogueRunner found in scene!");
+            }
+        }
         #endif
 
         #region Yarn presenter overrides
@@ -347,12 +337,10 @@ namespace ProjectHiki.UI
         {
             string speakerKey = line.CharacterName ?? string.Empty;
             string text = line.TextWithoutCharacterName.Text;
-
             SpawnThought(speakerKey, text);
 
             if (currentMode == ThoughtMode.Automatic)
             {
-                // Wait either for <<wait>> or your default lifetime
                 float duration = defaultLifetime;
                 float timer = 0f;
                 while (timer < duration && !token.IsNextLineRequested)
@@ -360,7 +348,6 @@ namespace ProjectHiki.UI
                     timer += Time.deltaTime;
                     await YarnTask.Yield();
                 }
-                return;
             }
             else
             {
@@ -368,18 +355,15 @@ namespace ProjectHiki.UI
             }
         }
 
-
         private async YarnTask WaitForPlayerContinue(LineCancellationToken token)
         {
             while (!token.IsNextLineRequested)
             {
                 if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
                     return;
-
                 await YarnTask.Yield();
             }
         }
-
 
         public override YarnTask<DialogueOption?> RunOptionsAsync(DialogueOption[] options, CancellationToken cancellationToken)
         {
@@ -391,46 +375,33 @@ namespace ProjectHiki.UI
 
         private async YarnTask<DialogueOption?> RunInteractiveOptions(DialogueOption[] options, CancellationToken cancellationToken)
         {
-            // Destroy old options
             foreach (var item in activeOptions)
                 Destroy(item.gameObject);
             activeOptions.Clear();
 
             optionSelectionSource = new YarnTaskCompletionSource<DialogueOption?>();
 
-            // Create buttons
             foreach (var opt in options)
             {
                 var item = Instantiate(optionButtonPrefab, optionContainer);
-
-                // Assign Yarn data BEFORE activation
                 item.Option = opt;
                 item.OnOptionSelected = optionSelectionSource;
                 item.completionToken = cancellationToken;
-
-                // Now activate
                 item.gameObject.SetActive(true);
-
                 activeOptions.Add(item);
             }
 
-
-            // Await player choice
             using (cancellationToken.Register(() => optionSelectionSource.TrySetResult(null)))
             {
                 var result = await optionSelectionSource.Task;
-
-                // Cleanup
                 foreach (var item in activeOptions)
                     Destroy(item.gameObject);
                 activeOptions.Clear();
-
                 return result;
             }
         }
 
         public override YarnTask OnDialogueStartedAsync() => YarnTask.CompletedTask;
-
         public override YarnTask OnDialogueCompleteAsync()
         {
             foreach (var b in new List<GameObject>(activeBubbles))
