@@ -1,7 +1,5 @@
-/*
-Yarn Spinner is licensed to you under the terms found in the file LICENSE.md.
-*/
-
+// OptionItem.cs
+// Updated: disables Unity Selectable color tinting and enforces our own visuals
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Yarn.Unity.Attributes;
@@ -34,6 +32,7 @@ namespace Yarn.Unity
 
         [Group("Appearance"), SerializeField] bool disabledStrikeThrough = true;
 
+        // Set by options presenter
         public YarnTaskCompletionSource<DialogueOption?>? OnOptionSelected;
         public System.Threading.CancellationToken completionToken;
 
@@ -71,23 +70,62 @@ namespace Yarn.Unity
                     return;
                 }
 
+                // assign text and interactability
                 text.text = line;
                 interactable = value.IsAvailable;
 
-                // we want to apply the default styling to the option item when they are given an option
+                // enforce visuals immediately (don't rely on Unity transitions)
                 ApplyStyle(normal);
+            }
+        }
+
+        protected override void Awake()
+        {
+            base.Awake();
+
+            // IMPORTANT: disable Unity's Selectable color tint transitions so
+            // Unity doesn't modify Image/Text color on hover/press/etc.
+            this.transition = Transition.None;
+
+            // Ensure default visuals reflect inspector values (they may be changed by Prefab defaults)
+            if (text != null)
+            {
+                text.color = normal.colour;
+            }
+
+            if (selectionImage != null)
+            {
+                selectionImage.color = normal.colour;
+                if (normal.sprite != null)
+                {
+                    selectionImage.sprite = normal.sprite;
+                    selectionImage.gameObject.SetActive(true);
+                }
+                else
+                {
+                    // if there's no sprite, we can keep selectionImage active or inactive
+                    // but don't leave it unexpectedly hidden by other systems
+                    selectionImage.gameObject.SetActive(false);
+                }
             }
         }
 
         private void ApplyStyle(InternalAppearance style)
         {
+            // Decide base colour/sprite depending on availability
             Color newColour = style.colour;
             Sprite newSprite = style.sprite;
-            if (!Option.IsAvailable)
+
+            if (_option != null && !_option.IsAvailable)
             {
                 newColour = disabled.colour;
                 newSprite = disabled.sprite;
             }
+
+            // Safety: ensure alpha component is preserved if inspector accidentally set 0
+            // (This avoids accidental invisible text if the user forgot alpha)
+            if (newColour.a <= 0f)
+                newColour.a = 1f;
 
             if (text == null)
             {
@@ -99,15 +137,22 @@ namespace Yarn.Unity
 
             if (selectionImage != null)
             {
+                // Apply the sprite & tint. If sprite is null we still set color and
+                // optionally hide/show the image according to whether sprite is present.
                 selectionImage.color = newColour;
+
                 if (newSprite != null)
                 {
                     selectionImage.sprite = newSprite;
-                    selectionImage.gameObject.SetActive(true);
+                    if (!selectionImage.gameObject.activeSelf)
+                        selectionImage.gameObject.SetActive(true);
                 }
                 else
                 {
-                    selectionImage.gameObject.SetActive(false);
+                    // If you prefer the empty selectionImage to remain active (e.g. colored rectangle),
+                    // comment out the next line. By default we deactivate when there's no sprite.
+                    if (selectionImage.gameObject.activeSelf)
+                        selectionImage.gameObject.SetActive(false);
                 }
             }
         }
@@ -116,6 +161,7 @@ namespace Yarn.Unity
         {
             base.OnSelect(eventData);
 
+            // Use the 'selected' style we own (Unity won't auto-tint because transition = None)
             ApplyStyle(selected);
         }
 
@@ -123,6 +169,7 @@ namespace Yarn.Unity
         {
             base.OnDeselect(eventData);
 
+            // Revert to the normal style
             ApplyStyle(normal);
         }
 
@@ -130,7 +177,7 @@ namespace Yarn.Unity
         {
             get
             {
-                return EventSystem.current.currentSelectedGameObject == this.gameObject;
+                return EventSystem.current != null && EventSystem.current.currentSelectedGameObject == this.gameObject;
             }
         }
 
@@ -142,16 +189,12 @@ namespace Yarn.Unity
 
         public void InvokeOptionSelected()
         {
-            // turns out that Selectable subclasses aren't intrinsically interactive/non-interactive
-            // based on their canvasgroup, you still need to check at the moment of interaction
+            // ensure interactive state
             if (!IsInteractable())
             {
                 return;
             }
 
-            // We only want to invoke this once, because it's an error to
-            // submit an option when the Dialogue Runner isn't expecting it. To
-            // prevent this, we'll only invoke this if the flag hasn't been cleared already.
             if (hasSubmittedOptionSelection == false && !completionToken.IsCancellationRequested)
             {
                 hasSubmittedOptionSelection = true;
@@ -164,10 +207,11 @@ namespace Yarn.Unity
             InvokeOptionSelected();
         }
 
-        // If we mouse-over, we're telling the UI system that this element is
-        // the currently 'selected' (i.e. focused) element. 
+        // If we mouse-over, select this element so keyboard/controller focus follows mouse.
         public override void OnPointerEnter(PointerEventData eventData)
         {
+            // Keep the Select call so navigation works; because transition == None,
+            // Unity won't change colors for us.
             base.Select();
         }
     }
