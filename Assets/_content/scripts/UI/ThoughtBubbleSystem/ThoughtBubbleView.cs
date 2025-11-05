@@ -47,6 +47,12 @@ namespace ProjectHiki.UI
         [SerializeField] private int maxSimultaneous = 12;
         private readonly List<GameObject> activeBubbles = new();
 
+        [SerializeField] private OptionItem optionButtonPrefab;  
+        [SerializeField] private RectTransform optionContainer;
+
+        private List<OptionItem> activeOptions = new();
+        private YarnTaskCompletionSource<DialogueOption?> optionSelectionSource;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -190,22 +196,45 @@ namespace ProjectHiki.UI
             var rt = instance.GetComponent<RectTransform>();
             if (rt != null)
             {
-                float y = spawnBaseY - (activeBubbles.Count * (rt.rect.height + stackingSpacing));
+                float y;
+
+                if (currentMode == ThoughtMode.Interactive)
+                {
+                    // Stack upward from base (like a dialogue log)
+                    y = spawnBaseY + (activeBubbles.Count * (rt.rect.height + stackingSpacing));
+                }
+                else
+                {
+                    // Stack downward (floaty thought bubble style)
+                    y = spawnBaseY - (activeBubbles.Count * (rt.rect.height + stackingSpacing));
+                }
+
                 rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
             }
 
             var bubble = instance.GetComponent<ThoughtBubble>();
             if (bubble != null)
             {
-                bubble.Initialize(text, bubbleColor, font, name, lifetime, rise, fadeEdgeTime, this);
+                if (currentMode == ThoughtMode.Interactive)
+                {
+                    // Dialogue bubbles stay visible indefinitely and don’t rise/fade
+                    bubble.Initialize(text, bubbleColor, font, name, Mathf.Infinity, 0f, 0f, this);
+                }
+                else
+                {
+                    // Thought bubbles fade and rise as normal
+                    bubble.Initialize(text, bubbleColor, font, name, lifetime, rise, fadeEdgeTime, this);
+                }
             }
             else
             {
+                // Fallback animation path
                 StartCoroutine(AnimateAndRecycle(instance, lifetime, rise));
             }
 
             activeBubbles.Add(instance);
         }
+
 
         private IEnumerator AnimateAndRecycle(GameObject instance, float lifetime = -1f, float rise = -1f)
         {
@@ -314,18 +343,31 @@ namespace ProjectHiki.UI
         #endif
 
         #region Yarn presenter overrides
-        public override YarnTask RunLineAsync(LocalizedLine localizedLine, LineCancellationToken token)
+        public override async YarnTask RunLineAsync(LocalizedLine line, LineCancellationToken token)
         {
-            string speakerKey = localizedLine.CharacterName ?? string.Empty;
-            string text = localizedLine.TextWithoutCharacterName.Text;
+            string speakerKey = line.CharacterName ?? string.Empty;
+            string text = line.TextWithoutCharacterName.Text;
 
             SpawnThought(speakerKey, text);
 
             if (currentMode == ThoughtMode.Automatic)
-                return YarnTask.CompletedTask;
+            {
+                // Wait either for <<wait>> or your default lifetime
+                float duration = defaultLifetime;
+                float timer = 0f;
+                while (timer < duration && !token.IsNextLineRequested)
+                {
+                    timer += Time.deltaTime;
+                    await YarnTask.Yield();
+                }
+                return;
+            }
             else
-                return WaitForPlayerContinue(token);
+            {
+                await WaitForPlayerContinue(token);
+            }
         }
+
 
         private async YarnTask WaitForPlayerContinue(LineCancellationToken token)
         {
@@ -344,8 +386,47 @@ namespace ProjectHiki.UI
             if (currentMode == ThoughtMode.Automatic)
                 return YarnTask.FromResult<DialogueOption?>(null);
 
-            Debug.Log("[ThoughtBubbleView] Displaying options (interactive mode)");
-            return YarnTask.FromResult<DialogueOption?>(options.Length > 0 ? options[0] : null);
+            return RunInteractiveOptions(options, cancellationToken);
+        }
+
+        private async YarnTask<DialogueOption?> RunInteractiveOptions(DialogueOption[] options, CancellationToken cancellationToken)
+        {
+            // Destroy old options
+            foreach (var item in activeOptions)
+                Destroy(item.gameObject);
+            activeOptions.Clear();
+
+            optionSelectionSource = new YarnTaskCompletionSource<DialogueOption?>();
+
+            // Create buttons
+            foreach (var opt in options)
+            {
+                var item = Instantiate(optionButtonPrefab, optionContainer);
+
+                // Assign Yarn data BEFORE activation
+                item.Option = opt;
+                item.OnOptionSelected = optionSelectionSource;
+                item.completionToken = cancellationToken;
+
+                // Now activate
+                item.gameObject.SetActive(true);
+
+                activeOptions.Add(item);
+            }
+
+
+            // Await player choice
+            using (cancellationToken.Register(() => optionSelectionSource.TrySetResult(null)))
+            {
+                var result = await optionSelectionSource.Task;
+
+                // Cleanup
+                foreach (var item in activeOptions)
+                    Destroy(item.gameObject);
+                activeOptions.Clear();
+
+                return result;
+            }
         }
 
         public override YarnTask OnDialogueStartedAsync() => YarnTask.CompletedTask;

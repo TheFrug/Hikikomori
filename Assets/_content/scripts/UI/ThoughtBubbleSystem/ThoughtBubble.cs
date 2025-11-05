@@ -182,13 +182,18 @@ namespace ProjectHiki.UI
             // If the nameplate is visible, push it slightly below the top
             if (namePanel != null && namePanel.activeSelf)
             {
-                var nameRect = namePanel.GetComponent<RectTransform>();
+                RectTransform nameRect = namePanel.GetComponent<RectTransform>();
                 if (nameRect != null)
                 {
-                    nameRect.anchoredPosition = new Vector2(
-                        nameRect.anchoredPosition.x,
-                        -height * 0.5f + nameRect.rect.height * 0.5f - 10f
-                    );
+                    // center it horizontally
+                    nameRect.anchoredPosition = new Vector2(0, 0);
+
+                    // then move it slightly above or below the bubble depending on your layout
+                    float offsetY = height * 0.5f + nameRect.rect.height * 0.5f + 8f; // 8px padding
+                    // if you anchored namePanel to bottom center, flip the sign:
+                    offsetY *= -1f;
+
+                    nameRect.anchoredPosition = new Vector2(0, offsetY);
                 }
             }
         }
