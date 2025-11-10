@@ -4204,9 +4204,13 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: 6dd52cfac56131a41aa97239e6ab9972, type: 2}
     - target: {fileID: 4285944389260234281, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
-      propertyPath: defaultLifetime
-      value: 2
-      objectReference: {fileID: 0}
+      propertyPath: debugAutomaticText
+      value: 
+      objectReference: {fileID: 11400000, guid: 6dd52cfac56131a41aa97239e6ab9972, type: 2}
+    - target: {fileID: 4285944389260234281, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+      propertyPath: debugInteractiveText
+      value: 
+      objectReference: {fileID: 11400000, guid: 5a4f0f3fa9fde0642b52b2a657f50074, type: 2}
     - target: {fileID: 4435476142822015686, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: m_IsActive
       value: 0

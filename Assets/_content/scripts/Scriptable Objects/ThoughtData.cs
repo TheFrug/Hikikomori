@@ -20,4 +20,3 @@ public class Thought : ScriptableObject
     public TextAsset yarnScript;
     public string yarnNodeName;
 }
-
