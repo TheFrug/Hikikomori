@@ -6,7 +6,7 @@ using TMPro;
 namespace ProjectHiki.UI
 {
     /// <summary>
-    /// Handles one bubble's lifetime: text, color, font, rising and fading.
+    /// Handles one bubble's lifetime: text, color, font, rising, holding at a ceiling, and fading away.
     /// Notifies owner (ThoughtBubbleView) when finished so the instance can be pooled.
     /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
@@ -27,6 +27,17 @@ namespace ProjectHiki.UI
         private float fadeEdge = 0.35f;
         private ThoughtBubbleView? owner = null;
 
+        // NEW: target ceiling Y (in bubbleContainer local coordinates).
+        // The bubble's top edge should not exceed this value.
+        private float ceilingY = float.PositiveInfinity;
+
+        // Movement tuning
+        [Header("Movement / Timing (tweak to taste)")]
+        [SerializeField] private float floatToCeilingSpeed = 120f; // units/sec
+        [SerializeField] private float floatAwaySpeed = 40f; // units/sec while leaving
+        [SerializeField] private float fadeOutDuration = 0.6f; // fade out after lifetime ends (seconds)
+        [SerializeField] private float fadeInDuration = 0.2f;
+
         [Header("Auto-sizing")]
         [SerializeField] private Vector2 padding = new Vector2(30f, 20f);
         [SerializeField] private float minWidth = 250f;
@@ -44,6 +55,7 @@ namespace ProjectHiki.UI
 
         /// <summary>
         /// Initialize and start the bubble’s animation. Safe to call multiple times.
+        /// After Initialize, the presenter should call SetCeiling(...) before expecting it to hold.
         /// </summary>
         public void Initialize(string text, Color color, TMP_FontAsset? font, string speakerKey,
                                float lifetime, float riseDistance, float fadeEdge, ThoughtBubbleView owner)
@@ -88,12 +100,12 @@ namespace ProjectHiki.UI
                 }
             }
 
-            // Start at zero alpha, position set by the view
+            // Start invisible; fade-in while moving to ceiling
             canvasGroup.alpha = 0f;
 
-            // Begin lifetime animation
+            // Reset any previous coroutine
             StopAllCoroutines();
-            StartCoroutine(FloatAndFadeCoroutine());
+            StartCoroutine(FloatToCeilingAndHoldCoroutine());
         }
 
         private void EnsureComponents()
@@ -109,47 +121,140 @@ namespace ProjectHiki.UI
                 nameText = namePanel.GetComponentInChildren<TMP_Text>(true);
         }
 
-        private IEnumerator FloatAndFadeCoroutine()
+        /// <summary>
+        /// Sets the ceiling Y (in the same local coordinate space as rect.anchoredPosition).
+        /// Bubble will float upward until its top edge is <= ceilingY (i.e., top edge touches ceilingY).
+        /// </summary>
+        public void SetCeiling(float ceilingY)
+        {
+            this.ceilingY = ceilingY;
+        }
+
+        /// <summary>
+        /// Returns the anchored Y of this bubble (center).
+        /// </summary>
+        public float GetAnchoredY() => rect != null ? rect.anchoredPosition.y : 0f;
+
+        /// <summary>
+        /// Top edge Y in local coords (anchoredPosition.y + half height)
+        /// </summary>
+        public float GetTopEdgeY() => rect != null ? rect.anchoredPosition.y + rect.rect.height * 0.5f : 0f;
+
+        /// <summary>
+        /// Bottom edge Y in local coords (anchoredPosition.y - half height)
+        /// </summary>
+        public float GetBottomEdgeY() => rect != null ? rect.anchoredPosition.y - rect.rect.height * 0.5f : 0f;
+
+        private IEnumerator FloatToCeilingAndHoldCoroutine()
         {
             EnsureComponents();
 
             Vector2 startPos = rect.anchoredPosition;
-            Vector2 endPos = startPos + Vector2.up * riseDistance;
 
-            float elapsed = 0f;
-            float total = Mathf.Max(0.01f, lifetime);
-            float edge = Mathf.Clamp01(fadeEdge);
+            // Compute target Y for the center so that top edge equals ceilingY.
+            float halfHeight = rect.rect.height * 0.5f;
+            float targetCenterY = float.PositiveInfinity;
+            if (float.IsInfinity(ceilingY))
+            {
+                // no ceiling defined — just float by riseDistance and behave like before
+                targetCenterY = startPos.y + riseDistance;
+            }
+            else
+            {
+                targetCenterY = ceilingY - halfHeight;
+            }
 
-            // randomize lateral drift amplitude and direction
+            // If the target is below current y (rare), clamp to current + small offset so it still animates.
+            if (targetCenterY < startPos.y)
+                targetCenterY = startPos.y + Mathf.Min(10f, riseDistance * 0.25f);
+
+            // Randomize lateral sway params (kept similar to prior behavior)
             float swayAmplitude = UnityEngine.Random.Range(10f, 25f);
             float swayFrequency = UnityEngine.Random.Range(0.8f, 1.4f);
             float swayPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
 
-            while (elapsed < total)
+            // Fade-in
+            float fadeTimer = 0f;
+            while (Mathf.Abs(rect.anchoredPosition.y - targetCenterY) > 0.5f)
             {
-                elapsed += Time.unscaledDeltaTime; // UI unaffected by time scale
-                float t = Mathf.Clamp01(elapsed / total);
+                float delta = Time.unscaledDeltaTime;
+                // Move toward target center Y
+                float newY = Mathf.MoveTowards(rect.anchoredPosition.y, targetCenterY, floatToCeilingSpeed * delta);
 
-                // vertical motion
-                float newY = Mathf.Lerp(startPos.y, endPos.y, t);
-
-                // side-to-side float (sinusoidal)
-                float swayX = Mathf.Sin((elapsed * swayFrequency) + swayPhase) * swayAmplitude;
-
+                // horizontal sway
+                float swayX = Mathf.Sin((Time.unscaledTime * swayFrequency) + swayPhase) * swayAmplitude;
                 rect.anchoredPosition = new Vector2(startPos.x + swayX, newY);
 
-                // fade in/out curve
-                float alpha;
-                if (elapsed < edge) alpha = Mathf.Clamp01(elapsed / edge);
-                else if (elapsed > (total - edge)) alpha = Mathf.Clamp01((total - elapsed) / edge);
-                else alpha = 1f;
-                canvasGroup.alpha = alpha;
+                // fade-in smoothly
+                if (fadeInDuration > 0f)
+                {
+                    fadeTimer += delta;
+                    canvasGroup.alpha = Mathf.Clamp01(fadeTimer / fadeInDuration);
+                }
+                else canvasGroup.alpha = 1f;
 
                 yield return null;
             }
+
+            // Snap exactly to target (stabilize)
+            rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, targetCenterY);
+            canvasGroup.alpha = 1f;
+
+            // Wait while pinned until lifetime expires (infinite lifetime means wait until externally cancelled)
+            if (float.IsInfinity(lifetime))
+            {
+                // Interactive — do nothing; bubble will be held until StopAndReturn or owner triggers RecycleImmediate
+                yield break;
+            }
+            else
+            {
+                float timer = 0f;
+                while (timer < lifetime)
+                {
+                    timer += Time.unscaledDeltaTime;
+                    yield return null;
+                }
+            }
+
+            // Lifetime ended — float away upward and fade out
+            float fadeElapsed = 0f;
+            Vector2 leaveStart = rect.anchoredPosition;
+            Vector2 leaveEnd = leaveStart + Vector2.up * riseDistance; // leave by same riseDistance
+            float leaveDistance = Mathf.Abs(leaveEnd.y - leaveStart.y);
+
+            // If fadeOutDuration is zero or negative, use fadeEdge as fallback
+            float fadeDuration = fadeOutDuration > 0f ? fadeOutDuration : Mathf.Max(0.01f, fadeEdge);
+
+            float leaveTime = Mathf.Max(0.01f, leaveDistance / floatAwaySpeed);
+            float leaveTimer = 0f;
+
+            while (leaveTimer < leaveTime)
+            {
+                float delta = Time.unscaledDeltaTime;
+                leaveTimer += delta;
+                float t = Mathf.Clamp01(leaveTimer / leaveTime);
+                float newY = Mathf.Lerp(leaveStart.y, leaveEnd.y, t);
+
+                // continue small sway while leaving
+                float swayX = Mathf.Sin((Time.unscaledTime * swayFrequency) + swayPhase) * swayAmplitude * (1f - t * 0.8f); // diminish sway as it leaves
+                rect.anchoredPosition = new Vector2(leaveStart.x + swayX, newY);
+
+                // fade start after 25% of leaveTime so fade overlaps leaving movement
+                float fadeStart = 0.25f;
+                if (t >= fadeStart)
+                {
+                    float fadeT = Mathf.Clamp01((t - fadeStart) / (1f - fadeStart));
+                    canvasGroup.alpha = Mathf.Lerp(1f, 0f, fadeT);
+                }
+
+                yield return null;
+            }
+
+            // Ensure fully invisible before returning
+            canvasGroup.alpha = 0f;
+
             owner?.RecycleBubble(gameObject);
         }
-
 
         /// <summary>
         /// Immediately stop animation and return to owner pool.

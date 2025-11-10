@@ -202,7 +202,7 @@ namespace ProjectHiki.UI
         }
         #endregion
 
-        #region Configure & animate
+        #region Configure & animate (delegated)
         private void ConfigureAndStart(GameObject instance, string speakerKey, string text, float lifetime, float rise)
         {
             instance.transform.SetParent(bubbleContainer, false);
@@ -223,21 +223,11 @@ namespace ProjectHiki.UI
             var rt = instance.GetComponent<RectTransform>();
             if (rt != null)
             {
-                // Add a small randomized horizontal offset for floatiness (yOffset requested stored here as local var)
-                float yOffset = UnityEngine.Random.Range(-12f, 12f);
-                float y;
-                if (currentMode == ThoughtMode.Interactive)
-                {
-                    // Stack upward from base (like a dialogue log)
-                    y = spawnBaseY + (activeBubbles.Count * (rt.rect.height + stackingSpacing)) + yOffset;
-                }
-                else
-                {
-                    // Stack downward (floaty thought bubble style)
-                    y = spawnBaseY - (activeBubbles.Count * (rt.rect.height + stackingSpacing)) + yOffset;
-                }
-
-                rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
+                // Spawn position remains near spawnBaseY to give "rising" behavior.
+                // Keep a small randomized horizontal offset for floatiness.
+                float xOffset = UnityEngine.Random.Range(-12f, 12f);
+                float initialY = spawnBaseY;
+                rt.anchoredPosition = new Vector2(rt.anchoredPosition.x + xOffset, initialY);
             }
 
             var bubble = instance.GetComponent<ThoughtBubble>();
@@ -247,9 +237,48 @@ namespace ProjectHiki.UI
                     bubble.Initialize(text, bubbleColor, font, name, Mathf.Infinity, 0f, 0f, this);
                 else
                     bubble.Initialize(text, bubbleColor, font, name, lifetime, rise, fadeEdgeTime, this);
+
+                // Compute a ceiling for this bubble (in container local coordinates) and tell the bubble about it.
+                float ceilingY = ComputeCeilingForNewBubble(bubble);
+                bubble.SetCeiling(ceilingY);
             }
 
             activeBubbles.Add(instance);
+        }
+
+        /// <summary>
+        /// Compute the ceiling Y (in bubbleContainer local coordinates) that the newly spawned bubble
+        /// should stop at. This uses the top of the container as the initial ceiling, and then
+        /// pushes it lower for each existing active bubble so they stack top-to-bottom with spacing.
+        /// </summary>
+        private float ComputeCeilingForNewBubble(ThoughtBubble newcomer)
+        {
+            // Top edge of the container (anchoredPosition y=0 is center)
+            float containerHalfHeight = bubbleContainer.rect.height * 0.5f;
+            float ceilingY = containerHalfHeight;
+
+            // We will inspect existing active bubbles and move the ceiling downward to sit below their bottoms.
+            // Sort active bubbles by anchored y descending (topmost first) so stacking is predictable.
+            var ordered = activeBubbles
+                .Select(go => go.GetComponent<ThoughtBubble>())
+                .Where(b => b != null && b.gameObject.activeInHierarchy)
+                .OrderByDescending(b => b.GetAnchoredY())
+                .ToList();
+
+            foreach (var b in ordered)
+            {
+                // get bottom edge of that bubble
+                float otherBottom = b.GetBottomEdgeY();
+                // place ceiling so that newcomer's top sits below that bottom by stackingSpacing
+                float candidateCeiling = otherBottom - stackingSpacing;
+                // choose the lower ceiling (so we keep pushing down)
+                if (candidateCeiling < ceilingY)
+                    ceilingY = candidateCeiling;
+            }
+
+            // If the newcomer has a height greater than available space we allow ceiling to be well below center.
+            // Return the final computed ceiling.
+            return ceilingY;
         }
 
         private void RecycleImmediate(GameObject instance)
@@ -396,8 +425,7 @@ namespace ProjectHiki.UI
         public override YarnTask OnDialogueStartedAsync() => YarnTask.CompletedTask;
         public override YarnTask OnDialogueCompleteAsync()
         {
-            foreach (var b in new List<GameObject>(activeBubbles))
-                RecycleImmediate(b);
+            // Don’t force immediate recycle — let bubbles end on their own
             return YarnTask.CompletedTask;
         }
         #endregion
