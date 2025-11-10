@@ -171,17 +171,12 @@ namespace ProjectHiki.UI
                 return;
             }
 
-            // Use explicit Thought.ThoughtType enum reference to avoid naming confusions
+            // Set mode based on type
             SetMode(thought.type == Thought.ThoughtType.Automatic ? ThoughtMode.Automatic : ThoughtMode.Interactive);
 
-            if (thought.type == Thought.ThoughtType.Automatic)
+            // If a Yarn node is defined, always run it — regardless of type
+            if (!string.IsNullOrEmpty(thought.yarnNodeName))
             {
-                // Simple bubble preview
-                SpawnThought(thought.speakerKey, thought.previewText, thought.lifetime, thought.riseDistance);
-            }
-            else
-            {
-                // Interactive: ensure a DialogueRunner is present and register this presenter, then start node.
                 var runner = FindObjectOfType<DialogueRunner>();
                 if (runner == null)
                 {
@@ -197,16 +192,13 @@ namespace ProjectHiki.UI
                     runner.DialoguePresenters = presenters;
                 }
 
-                if (string.IsNullOrEmpty(thought.yarnNodeName))
-                {
-                    Debug.LogWarning("[ThoughtBubbleView] Thought has no yarnNodeName specified.");
-                    return;
-                }
-
-                // Start the indicated node. (Assumes the DialogueRunner has access to the node
-                // via its project/program already. We DO NOT try to swap yarn project here.)
+                // Start the Yarn node
                 runner.StartDialogue(thought.yarnNodeName);
+                return; // Important: stop here so we don't also spawn a static bubble
             }
+
+            // If no Yarn node is defined, fall back to the simple preview bubble
+            SpawnThought(thought.speakerKey, thought.previewText, thought.lifetime, thought.riseDistance);
         }
         #endregion
 

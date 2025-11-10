@@ -2,8 +2,8 @@
 ---
 <<set $Goblin = GetPartDisplayName("Goblin")>>
 {$Goblin}: You really think that was a good idea?
-<<wait 3.0>>
-{$Goblin}: Probably not.
 <<wait 2.0>>
+{$Goblin}: Probably not.
+<<wait 1.0>>
 {$Goblin}: Heh... we’ll see.
 ===
