@@ -37,7 +37,6 @@ public class BehaviorButtonHoverable : MonoBehaviour, IPointerEnterHandler, IPoi
         Configure(behaviorData, tooltipPanel, panel);
     }
 
-
     private void OnClicked()
     {
         if (isLocked)

@@ -24,6 +24,9 @@ public class BehaviorData : ScriptableObject
     [Header("Visuals")]
     public Sprite icon;
 
+    public bool isScene;
+    public Thought thought;
+
     public List<BehaviorYarnTrigger> yarnTrigger;
 
     [System.Serializable]
