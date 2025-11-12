@@ -270,25 +270,31 @@ namespace ProjectHiki.UI
             if (bodyText == null || rect == null)
                 return;
 
-            // Ensure TMP has up-to-date geometry
+            // Defensive TMP settings (ensure predictable behavior)
             bodyText.enableWordWrapping = true;
+            bodyText.enableAutoSizing = false; // keep font size stable
+            bodyText.overflowMode = TextOverflowModes.Overflow;
             bodyText.ForceMeshUpdate();
 
-            // We will measure the text with a reasonable "measuring width".
-            // Use the largest allowed content width (maxWidth minus horizontal padding)
-            // so TMP won't wrap into absurd single-column lines if padding is huge.
-            float maxContentWidth = Mathf.Max(8f, maxWidth - padding.x);
-            Vector2 measured = bodyText.GetPreferredValues(bodyText.text, maxContentWidth, Mathf.Infinity);
+            // 1) Compute the content width (space available for glyphs inside the bubble)
+            float contentWidth = Mathf.Clamp(maxWidth - padding.x, 8f, maxWidth - 8f);
 
-            // measured.x is the preferred content width (no padding). Add padding to get bubble width.
-            float targetWidth = Mathf.Clamp(measured.x + padding.x, minWidth, maxWidth);
+            // 2) Temporarily set the text rect width so TMP will wrap to that width
+            RectTransform textRect = bodyText.rectTransform;
+            textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, contentWidth);
 
-            // For height, measure using the final content width (so we get the correct wrapped height)
-            float contentWidthForHeight = Mathf.Clamp(targetWidth - padding.x, 8f, maxWidth);
-            Vector2 measuredFinal = bodyText.GetPreferredValues(bodyText.text, contentWidthForHeight, Mathf.Infinity);
-            float targetHeight = Mathf.Clamp(measuredFinal.y + padding.y, minHeight, maxHeight);
+            // Force a mesh/layout update so GetPreferredValues respects the current width
+            bodyText.ForceMeshUpdate();
 
-            // Apply sizes to the root rect (the bubble) and the background sprite
+            // 3) Measure the wrapped height for that content width
+            Vector2 measured = bodyText.GetPreferredValues(bodyText.text, contentWidth, Mathf.Infinity);
+            float measuredHeight = Mathf.Max(8f, measured.y);
+
+            // 4) Compute final bubble sizes (add padding and clamp)
+            float targetWidth = Mathf.Clamp(contentWidth + padding.x, minWidth, maxWidth);
+            float targetHeight = Mathf.Clamp(measuredHeight + padding.y, minHeight, maxHeight);
+
+            // 5) Apply sizes to the root rect (bubble) and background
             rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
             rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
 
@@ -299,21 +305,15 @@ namespace ProjectHiki.UI
                 bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
             }
 
-            // Now set the text rect to be the inner content area (bubble size minus padding).
-            // Use SetSizeWithCurrentAnchors instead of offsetMin/Max to avoid anchor/offset issues.
-            RectTransform textRect = bodyText.rectTransform;
-
-            // Compute inner content size and clamp to small positive values to avoid layout errors.
+            // 6) Now set the text rect to the inner content area and center it
             float innerWidth = Mathf.Max(8f, targetWidth - padding.x);
             float innerHeight = Mathf.Max(8f, targetHeight - padding.y);
 
             textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, innerWidth);
             textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, innerHeight);
-
-            // Center the textRect inside the bubble (assumes pivot/anchor are centered — which is recommended).
             textRect.anchoredPosition = Vector2.zero;
 
-            // Finally, force TMP to reflow with the final rect
+            // 7) final TMP update to sync visuals
             bodyText.ForceMeshUpdate();
         }
     }
