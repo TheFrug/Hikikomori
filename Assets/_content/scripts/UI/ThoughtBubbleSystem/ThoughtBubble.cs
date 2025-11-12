@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.EventSystems;
 
 namespace ProjectHiki.UI
 {
@@ -40,7 +41,7 @@ namespace ProjectHiki.UI
 
         [Header("Auto-sizing")]
         [SerializeField] private Vector2 padding = new Vector2(30f, 20f);
-        [SerializeField] private float minWidth = 250f;
+        [SerializeField] private float minWidth = 100f;
         [SerializeField] private float maxWidth = 500f;
         [SerializeField] private float minHeight = 75f;
         [SerializeField] private float maxHeight = 300f;
@@ -119,6 +120,52 @@ namespace ProjectHiki.UI
                 background = GetComponentInChildren<Image>(true);
             if (namePanel != null && nameText == null)
                 nameText = namePanel.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        public void InitializeInteractive(string text, Color color, TMP_FontAsset? font, string speakerKey, ThoughtBubbleView owner)
+        {
+            EnsureComponents();
+
+            this.owner = owner;
+
+            // Text setup
+            bodyText.text = text ?? string.Empty;
+            if (font != null) bodyText.font = font;
+            if (background != null) background.color = color;
+
+            ResizeToFitText();
+
+            // Name setup
+            bool showName = false;
+            string displayName = string.Empty;
+
+            var fm = FamilyManager.Instance;
+            if (fm != null)
+            {
+                var part = fm.parts.Find(p => p.key == speakerKey);
+                if (part != null && part.nameRevealed)
+                {
+                    showName = true;
+                    displayName = part.realName;
+                }
+            }
+
+            if (namePanel != null)
+            {
+                namePanel.SetActive(showName);
+
+                if (showName && nameText != null)
+                {
+                    nameText.text = displayName;
+                    nameText.color = color;
+                    if (font != null) nameText.font = font;
+                }
+            }
+
+            canvasGroup.alpha = 1f;
+
+            // Don’t float or fade — interactive bubbles stay static
+            StopAllCoroutines();
         }
 
         /// <summary>
@@ -265,56 +312,69 @@ namespace ProjectHiki.UI
             owner?.RecycleBubble(this.gameObject);
         }
 
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            // Tell the view that this bubble was clicked. The view will only set the advance
+            // flag if currentMode == Interactive.
+            owner?.NotifyBubbleClicked(this);
+        }
+
         private void ResizeToFitText()
         {
             if (bodyText == null || rect == null)
                 return;
 
-            // Defensive TMP settings (ensure predictable behavior)
             bodyText.enableWordWrapping = true;
-            bodyText.enableAutoSizing = false; // keep font size stable
+            bodyText.enableAutoSizing = false;
             bodyText.overflowMode = TextOverflowModes.Overflow;
-            bodyText.ForceMeshUpdate();
 
-            // 1) Compute the content width (space available for glyphs inside the bubble)
-            float contentWidth = Mathf.Clamp(maxWidth - padding.x, 8f, maxWidth - 8f);
-
-            // 2) Temporarily set the text rect width so TMP will wrap to that width
             RectTransform textRect = bodyText.rectTransform;
-            textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, contentWidth);
 
-            // Force a mesh/layout update so GetPreferredValues respects the current width
+            // Pass 1: measure text unconstrained to find natural width
+            bodyText.ForceMeshUpdate();
+            Vector2 fullSize = bodyText.GetPreferredValues(bodyText.text, Mathf.Infinity, Mathf.Infinity);
+
+            // Clamp that width by our max bubble width
+            float targetContentWidth = Mathf.Clamp(fullSize.x, minWidth - padding.x, maxWidth - padding.x);
+
+            // Apply that width so TMP can wrap properly
+            textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetContentWidth);
             bodyText.ForceMeshUpdate();
 
-            // 3) Measure the wrapped height for that content width
-            Vector2 measured = bodyText.GetPreferredValues(bodyText.text, contentWidth, Mathf.Infinity);
-            float measuredHeight = Mathf.Max(8f, measured.y);
+            // Pass 2: measure again with wrapping now enforced
+            Vector2 wrappedSize = bodyText.GetPreferredValues(bodyText.text, targetContentWidth, Mathf.Infinity);
 
-            // 4) Compute final bubble sizes (add padding and clamp)
-            float targetWidth = Mathf.Clamp(contentWidth + padding.x, minWidth, maxWidth);
-            float targetHeight = Mathf.Clamp(measuredHeight + padding.y, minHeight, maxHeight);
+            float contentWidth = wrappedSize.x;
+            float contentHeight = wrappedSize.y;
 
-            // 5) Apply sizes to the root rect (bubble) and background
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
+            // Add padding and clamp
+            float finalWidth = Mathf.Clamp(contentWidth + padding.x, minWidth, maxWidth);
+            float finalHeight = Mathf.Clamp(contentHeight + padding.y, minHeight, maxHeight);
+
+            // Apply to bubble and background
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, finalWidth);
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, finalHeight);
 
             if (background != null)
             {
                 var bgRect = background.rectTransform;
-                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
-                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
+                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, finalWidth);
+                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, finalHeight);
             }
 
-            // 6) Now set the text rect to the inner content area and center it
-            float innerWidth = Mathf.Max(8f, targetWidth - padding.x);
-            float innerHeight = Mathf.Max(8f, targetHeight - padding.y);
-
-            textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, innerWidth);
-            textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, innerHeight);
+            // Apply final text box size
+            float innerW = Mathf.Max(8f, finalWidth - padding.x);
+            float innerH = Mathf.Max(8f, finalHeight - padding.y);
+            textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, innerW);
+            textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, innerH);
             textRect.anchoredPosition = Vector2.zero;
 
-            // 7) final TMP update to sync visuals
             bodyText.ForceMeshUpdate();
+        }
+
+         public void SetOwnerView(ThoughtBubbleView newOwner)
+        {
+            owner = newOwner;
         }
     }
 }

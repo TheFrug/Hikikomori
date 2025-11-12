@@ -1,9 +1,10 @@
 ﻿title: GoblinThought
 ---
 <<set $Goblin = GetPartDisplayName("Goblin")>>
+<<set $Lady = GetPartDisplayName("Lady")>>
 {$Goblin}: You really think that was a good idea?
 //<<wait 2.0>>
 {$Goblin}: Probably not.
 //<<wait 1.0>>
-{$Goblin}: Heh... we’ll see.
+{$Lady}: Heh... we’ll see.
 ===

@@ -8,6 +8,7 @@ using System.Linq;
 using UnityEngine;
 using TMPro;
 using Yarn.Unity;
+using UnityEngine.UI;
 
 using static System.ValueType;
 
@@ -37,6 +38,7 @@ namespace ProjectHiki.UI
         [SerializeField] private float fadeEdgeTime = 0.35f;
         [SerializeField] private float stackingSpacing = 20f;
         [SerializeField] private float spawnBaseY = -300f;
+        [SerializeField] private float interactiveSpawnBaseY = -120f;
 
         [Header("Pooling")]
         [SerializeField] private int initialPoolSize = 6;
@@ -45,11 +47,18 @@ namespace ProjectHiki.UI
         private readonly List<GameObject> activeBubbles = new();
         [SerializeField] private int maxSimultaneous = 12;
 
+        [Header("Interactive Layout (chat)")]
+        [SerializeField] private ScrollRect bubbleScrollRect = null!;
+        [SerializeField] private RectTransform bubbleContent = null!;
+        [SerializeField] private RectTransform layoutContent = null!;
+
+
         [Header("Interactive Options")]
         [SerializeField] private OptionItem optionButtonPrefab = null!;
         [SerializeField] private RectTransform optionContainer = null!;
         private List<OptionItem> activeOptions = new();
         private YarnTaskCompletionSource<DialogueOption?> optionSelectionSource = null!;
+        private bool interactiveAdvanceRequested = false;
 
         [Header("Debug Thought assets (assign in inspector)")]
         [SerializeField] private Thought goblinThought = null!;
@@ -70,6 +79,11 @@ namespace ProjectHiki.UI
                 Debug.LogError($"{nameof(ThoughtBubbleView)} requires prefab and container assigned.", this);
                 enabled = false;
                 return;
+            }
+
+            if (bubbleScrollRect == null || bubbleContent == null)
+            {
+                Debug.LogWarning($"{nameof(ThoughtBubbleView)}: bubbleScrollRect or bubbleContent not assigned. Interactive mode layout will not scroll.", this);
             }
 
             for (int i = 0; i < initialPoolSize; i++)
@@ -205,9 +219,11 @@ namespace ProjectHiki.UI
         #region Configure & animate (delegated)
         private void ConfigureAndStart(GameObject instance, string speakerKey, string text, float lifetime, float rise)
         {
+            // Base setup
             instance.transform.SetParent(bubbleContainer, false);
             instance.SetActive(true);
 
+            // Retrieve display info from FamilyManager
             var fm = FamilyManager.Instance;
             Color bubbleColor = Color.white;
             TMP_FontAsset? font = null;
@@ -220,30 +236,77 @@ namespace ProjectHiki.UI
                 name = fm.GetDisplayName(speakerKey);
             }
 
+            // --- Step 2 integration: proper parenting + layout awareness ---
             var rt = instance.GetComponent<RectTransform>();
             if (rt != null)
             {
-                // Spawn position remains near spawnBaseY to give "rising" behavior.
-                // Keep a small randomized horizontal offset for floatiness.
-                float xOffset = UnityEngine.Random.Range(-12f, 12f);
-                float initialY = spawnBaseY;
-                rt.anchoredPosition = new Vector2(rt.anchoredPosition.x + xOffset, initialY);
+                if (currentMode == ThoughtMode.Interactive && bubbleContent != null)
+                {
+                    // Parent to layout-driven content object
+                    instance.transform.SetParent(bubbleContent, false);
+
+                    // Clear any manual positioning; VerticalLayoutGroup will handle spacing
+                    rt.anchoredPosition = Vector2.zero;
+                    rt.offsetMin = Vector2.zero;
+                    rt.offsetMax = Vector2.zero;
+                }
+                else
+                {
+                    // Automatic or Interactive (non-layout) bubbles
+                    float xOffset = UnityEngine.Random.Range(-12f, 12f);
+                    float baseY = currentMode == ThoughtMode.Interactive ? interactiveSpawnBaseY : spawnBaseY;
+
+                    rt.SetParent(bubbleContainer, false);
+                    rt.anchoredPosition = new Vector2(rt.anchoredPosition.x + xOffset, baseY);
+                }
             }
 
+            // --- Initialize bubble depending on mode ---
             var bubble = instance.GetComponent<ThoughtBubble>();
             if (bubble != null)
             {
                 if (currentMode == ThoughtMode.Interactive)
-                    bubble.Initialize(text, bubbleColor, font, name, Mathf.Infinity, 0f, 0f, this);
+                {
+                    // Layout-based static bubble
+                    bubble.InitializeInteractive(text, bubbleColor, font, name, this);
+                    bubble.SetOwnerView(this);
+                }
                 else
+                {
+                    // Floating automatic bubble
                     bubble.Initialize(text, bubbleColor, font, name, lifetime, rise, fadeEdgeTime, this);
 
-                // Compute a ceiling for this bubble (in container local coordinates) and tell the bubble about it.
-                float ceilingY = ComputeCeilingForNewBubble(bubble);
-                bubble.SetCeiling(ceilingY);
+                    float ceilingY = ComputeCeilingForNewBubble(bubble);
+                    bubble.SetCeiling(ceilingY);
+                }
             }
 
+            // --- Bookkeeping ---
             activeBubbles.Add(instance);
+
+            // --- Layout rebuild and scroll management ---
+            if (currentMode == ThoughtMode.Interactive && bubbleScrollRect != null && bubbleContent != null)
+            {
+                // Force Unity to recalc the layout sizes and push new content
+                LayoutRebuilder.ForceRebuildLayoutImmediate(bubbleContent);
+                Canvas.ForceUpdateCanvases();
+
+                // Now ensure scroll is pinned to bottom (0 = bottom)
+                bubbleScrollRect.verticalNormalizedPosition = 0f;
+
+                // Unity often needs one frame delay to stabilize scroll after rebuild
+                StartCoroutine(ScrollToBottomNextFrame());
+            }
+        }
+        #endregion
+
+        private IEnumerator ScrollToBottomNextFrame()
+        {
+            yield return null; // Wait for next layout pass
+            Canvas.ForceUpdateCanvases();
+
+            if (bubbleScrollRect != null)
+                bubbleScrollRect.verticalNormalizedPosition = 0f;
         }
 
         /// <summary>
@@ -293,7 +356,6 @@ namespace ProjectHiki.UI
 
             PoolReturn(instance);
         }
-        #endregion
 
         #if UNITY_EDITOR
         private void Update()
@@ -353,6 +415,16 @@ namespace ProjectHiki.UI
         }
         #endif
 
+        // Put this somewhere in ThoughtBubbleView (public or internal as you like)
+        public void NotifyBubbleClicked(ThoughtBubble bubble)
+        {
+            // Only honor bubble clicks while in Interactive mode
+            if (currentMode == ThoughtMode.Interactive)
+            {
+                interactiveAdvanceRequested = true;
+            }
+        }
+
         #region Yarn presenter overrides
         public override async YarnTask RunLineAsync(LocalizedLine line, LineCancellationToken token)
         {
@@ -378,10 +450,23 @@ namespace ProjectHiki.UI
 
         private async YarnTask WaitForPlayerContinue(LineCancellationToken token)
         {
+            // Only allow advance via SPACE (keyboard) or via clicking the bubble (bubble click
+            // sets interactiveAdvanceRequested), NOT via general mouse clicks.
             while (!token.IsNextLineRequested)
             {
-                if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    // consume the space press as an explicit "advance"
                     return;
+                }
+
+                if (interactiveAdvanceRequested)
+                {
+                    // was set by a bubble click
+                    interactiveAdvanceRequested = false;
+                    return;
+                }
+
                 await YarnTask.Yield();
             }
         }

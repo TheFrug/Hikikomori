@@ -1,11 +1,18 @@
 ﻿title: InnerDialogue_Truth
 ---
-<<declare $voice2 = "Lady">>
-{$voice2}: You’ve come far... but you’re still hiding something.
+<<declare $Lady = "Lady">>
+<<declare $Hiki = "You">>
+{$Lady}: Hiki... can you hear me?
+{$Hiki}: Hello? Who's speaking to me?
+{$Lady}: Hiki... can you hear me?
+{$Hiki}: Hello? Who's speaking to me?
+{$Lady}: Hiki... can you hear me?
+{$Hiki}: Hello? Who's speaking to me?
+{$Lady}: You’ve come far... but you’re still hiding something.
 -> “I’m not hiding anything.” 
-    {$voice2}: Lies are heavier when you believe them.
+    {$Lady}: Lies are heavier when you believe them.
 -> “Maybe you’re right.”
-    {$voice2}: Then why keep walking in circles?
+    {$Lady}: Then why keep walking in circles?
 -> [silent]
-    {$voice2}: Silence isn’t peace.
+    {$Lady}: Silence isn’t peace.
 ===

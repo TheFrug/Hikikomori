@@ -128,7 +128,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -144.40515, y: -11.70462, z: -136.72485, w: -12.878082}
+  m_margin: {x: -56.143707, y: -8.871887, z: -54.873413, w: -8.454971}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -414,11 +414,11 @@ MonoBehaviour:
   floatAwaySpeed: 40
   fadeOutDuration: 0.6
   fadeInDuration: 0.2
-  padding: {x: 60, y: 24}
+  padding: {x: 30, y: 30}
   minWidth: 100
   maxWidth: 500
-  minHeight: 50
-  maxHeight: 400
+  minHeight: 75
+  maxHeight: 500
 --- !u!225 &2163664826057180004
 CanvasGroup:
   m_ObjectHideFlags: 0
