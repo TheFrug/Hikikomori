@@ -15,14 +15,14 @@ MonoBehaviour:
   BasicMarkers:
   - Marker: hype
     CustomColor: 1
-    Color: {r: 0, g: 1, b: 0.33529425, a: 0}
+    Color: {r: 0, g: 1, b: 0.33529425, a: 0.6745098}
     Boldened: 0
     Italicised: 0
     Underlined: 1
     Strikedthrough: 0
   - Marker: dread
     CustomColor: 1
-    Color: {r: 1, g: 0, b: 0, a: 0}
+    Color: {r: 1, g: 0, b: 0, a: 0.69411767}
     Boldened: 0
     Italicised: 0
     Underlined: 0

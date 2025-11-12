@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 520492548345690637}
   - component: {fileID: 4881512364914016212}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: ThoughtText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -128,7 +128,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -145.13959, y: -11.70462, z: -149.72388, w: -12.878082}
+  m_margin: {x: -144.40515, y: -11.70462, z: -136.72485, w: -12.878082}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -146,7 +146,7 @@ GameObject:
   - component: {fileID: 6872413747607262645}
   - component: {fileID: 7269287290355443445}
   m_Layer: 5
-  m_Name: namePlate
+  m_Name: NamePlate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -414,10 +414,10 @@ MonoBehaviour:
   floatAwaySpeed: 40
   fadeOutDuration: 0.6
   fadeInDuration: 0.2
-  padding: {x: 30, y: 30}
-  minWidth: 250
+  padding: {x: 60, y: 24}
+  minWidth: 100
   maxWidth: 500
-  minHeight: 75
+  minHeight: 50
   maxHeight: 400
 --- !u!225 &2163664826057180004
 CanvasGroup:
@@ -489,14 +489,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.7372549}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.22745098}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 21300000, guid: 2b62f169ad6c04c2d9a3fa4e8c3aa694, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1

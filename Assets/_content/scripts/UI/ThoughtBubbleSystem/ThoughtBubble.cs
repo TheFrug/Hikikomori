@@ -169,8 +169,8 @@ namespace ProjectHiki.UI
                 targetCenterY = startPos.y + Mathf.Min(10f, riseDistance * 0.25f);
 
             // Randomize lateral sway params (kept similar to prior behavior)
-            float swayAmplitude = UnityEngine.Random.Range(10f, 25f);
-            float swayFrequency = UnityEngine.Random.Range(0.8f, 1.4f);
+            float swayAmplitude = UnityEngine.Random.Range(5f, 15f);
+            float swayFrequency = UnityEngine.Random.Range(0.6f, 1.2f);
             float swayPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
 
             // Fade-in
@@ -270,46 +270,51 @@ namespace ProjectHiki.UI
             if (bodyText == null || rect == null)
                 return;
 
-            // Force layout and ensure TMP knows what area it's wrapping inside
+            // Ensure TMP has up-to-date geometry
             bodyText.enableWordWrapping = true;
             bodyText.ForceMeshUpdate();
 
-            // Measure with an approximate width limit to calculate multiline height correctly
-            float availableWidth = Mathf.Clamp(rect.rect.width, minWidth, maxWidth);
-            Vector2 preferred = bodyText.GetPreferredValues(bodyText.text, availableWidth, Mathf.Infinity);
+            // We will measure the text with a reasonable "measuring width".
+            // Use the largest allowed content width (maxWidth minus horizontal padding)
+            // so TMP won't wrap into absurd single-column lines if padding is huge.
+            float maxContentWidth = Mathf.Max(8f, maxWidth - padding.x);
+            Vector2 measured = bodyText.GetPreferredValues(bodyText.text, maxContentWidth, Mathf.Infinity);
 
-            // Apply padding and clamp final dimensions
-            float width = Mathf.Clamp(preferred.x + padding.x, minWidth, maxWidth);
-            float height = Mathf.Clamp(preferred.y + padding.y, minHeight, maxHeight);
+            // measured.x is the preferred content width (no padding). Add padding to get bubble width.
+            float targetWidth = Mathf.Clamp(measured.x + padding.x, minWidth, maxWidth);
 
-            // Apply to rects
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+            // For height, measure using the final content width (so we get the correct wrapped height)
+            float contentWidthForHeight = Mathf.Clamp(targetWidth - padding.x, 8f, maxWidth);
+            Vector2 measuredFinal = bodyText.GetPreferredValues(bodyText.text, contentWidthForHeight, Mathf.Infinity);
+            float targetHeight = Mathf.Clamp(measuredFinal.y + padding.y, minHeight, maxHeight);
+
+            // Apply sizes to the root rect (the bubble) and the background sprite
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
 
             if (background != null)
             {
                 var bgRect = background.rectTransform;
-                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
-                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+                bgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
             }
 
-            // If the nameplate is visible, push it slightly below the top
-            if (namePanel != null && namePanel.activeSelf)
-            {
-                RectTransform nameRect = namePanel.GetComponent<RectTransform>();
-                if (nameRect != null)
-                {
-                    // center it horizontally
-                    nameRect.anchoredPosition = new Vector2(0, 0);
+            // Now set the text rect to be the inner content area (bubble size minus padding).
+            // Use SetSizeWithCurrentAnchors instead of offsetMin/Max to avoid anchor/offset issues.
+            RectTransform textRect = bodyText.rectTransform;
 
-                    // then move it slightly above or below the bubble depending on your layout
-                    float offsetY = height * 0.5f + nameRect.rect.height * 0.5f + 8f; // 8px padding
-                    // if you anchored namePanel to bottom center, flip the sign:
-                    offsetY *= -1f;
+            // Compute inner content size and clamp to small positive values to avoid layout errors.
+            float innerWidth = Mathf.Max(8f, targetWidth - padding.x);
+            float innerHeight = Mathf.Max(8f, targetHeight - padding.y);
 
-                    nameRect.anchoredPosition = new Vector2(0, offsetY);
-                }
-            }
+            textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, innerWidth);
+            textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, innerHeight);
+
+            // Center the textRect inside the bubble (assumes pivot/anchor are centered — which is recommended).
+            textRect.anchoredPosition = Vector2.zero;
+
+            // Finally, force TMP to reflow with the final rect
+            bodyText.ForceMeshUpdate();
         }
     }
 }
