@@ -37,6 +37,7 @@ public class BehaviorAnchor : MonoBehaviour
 
         iconInstance = Instantiate(iconPrefab, worldIconsParent);  
         iconInstance.anchor = this;
+        iconInstance.uiCanvas = uiCanvas;
     }
 
     public void OnWorldClicked()

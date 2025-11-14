@@ -13,14 +13,26 @@ public class BehaviorIconUI : MonoBehaviour
         if (!worldCamera) worldCamera = Camera.main;
     }
 
+    public Canvas uiCanvas; // assign from BehaviorAnchor on spawn
+
     void Update()
     {
-        if (!anchor) return;
+        if (!anchor || !rectTransform || !worldCamera || !uiCanvas) return;
 
-        Vector3 screenPos = worldCamera.WorldToScreenPoint(anchor.transform.position);
+        Vector2 screenPoint = worldCamera.WorldToScreenPoint(anchor.transform.position);
 
-        rectTransform.position = screenPos;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            (RectTransform)rectTransform.parent,
+            screenPoint,
+            uiCanvas.renderMode == RenderMode.ScreenSpaceOverlay
+                ? null
+                : uiCanvas.worldCamera,
+            out Vector2 localPos
+        );
+
+        rectTransform.localPosition = localPos;
     }
+
 
     public void OnClick()
     {
