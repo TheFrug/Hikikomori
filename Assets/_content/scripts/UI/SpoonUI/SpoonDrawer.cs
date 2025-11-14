@@ -92,7 +92,7 @@ public class SpoonDrawer : MonoBehaviour
                 behavior.restPosition = spoonRect.anchoredPosition;
             }
 
-            Debug.Log($"Spoon {i} spawned at {pos}");
+            //Debug.Log($"Spoon {i} spawned at {pos}");
         }
     }
 }

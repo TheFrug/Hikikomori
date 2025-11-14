@@ -15,7 +15,7 @@ MonoBehaviour:
   behaviorName: Watch Anime
   behaviorDescription: I'll never forgive the Japanese for inventing Anime!
   isDefault: 0
-  startsLocked: 1
+  startsLocked: 0
   durationMinutes: 20
   isToggle: 0
   spoonsCost: 1
@@ -23,6 +23,8 @@ MonoBehaviour:
   hungerImpact: 10
   cashCost: 0
   icon: {fileID: 0}
+  isScene: 0
+  thought: {fileID: 0}
   yarnTrigger:
   - yarnNodeName: Doomscrolling
     triggerTime: 0
