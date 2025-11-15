@@ -59,9 +59,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fd19d0e568ce664e93d3a59d2488118, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  anchor: {fileID: 0}
-  rectTransform: {fileID: 1493095233949453513}
-  worldCamera: {fileID: 0}
+  roomType: 0
+  behaviors: []
+  choicePrefab: {fileID: 6514129589541754561, guid: d0fe02ef969d55348805c8ba81c57ff9, type: 3}
+  behaviorGridParent: {fileID: 0}
+  behaviorManager: {fileID: 0}
+  backButton: {fileID: 0}
 --- !u!114 &1616270225538818919
 MonoBehaviour:
   m_ObjectHideFlags: 0

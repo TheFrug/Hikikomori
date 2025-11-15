@@ -1,3 +1,4 @@
+/*
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -103,3 +104,4 @@ public class BehaviorAnchor : MonoBehaviour
         activePanels.Clear();
     }
 }
+*/
