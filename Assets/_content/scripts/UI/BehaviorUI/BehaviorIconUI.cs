@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 
 public class BehaviorIconUI : MonoBehaviour
@@ -18,6 +19,7 @@ public class BehaviorIconUI : MonoBehaviour
 
     private List<BehaviorChoice> activePanels = new();
     private bool isOpen = false;
+    private CanvasGroup group;
 
     void Start()
     {
@@ -28,20 +30,51 @@ public class BehaviorIconUI : MonoBehaviour
 
     public void SetVisible(bool visible)
     {
-        gameObject.SetActive(visible);
+        StopAllCoroutines();
+        StartCoroutine(Fade(visible ? 1 : 0));
+    }
+
+    IEnumerator Fade(float target)
+    {
+        if (group == null)
+            group = gameObject.GetComponent<CanvasGroup>() 
+                ?? gameObject.AddComponent<CanvasGroup>();
+
+        float start = group.alpha;
+        float t = 0;
+
+        while (t < 0.2f)
+        {
+            t += Time.deltaTime;
+            group.alpha = Mathf.Lerp(start, target, t / 0.2f);
+            yield return null;
+        }
+
+        group.alpha = target;
+        group.blocksRaycasts = target > 0.9f;
     }
 
     public void OnClick()
     {
-        Debug.Log("Clicked");
-        if (isOpen)
-        {
-            CloseChoices();
-        }
-        else
-        {
-            OpenChoices();
-        }
+        if (isOpen) return;
+
+        BehaviorIconRoomController roomCtrl = FindObjectOfType<BehaviorIconRoomController>();
+        roomCtrl.Focus(this);
+        // Fade out all icons INCLUDING this one
+        foreach (var icon in roomCtrl.icons)
+            icon.SetVisible(false);
+
+        // Camera zoom-in goes here — not implemented yet but placeholder:
+        // cameraManager.ZoomTo(anchorObject);
+
+        // After zoom, open choices
+        StartCoroutine(OpenAfterCamera());
+    }
+
+    IEnumerator OpenAfterCamera()
+    {
+        yield return new WaitForSeconds(0.2f); // replace later with actual camera event
+        OpenChoices();
     }
 
     private void OpenChoices()
@@ -73,14 +106,37 @@ public class BehaviorIconUI : MonoBehaviour
 
     private void CloseChoices()
     {
+        Debug.Log("Closing Choices");
         isOpen = false;
 
         foreach (var c in activePanels)
-            if (c != null) Destroy(c.gameObject);
+        {
+            Debug.Log("Destroying: " + c.name + " @ " + c.transform.position);
+            Destroy(c.gameObject);
+        }
 
         activePanels.Clear();
 
         if (backButton != null)
             backButton.gameObject.SetActive(false);
+    }
+
+    public void OnBack()
+    {
+        BehaviorIconRoomController roomCtrl = FindObjectOfType<BehaviorIconRoomController>();
+
+        if (roomCtrl.focusedIcon != this)
+        {
+            Debug.LogWarning("Ignoring back press: wrong icon");
+            return;
+        }
+
+        CloseChoices();
+        roomCtrl.Unfocus();
+
+        int activeRoom = roomCtrl.camManager.currentCamIndex;
+
+        foreach (var icon in roomCtrl.icons)
+            icon.SetVisible((int)icon.roomType + 1 == activeRoom);
     }
 }

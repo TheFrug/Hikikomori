@@ -18,7 +18,7 @@ public class spatialCameraManager : MonoBehaviour
     private Transform cameraRig;
 
     [Header("Camera Positions")]
-    [Tooltip("Transform reference for Camera Position 1")]
+    [Tooltip("Transform reference for Camera PFosition 1")]
     [SerializeField]
     private Transform cam1Params;
 
@@ -35,6 +35,8 @@ public class spatialCameraManager : MonoBehaviour
     [SerializeField]
     protected bool isMoving = false;
 
+    public System.Action<int> OnCameraChanged;
+
     // Called to switch the camera to a new predefined position using an animation.
     public void SwitchCamera(Transform activeCam)
     {
@@ -44,13 +46,15 @@ public class spatialCameraManager : MonoBehaviour
 
         if (currentCamIndex == targetIndex) return; // Avoid redundant switches
 
+        FindObjectOfType<BehaviorIconRoomController>()?.FadeAllIconsOut();
+        
         string animName = $"Cam{currentCamIndex}To{targetIndex}"; //plugs current+target cam into animation name convention
         camAnimator.Play(animName); // Play the transition animation
         StartCoroutine(WaitForAnimation(camAnimator, animName)); // Start coroutine to wait for animation to finish before accepting new input
         currentCamIndex = targetIndex; // Update the current camera index
     }
 
-    // Maps a given camera Transform to its corresponding index (1–3).
+    // Maps a given camera Transform to its corresponding index (1ï¿½3).
     private int GetCamIndex(Transform cam)
     {
         if (cam == cam1Params) return 1;
@@ -76,6 +80,6 @@ public class spatialCameraManager : MonoBehaviour
 
         // Re-enable camera switching
         isMoving = false;
-
+        OnCameraChanged?.Invoke(currentCamIndex);
     }
 }
