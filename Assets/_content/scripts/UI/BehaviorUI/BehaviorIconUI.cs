@@ -15,7 +15,7 @@ public class BehaviorIconUI : MonoBehaviour
     public BehaviorChoice choicePrefab;
     public Transform behaviorGridParent;
     public BehaviorManager behaviorManager;
-    public Button backButton;
+    public BehaviorIconRoomController roomCtrl;
 
     private List<BehaviorChoice> activePanels = new();
     private bool isOpen = false;
@@ -24,8 +24,12 @@ public class BehaviorIconUI : MonoBehaviour
     void Start()
     {
         // The back button is hidden by default
-        if (backButton != null)
-            backButton.gameObject.SetActive(false);
+        roomCtrl = FindObjectOfType<BehaviorIconRoomController>();
+    }
+
+    void Update()
+    {
+
     }
 
     public void SetVisible(bool visible)
@@ -99,9 +103,12 @@ public class BehaviorIconUI : MonoBehaviour
             card.Configure(behaviors[i], behaviorManager);
             activePanels.Add(card);
         }
+        roomCtrl.backButton.gameObject.SetActive(true);
+    }
 
-        if (backButton != null)
-            backButton.gameObject.SetActive(true);
+    public void ForceCloseChoices()
+    {
+        CloseChoices();
     }
 
     private void CloseChoices()
@@ -116,27 +123,5 @@ public class BehaviorIconUI : MonoBehaviour
         }
 
         activePanels.Clear();
-
-        if (backButton != null)
-            backButton.gameObject.SetActive(false);
-    }
-
-    public void OnBack()
-    {
-        BehaviorIconRoomController roomCtrl = FindObjectOfType<BehaviorIconRoomController>();
-
-        if (roomCtrl.focusedIcon != this)
-        {
-            Debug.LogWarning("Ignoring back press: wrong icon");
-            return;
-        }
-
-        CloseChoices();
-        roomCtrl.Unfocus();
-
-        int activeRoom = roomCtrl.camManager.currentCamIndex;
-
-        foreach (var icon in roomCtrl.icons)
-            icon.SetVisible((int)icon.roomType + 1 == activeRoom);
     }
 }
