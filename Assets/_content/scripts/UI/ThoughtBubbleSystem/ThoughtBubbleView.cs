@@ -1,4 +1,3 @@
-#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -135,17 +134,17 @@ namespace ProjectHiki.UI
                 Destroy(go);
         }
 
-        private void StopAllCoroutinesOnInstance(GameObject instance) { }
+        private void StopAllCoroutinesOnInstance(GameObject thoughtBubble) { }
 
-        public void RecycleBubble(GameObject instance)
+        public void RecycleBubble(GameObject thoughtBubble)
         {
-            if (instance == null) return;
-            if (!activeBubbles.Contains(instance))
+            if (thoughtBubble == null) return;
+            if (!activeBubbles.Contains(thoughtBubble))
             {
-                PoolReturn(instance);
+                PoolReturn(thoughtBubble);
                 return;
             }
-            RecycleImmediate(instance);
+            RecycleImmediate(thoughtBubble);
         }
         #endregion
 
@@ -217,33 +216,32 @@ namespace ProjectHiki.UI
         #endregion
 
         #region Configure & animate (delegated)
-        private void ConfigureAndStart(GameObject instance, string speakerKey, string text, float lifetime, float rise)
+        private void ConfigureAndStart(GameObject thoughtBubble, string speakerKey, string text, float lifetime, float rise)
         {
             // Base setup
-            instance.transform.SetParent(bubbleContainer, false);
-            instance.SetActive(true);
+            thoughtBubble.SetActive(true);
 
             // Retrieve display info from FamilyManager
-            var fm = FamilyManager.Instance;
+            var familyManager = FamilyManager.Instance;
             Color bubbleColor = Color.white;
             TMP_FontAsset? font = null;
             string name = string.Empty;
 
-            if (fm != null)
+            if (familyManager != null)
             {
-                bubbleColor = fm.GetBubbleColor(speakerKey);
-                font = fm.GetFontAsset(speakerKey);
-                name = fm.GetDisplayName(speakerKey);
+                bubbleColor = familyManager.GetBubbleColor(speakerKey);
+                font = familyManager.GetFontAsset(speakerKey);
+                name = familyManager.GetDisplayName(speakerKey);
             }
 
             // --- Step 2 integration: proper parenting + layout awareness ---
-            var rt = instance.GetComponent<RectTransform>();
+            var rt = thoughtBubble.GetComponent<RectTransform>();
             if (rt != null)
             {
                 if (currentMode == ThoughtMode.Interactive && bubbleContent != null)
                 {
                     // Parent to layout-driven content object
-                    instance.transform.SetParent(bubbleContent, false);
+                    rt.SetParent(bubbleContent, false);
 
                     // Clear any manual positioning; VerticalLayoutGroup will handle spacing
                     rt.anchoredPosition = Vector2.zero;
@@ -262,7 +260,7 @@ namespace ProjectHiki.UI
             }
 
             // --- Initialize bubble depending on mode ---
-            var bubble = instance.GetComponent<ThoughtBubble>();
+            var bubble = thoughtBubble.GetComponent<ThoughtBubble>();
             if (bubble != null)
             {
                 if (currentMode == ThoughtMode.Interactive)
@@ -273,16 +271,22 @@ namespace ProjectHiki.UI
                 }
                 else
                 {
-                    // Floating automatic bubble
-                    bubble.Initialize(text, bubbleColor, font, name, lifetime, rise, fadeEdgeTime, this);
+                    var previous = activeBubbles.Count > 0 ? activeBubbles[activeBubbles.Count - 1] : null;
+                    var previousThought =  previous != null ? previous.GetComponent<ThoughtBubble>() : null;
 
-                    float ceilingY = ComputeCeilingForNewBubble(bubble);
-                    bubble.SetCeiling(ceilingY);
+                    // Floating automatic bubble
+                    
+                    bubble.Initialize(text, bubbleColor, font, name, lifetime, rise, fadeEdgeTime, this, previousThought);
+
+                    bubble.SetCeiling(bubbleContainer.position.y + bubbleContainer.rect.height * 0.5f - (rt != null ? rt.rect.height * 0.5f : 0f));
+
+                    //float ceilingY = ComputeCeilingForNewBubble(bubble);
+                    //bubble.SetCeiling(ceilingY);
                 }
             }
 
             // --- Bookkeeping ---
-            activeBubbles.Add(instance);
+            activeBubbles.Add(thoughtBubble);
 
             // --- Layout rebuild and scroll management ---
             if (currentMode == ThoughtMode.Interactive && bubbleScrollRect != null && bubbleContent != null)
@@ -344,17 +348,17 @@ namespace ProjectHiki.UI
             return ceilingY;
         }
 
-        private void RecycleImmediate(GameObject instance)
+        private void RecycleImmediate(GameObject thoughtBubble)
         {
-            if (instance == null) return;
-            activeBubbles.Remove(instance);
+            if (thoughtBubble == null) return;
+            activeBubbles.Remove(thoughtBubble);
 
-            var rt = instance.GetComponent<RectTransform>();
+            var rt = thoughtBubble.GetComponent<RectTransform>();
             if (rt != null) rt.anchoredPosition = Vector2.zero;
-            var cg = instance.GetComponent<CanvasGroup>();
+            var cg = thoughtBubble.GetComponent<CanvasGroup>();
             if (cg != null) cg.alpha = 0f;
 
-            PoolReturn(instance);
+            PoolReturn(thoughtBubble);
         }
 
         #if UNITY_EDITOR

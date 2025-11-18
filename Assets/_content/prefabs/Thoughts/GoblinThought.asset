@@ -15,7 +15,7 @@ MonoBehaviour:
   type: 0
   speakerKey: Goblin
   previewText: 
-  lifetime: 3
+  lifetime: 10
   riseDistance: 800
   yarnScript: {fileID: -8253061345870894857, guid: 28e76025f645f0b4d9c8f96be4bcc303, type: 3}
   yarnNodeName: GoblinThought

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7090945026151927571}
   - component: {fileID: 3343034044955910072}
   - component: {fileID: 8266648420860825538}
+  - component: {fileID: 8250705317301208015}
   m_Layer: 5
   m_Name: SpoonPrefab
   m_TagString: Untagged
@@ -118,3 +119,15 @@ MonoBehaviour:
   insideDrawer: 1
   dragScale: 1.2
   dragBrightness: 1.3
+--- !u!225 &8250705317301208015
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1620568039972372343}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0

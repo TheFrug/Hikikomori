@@ -14,7 +14,7 @@ namespace ProjectHiki.UI
     public class ThoughtBubble : MonoBehaviour
     {
         [Header("UI References")]
-        [SerializeField] private TextMeshProUGUI bodyText = null!;
+        [SerializeField] private TextMeshProUGUI _dialogue = null!;
         [SerializeField] private Image background = null!;
         [Tooltip("The full nameplate panel (toggle this on/off). Should have a TMP_Text child for the speaker name.")]
         [SerializeField] private GameObject namePanel = null!;
@@ -40,11 +40,14 @@ namespace ProjectHiki.UI
         [SerializeField] private float fadeInDuration = 0.2f;
 
         [Header("Auto-sizing")]
+        [SerializeField] private bool autoSize;
         [SerializeField] private Vector2 padding = new Vector2(30f, 20f);
         [SerializeField] private float minWidth = 100f;
-        [SerializeField] private float maxWidth = 500f;
+        [SerializeField] private float maxWidth = 400f;
         [SerializeField] private float minHeight = 75f;
         [SerializeField] private float maxHeight = 300f;
+
+        private ThoughtBubble previousThought;
 
         private void Awake()
         {
@@ -59,7 +62,7 @@ namespace ProjectHiki.UI
         /// After Initialize, the presenter should call SetCeiling(...) before expecting it to hold.
         /// </summary>
         public void Initialize(string text, Color color, TMP_FontAsset? font, string speakerKey,
-                               float lifetime, float riseDistance, float fadeEdge, ThoughtBubbleView owner)
+                               float lifetime, float riseDistance, float fadeEdge, ThoughtBubbleView owner, ThoughtBubble previousThought)
         {
             EnsureComponents();
 
@@ -67,21 +70,24 @@ namespace ProjectHiki.UI
             this.riseDistance = riseDistance;
             this.fadeEdge = fadeEdge;
             this.owner = owner;
+            this.previousThought = previousThought;
 
             // Body text setup
-            bodyText.text = text ?? string.Empty;
-            if (font != null) bodyText.font = font;
+            _dialogue.text = text ?? string.Empty;
+            if (font != null) _dialogue.font = font;
             if (background != null) background.color = color;
-            ResizeToFitText();
+            
+            if (autoSize)
+                ResizeToFitText();
 
             // Name setup (depends on FamilyManager)
             bool showName = false;
             string displayName = string.Empty;
 
-            var fm = FamilyManager.Instance;
-            if (fm != null)
+            var familyManager = FamilyManager.Instance;
+            if (familyManager != null)
             {
-                var part = fm.parts.Find(p => p.key == speakerKey);
+                var part = familyManager.parts.Find(p => p.key == speakerKey);
                 if (part != null && part.nameRevealed)
                 {
                     showName = true;
@@ -92,11 +98,11 @@ namespace ProjectHiki.UI
             if (namePanel != null)
             {
                 namePanel.SetActive(showName);
-
+                nameText.color = color;
                 if (showName && nameText != null)
                 {
                     nameText.text = displayName;
-                    nameText.color = color;
+                    //nameText.color = color;
                     if (font != null) nameText.font = font;
                 }
             }
@@ -113,8 +119,8 @@ namespace ProjectHiki.UI
         {
             if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
             if (rect == null) rect = GetComponent<RectTransform>();
-            if (bodyText == null)
-                bodyText = GetComponentInChildren<TextMeshProUGUI>(true)
+            if (_dialogue == null)
+                _dialogue = GetComponentInChildren<TextMeshProUGUI>(true)
                     ?? throw new System.InvalidOperationException("ThoughtBubble requires a TextMeshProUGUI child for bodyText.");
             if (background == null)
                 background = GetComponentInChildren<Image>(true);
@@ -129,20 +135,21 @@ namespace ProjectHiki.UI
             this.owner = owner;
 
             // Text setup
-            bodyText.text = text ?? string.Empty;
-            if (font != null) bodyText.font = font;
+            _dialogue.text = text ?? string.Empty;
+            if (font != null) _dialogue.font = font;
             if (background != null) background.color = color;
 
-            ResizeToFitText();
+            if (autoSize)
+                ResizeToFitText();
 
             // Name setup
             bool showName = false;
             string displayName = string.Empty;
 
-            var fm = FamilyManager.Instance;
-            if (fm != null)
+            var familyManager = FamilyManager.Instance;
+            if (familyManager != null)
             {
-                var part = fm.parts.Find(p => p.key == speakerKey);
+                var part = familyManager.parts.Find(p => p.key == speakerKey);
                 if (part != null && part.nameRevealed)
                 {
                     showName = true;
@@ -210,20 +217,25 @@ namespace ProjectHiki.UI
             {
                 targetCenterY = ceilingY - halfHeight;
             }
+            RectTransform previousRect = previousThought != null ? previousThought.GetComponent<RectTransform>() : null;
+            float spacing = 10;
 
             // If the target is below current y (rare), clamp to current + small offset so it still animates.
             if (targetCenterY < startPos.y)
                 targetCenterY = startPos.y + Mathf.Min(10f, riseDistance * 0.25f);
 
             // Randomize lateral sway params (kept similar to prior behavior)
-            float swayAmplitude = UnityEngine.Random.Range(5f, 15f);
-            float swayFrequency = UnityEngine.Random.Range(0.6f, 1.2f);
+            float swayAmplitude = UnityEngine.Random.Range(5f, 10f);
+            float swayFrequency = UnityEngine.Random.Range(1f, 2f);
             float swayPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
 
             // Fade-in
             float fadeTimer = 0f;
-            while (Mathf.Abs(rect.anchoredPosition.y - targetCenterY) > 0.5f)
+            float timer = 0f;
+            while (timer < lifetime)
             {
+                if (previousRect != null)
+                    targetCenterY = Mathf.Min(ceilingY - halfHeight, previousRect.position.y - previousRect.rect.height * 0.5f - rect.rect.height * 0.5f - spacing);
                 float delta = Time.unscaledDeltaTime;
                 // Move toward target center Y
                 float newY = Mathf.MoveTowards(rect.anchoredPosition.y, targetCenterY, floatToCeilingSpeed * delta);
@@ -240,27 +252,22 @@ namespace ProjectHiki.UI
                 }
                 else canvasGroup.alpha = 1f;
 
+                if (Mathf.Abs(rect.anchoredPosition.y - targetCenterY) <= 0.5f)
+                {
+                    // Snap exactly to target (stabilize)
+                    rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, targetCenterY);
+                    canvasGroup.alpha = 1f;
+                    timer += Time.unscaledDeltaTime;
+                }
+
                 yield return null;
             }
-
-            // Snap exactly to target (stabilize)
-            rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, targetCenterY);
-            canvasGroup.alpha = 1f;
 
             // Wait while pinned until lifetime expires (infinite lifetime means wait until externally cancelled)
             if (float.IsInfinity(lifetime))
             {
                 // Interactive — do nothing; bubble will be held until StopAndReturn or owner triggers RecycleImmediate
                 yield break;
-            }
-            else
-            {
-                float timer = 0f;
-                while (timer < lifetime)
-                {
-                    timer += Time.unscaledDeltaTime;
-                    yield return null;
-                }
             }
 
             // Lifetime ended — float away upward and fade out
@@ -321,28 +328,28 @@ namespace ProjectHiki.UI
 
         private void ResizeToFitText()
         {
-            if (bodyText == null || rect == null)
+            if (_dialogue == null || rect == null)
                 return;
 
-            bodyText.enableWordWrapping = true;
-            bodyText.enableAutoSizing = false;
-            bodyText.overflowMode = TextOverflowModes.Overflow;
+            _dialogue.enableWordWrapping = true;
+            _dialogue.enableAutoSizing = false;
+            _dialogue.overflowMode = TextOverflowModes.Overflow;
 
-            RectTransform textRect = bodyText.rectTransform;
+            RectTransform textRect = _dialogue.rectTransform;
 
             // Pass 1: measure text unconstrained to find natural width
-            bodyText.ForceMeshUpdate();
-            Vector2 fullSize = bodyText.GetPreferredValues(bodyText.text, Mathf.Infinity, Mathf.Infinity);
+            _dialogue.ForceMeshUpdate();
+            Vector2 fullSize = _dialogue.GetPreferredValues(_dialogue.text, Mathf.Infinity, Mathf.Infinity);
 
             // Clamp that width by our max bubble width
             float targetContentWidth = Mathf.Clamp(fullSize.x, minWidth - padding.x, maxWidth - padding.x);
 
             // Apply that width so TMP can wrap properly
             textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetContentWidth);
-            bodyText.ForceMeshUpdate();
+            _dialogue.ForceMeshUpdate();
 
             // Pass 2: measure again with wrapping now enforced
-            Vector2 wrappedSize = bodyText.GetPreferredValues(bodyText.text, targetContentWidth, Mathf.Infinity);
+            Vector2 wrappedSize = _dialogue.GetPreferredValues(_dialogue.text, targetContentWidth, Mathf.Infinity);
 
             float contentWidth = wrappedSize.x;
             float contentHeight = wrappedSize.y;
@@ -369,7 +376,7 @@ namespace ProjectHiki.UI
             textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, innerH);
             textRect.anchoredPosition = Vector2.zero;
 
-            bodyText.ForceMeshUpdate();
+            _dialogue.ForceMeshUpdate();
         }
 
          public void SetOwnerView(ThoughtBubbleView newOwner)

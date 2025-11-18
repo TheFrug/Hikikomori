@@ -16,6 +16,8 @@ public class BehaviorChoice : MonoBehaviour
     [Header("Hook-ins")]
     public Button selectButton;
     public BehaviorManager behaviorManager;
+    [SerializeField] public GameObject spoonPanelPrefab; // assign via inspector; the panel prefab contains SpoonPanel component
+    [SerializeField] public Transform panelAnchor; // where to spawn the panel (child container)
 
     private BehaviorData data;
 
@@ -61,10 +63,20 @@ public class BehaviorChoice : MonoBehaviour
             return;
         }
 
-        behaviorManager.QueueBehavior(data);
+        // If Hiki is busy, let manager show tooltip
+        if (behaviorManager.IsBusy())
+        {
+            behaviorManager.ShowBusyTooltip();
+            return;
+        }
 
-        // You can replace this later with an animation / UI fade-out
-        Destroy(gameObject);
+        // Instantiate the spoon panel and configure it
+        var panelGO = Instantiate(spoonPanelPrefab, panelAnchor != null ? panelAnchor : transform);
+        var panel = panelGO.GetComponent<SpoonPanel>();
+        panel.Setup(data, behaviorManager);
+
+        // Optional: animate panel sliding out (tween or animator on panel prefab)
+        // Do NOT Destroy this card here — panel will call back to the manager when done.
     }
 
     string FormatDuration(int minutes)

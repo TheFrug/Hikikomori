@@ -11,31 +11,20 @@ public class BehaviorData : ScriptableObject
     public bool startsLocked;
 
     [Header("Time")]
-    public int durationMinutes = 30;            // used when isToggle == false
+    public int durationMinutes = 30;            // used for one-shot visual timing
     public bool isToggle = false;               // toggle = player-controlled (no fixed time)
 
     [Header("Costs / Impacts")]
     public int spoonsCost = 0;
-    public bool hideSpoonsCost = false;         // False -> ???
-    public int hungerImpact = 0;                // + means increases hunger; - reduces hunger
+    public bool hideSpoonsCost = false;
+    public int hungerImpact = 0;
     [Tooltip("-1 = none")]
-    public float cashCost = -1f;                // -1 => none
+    public float cashCost = -1f;
 
     [Header("Visuals")]
     public Sprite icon;
 
-    public bool isScene;
-    public Thought thought;
-
-    public List<BehaviorYarnTrigger> yarnTrigger;
-
-    [System.Serializable]
-    public class BehaviorYarnTrigger
-    {
-        public string yarnNodeName;
-        public enum TriggerTime { OnStart, OnMidpoint, OnEnd }
-        public TriggerTime triggerTime;
-        public float triggerMinute; // optional override for custom minute marks
-        public bool pauseClock;
-    }
+    [Header("Behavior Run Mode")]
+    public bool isScene;         // true => interactive scene (uses Thought in interactive mode)
+    public Thought thought;      // thought to play for this behavior (automatic/interactive)
 }
