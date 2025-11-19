@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,13 +14,21 @@ public class SpoonPanel : MonoBehaviour
     public RectTransform slotContainer;
     public GameObject slotPrefab;
     public Button cancelButton;
-    public Slider progressBar;
+    public Button doThingButton;        // NEW: "Do the Thing" inside panel
+    public TMP_Text spoonsUsedText;     // NEW: "Spoons Used: a / b"
+    public Slider progressBar; // optional visual; mainly kept for legacy/visual feedback
     public float oneShotBaseSeconds = 0.6f;
 
     [HideInInspector] public List<SpoonSlot> slots = new List<SpoonSlot>();
 
     private int requiredSpoons = 0;
     private bool behaviorTriggered = false;
+
+    // runtime: list of spoonBehavior objects that have been consumed/spent
+    private List<spoonBehavior> spentSpoons = new List<spoonBehavior>();
+
+    // owner
+    private BehaviorChoice ownerChoice;
 
     void OnEnable()
     {
@@ -35,13 +44,15 @@ public class SpoonPanel : MonoBehaviour
     void Start()
     {
         if (behaviorData != null && behaviorManager != null)
-            Setup(behaviorData, behaviorManager);
+            Setup(behaviorData, behaviorManager, ownerChoice);
     }
 
-    public void Setup(BehaviorData data, BehaviorManager mgr)
+    // NOTE: setup now takes the owning BehaviorChoice so we can notify it
+    public void Setup(BehaviorData data, BehaviorManager mgr, BehaviorChoice owner)
     {
         behaviorData = data;
         behaviorManager = mgr;
+        ownerChoice = owner;
 
         requiredSpoons = Mathf.Max(0, data.spoonsCost);
         behaviorTriggered = false;
@@ -50,8 +61,9 @@ public class SpoonPanel : MonoBehaviour
             Destroy(t.gameObject);
 
         slots.Clear();
+        spentSpoons.Clear();
 
-        // Only ONE slot
+        // Only ONE slot (this slot can accept multiple spoons)
         var go = Instantiate(slotPrefab, slotContainer);
         var slot = go.GetComponent<SpoonSlot>();
         slot.Initialize(this);
@@ -60,8 +72,35 @@ public class SpoonPanel : MonoBehaviour
         cancelButton.onClick.RemoveAllListeners();
         cancelButton.onClick.AddListener(CancelPanel);
 
+        if (doThingButton != null)
+        {
+            doThingButton.onClick.RemoveAllListeners();
+            doThingButton.onClick.AddListener(OnDoTheThing);
+            doThingButton.interactable = false;
+        }
+
+        if (spoonsUsedText != null)
+            spoonsUsedText.text = $"Spoons Used: 0 / {requiredSpoons}";
+
         if (progressBar != null)
             progressBar.gameObject.SetActive(false);
+    }
+
+    // Called by a SpoonSlot when it accepts a spoon
+    public void RegisterSpentSpoon(spoonBehavior spoon)
+    {
+        if (spoon == null) return;
+
+        // Avoid double-register
+        if (spentSpoons.Contains(spoon)) return;
+
+        // Mark spoon spent (visual fade + deactivation)
+        spoon.Spend();
+
+        spentSpoons.Add(spoon);
+
+        // Notify slot change logic
+        OnSlotChanged();
     }
 
     public int CurrentFilledSpoons()
@@ -70,6 +109,8 @@ public class SpoonPanel : MonoBehaviour
         foreach (var s in slots)
             count += s.spoonCount;
 
+        // Also include spent spoons if slotCount logic doesn't reflect them
+        count += Mathf.Max(0, spentSpoons.Count - count);
         return count;
     }
 
@@ -80,13 +121,38 @@ public class SpoonPanel : MonoBehaviour
 
         int filled = CurrentFilledSpoons();
 
+        // update UI text
+        if (spoonsUsedText != null)
+            spoonsUsedText.text = $"Spoons Used: {filled} / {requiredSpoons}";
+
+        // enable do-the-thing once enough spoons present
+        if (doThingButton != null)
+            doThingButton.interactable = (filled >= requiredSpoons);
+
         if (filled >= requiredSpoons)
         {
             behaviorTriggered = true;
+            // notify the owner to enable its confirm UI if you used that approach previously
+            // but our new flow will run progress from the panel when player clicks Do-the-Thing
+        }
+    }
+
+    // Do-the-Thing pressed inside the SpoonPanel
+    private void OnDoTheThing()
+    {
+        // If an owner choice is present, delegate running the progress UI to it
+        if (ownerChoice != null)
+        {
+            ownerChoice.StartProgressFromPanel(this);
+        }
+        else
+        {
+            // fallback: run panel-local behavior
             StartBehaviorRun();
         }
     }
 
+    // Legacy fallback when ownerChoice isn't provided
     private void StartBehaviorRun()
     {
         if (behaviorManager == null)
@@ -135,17 +201,36 @@ public class SpoonPanel : MonoBehaviour
         behaviorManager.BeginOneShotBehavior(behaviorData, this);
     }
 
+    // Called by owner Choice when the user cancels out from the Choice (or when the manager destroys panel).
     public void CancelPanel()
     {
-        foreach (var s in slots)
-            s.ForceReturnSpoon();
+        // restore spent spoons
+        RestoreSpentSpoons();
+
+        // notify owner to reset its UI
+        ownerChoice?.NotifyPanelClosed();
 
         Destroy(gameObject);
     }
 
+    private void RestoreSpentSpoons()
+    {
+        if (spentSpoons == null || spentSpoons.Count == 0) return;
+
+        foreach (var spoon in spentSpoons)
+        {
+            if (spoon == null) continue;
+
+            // restore spoon: make it visible and animate it back into drawer
+            spoon.RestoreFromSpend();
+        }
+
+        spentSpoons.Clear();
+    }
+
     void OnDestroy()
     {
-        foreach (var s in slots)
-            s.ForceReturnSpoon();
+        // extra failsafe so spoons never get stranded
+        RestoreSpentSpoons();
     }
 }

@@ -15,6 +15,8 @@ public class FamilyManager : MonoBehaviour
     {
         public string key;
         public string realName;
+        public string partType;
+        public string partDescription;
         public bool nameRevealed;
         public float bond;
 

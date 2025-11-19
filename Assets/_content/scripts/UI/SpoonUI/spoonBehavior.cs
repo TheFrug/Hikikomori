@@ -19,6 +19,9 @@ public class spoonBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     [Header("State")]
     public bool insideDrawer = true;
 
+    // saved rest position used when restoring from "spent" state
+    private Vector2 savedRestPosition;
+
     private Coroutine returnRoutine;
     private Vector2 dragOffset;
 
@@ -33,6 +36,8 @@ public class spoonBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     {
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
         canvas = GetComponentInParent<Canvas>();
         image = GetComponent<Image>();
 
@@ -44,10 +49,13 @@ public class spoonBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     void Start()
     {
         restPosition = rectTransform.anchoredPosition;
+        savedRestPosition = restPosition;
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (canvasGroup == null) canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
         canvasGroup.blocksRaycasts = false;
         canvasGroup.alpha = 0.85f;
 
@@ -100,7 +108,7 @@ public class spoonBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             foreach (var slot in SpoonPanel.ActivePanel.slots)
             {
                 slot.TryAcceptSpoon(this);
-                if (!insideDrawer) return;
+                if (!insideDrawer) return; // accepted -> stop further processing
             }
         }
 
@@ -109,6 +117,7 @@ public class spoonBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             insideDrawer = true;
             restPosition = rectTransform.anchoredPosition;
+            savedRestPosition = restPosition;
         }
         else
         {
@@ -163,6 +172,96 @@ public class spoonBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         rectTransform.anchoredPosition = restPosition;
         insideDrawer = true;
+        savedRestPosition = restPosition;
         returnRoutine = null;
+    }
+
+    // Called by SpoonPanel to mark this spoon as consumed/spent
+    public void Spend()
+    {
+        // Save the rest position in case we need to restore
+        savedRestPosition = restPosition;
+
+        // Visual fade and deactivate
+        StartCoroutine(FadeOutAndDeactivate());
+    }
+
+    private IEnumerator FadeOutAndDeactivate()
+    {
+        float fadeTime = 0.25f;
+        float elapsed = 0f;
+
+        // Try to fade via CanvasGroup
+        CanvasGroup cg = GetComponent<CanvasGroup>();
+        if (cg == null)
+        {
+            cg = gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = 1f;
+        }
+
+        while (elapsed < fadeTime)
+        {
+            elapsed += Time.deltaTime;
+            cg.alpha = Mathf.Lerp(1f, 0f, elapsed / fadeTime);
+            yield return null;
+        }
+
+        cg.alpha = 0f;
+
+        // Deactivate the GO (we keep the component to restore later)
+        gameObject.SetActive(false);
+    }
+
+    // Restore a spent spoon back to the drawer using its savedRestPosition
+    public void RestoreFromSpend()
+    {
+        // Make sure Go is active and parented under the drawer
+        gameObject.SetActive(true);
+
+        if (SpoonDrawer.Instance != null && SpoonDrawer.Instance.spoonParent != null)
+        {
+            rectTransform.SetParent(SpoonDrawer.Instance.spoonParent, false);
+        }
+
+        // re-enable visuals
+        CanvasGroup cg = GetComponent<CanvasGroup>();
+        if (cg != null) cg.alpha = 0f;
+        if (image != null)
+        {
+            // reset color immediately
+            image.color = originalColor;
+        }
+
+        // Animate from current anchored position to savedRestPosition
+        StartCoroutine(AnimateRestoreTo(savedRestPosition));
+    }
+
+    private IEnumerator AnimateRestoreTo(Vector2 targetAnchored)
+    {
+        // start visible
+        CanvasGroup cg = GetComponent<CanvasGroup>();
+        if (cg != null)
+            cg.alpha = 0f;
+
+        // Optionally set starting position near the spoon panel/slot.
+        Vector2 start = rectTransform.anchoredPosition;
+        float dur = Mathf.Max(0.25f, returnDuration);
+
+        float elapsed = 0f;
+        while (elapsed < dur)
+        {
+            elapsed += Time.deltaTime;
+            float t = returnEase.Evaluate(Mathf.Clamp01(elapsed / dur));
+            rectTransform.anchoredPosition = Vector2.Lerp(start, targetAnchored, t);
+            if (cg != null) cg.alpha = Mathf.Lerp(0f, 1f, elapsed / dur);
+            yield return null;
+        }
+
+        rectTransform.anchoredPosition = targetAnchored;
+        if (cg != null) cg.alpha = 1f;
+
+        insideDrawer = true;
+        restPosition = targetAnchored;
+        savedRestPosition = targetAnchored;
     }
 }

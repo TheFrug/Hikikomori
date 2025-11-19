@@ -1464,6 +1464,9 @@ MonoBehaviour:
   parts:
   - key: Goblin
     realName: Goblin
+    partType: Firefighter
+    partDescription: 'Hiki''s hedonism. The Goblin encourages Hiki to indulge his
+      basest wants, and often does so '
     nameRevealed: 0
     bond: 10
     baseColor: {r: 0.2783019, g: 1, b: 0.37210622, a: 1}
@@ -1495,6 +1498,8 @@ MonoBehaviour:
     bondMax: 100
   - key: Lady
     realName: Lady
+    partType: 
+    partDescription: 
     nameRevealed: 1
     bond: 20
     baseColor: {r: 1, g: 0.4481132, b: 0.96353257, a: 1}
@@ -1526,10 +1531,12 @@ MonoBehaviour:
     bondMax: 100
   - key: Soldier
     realName: Soldier
+    partType: 
+    partDescription: 
     nameRevealed: 0
-    bond: 50
+    bond: 0
     baseColor: {r: 1, g: 0.2626216, b: 0.13679248, a: 1}
-    font: {fileID: 11400000, guid: 8ab7f08a3f6712a47bc07178080087fa, type: 2}
+    font: {fileID: 0}
     bondToSaturation:
       serializedVersion: 2
       m_Curve:
@@ -1557,9 +1564,11 @@ MonoBehaviour:
     bondMax: 100
   - key: Soldier
     realName: Soldier
+    partType: 
+    partDescription: 
     nameRevealed: 0
     bond: 0
-    baseColor: {r: 1, g: 0.2626216, b: 0.13679248, a: 1}
+    baseColor: {r: 0.40883204, g: 0.1372549, b: 1, a: 1}
     font: {fileID: 0}
     bondToSaturation:
       serializedVersion: 2
@@ -16963,7 +16972,7 @@ PrefabInstance:
       objectReference: {fileID: 1873167928}
     - target: {fileID: 2865912124301481558, guid: 38bdb7eaf8dd8574db1c6525d0c88155, type: 3}
       propertyPath: behaviors.Array.size
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2865912124301481558, guid: 38bdb7eaf8dd8574db1c6525d0c88155, type: 3}
       propertyPath: behaviors.Array.data[0]
@@ -16977,6 +16986,10 @@ PrefabInstance:
       propertyPath: behaviors.Array.data[2]
       value: 
       objectReference: {fileID: 11400000, guid: 0ca80140c458db24682d1c2b36f1b7e3, type: 2}
+    - target: {fileID: 2865912124301481558, guid: 38bdb7eaf8dd8574db1c6525d0c88155, type: 3}
+      propertyPath: behaviors.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: 6e850be11124b5141971238b303dc0f0, type: 2}
     - target: {fileID: 5301038788526764666, guid: 38bdb7eaf8dd8574db1c6525d0c88155, type: 3}
       propertyPath: m_Name
       value: BehaviorIconUI

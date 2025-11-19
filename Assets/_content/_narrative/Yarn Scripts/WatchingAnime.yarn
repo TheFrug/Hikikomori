@@ -1,0 +1,16 @@
+﻿title: WatchingAnime
+---
+<<declare $Soldier = "" as string>>
+<<declare $Wiki = "" as string>>
+
+<<set $Goblin = GetPartDisplayName("Goblin")>>
+<<set $Lady = GetPartDisplayName("Lady")>>
+<<set $Soldier = GetPartDisplayName("Soldier")>>
+<<set $Wiki = GetPartDisplayName("Wiki")>>
+{$Goblin}: Finally, we get to have fun!
+{$Soldier}: You've had plenty of fun today. We should be working.
+{$Goblin}: Nonsense! A guy's gotta live a little. Wadya want to watch, Hiki?
+{$Lady}: Something cozy! 
+{$Wiki}: Something informative
+{$Soldier}: Something with bloodshed. 
+===

@@ -21,16 +21,17 @@ public class SpoonSlot : MonoBehaviour
 
     public void TryAcceptSpoon(spoonBehavior spoon)
     {
+        if (spoon == null) return;
         if (!IsSpoonInside(spoon))
             return;
 
         var spoonRect = spoon.GetComponent<RectTransform>();
 
-        // Save return data
+        // Save return data locally on slot (slot may hold multiple, but we only have one visual slot)
         originalParent = spoonRect.parent;
         originalAnchoredPos = spoonRect.anchoredPosition;
 
-        // Snap spoon to slot
+        // Snap spoon to slot visually (we keep it so the player sees it before it fades)
         spoonRect.SetParent(transform, true);
         spoonRect.anchoredPosition = Vector2.zero;
 
@@ -38,7 +39,8 @@ public class SpoonSlot : MonoBehaviour
 
         spoonCount++;
 
-        parentPanel.OnSlotChanged();
+        // Let the panel register/track it as a spent spoon (panel will call spoon.Spend())
+        parentPanel?.RegisterSpentSpoon(spoon);
     }
 
     public bool IsSpoonInside(spoonBehavior spoon)

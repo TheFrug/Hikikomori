@@ -18,15 +18,10 @@ MonoBehaviour:
   startsLocked: 0
   durationMinutes: 20
   isToggle: 0
-  spoonsCost: 1
+  spoonsCost: 0
   hideSpoonsCost: 0
   hungerImpact: 10
   cashCost: 0
   icon: {fileID: 0}
   isScene: 0
-  thought: {fileID: 0}
-  yarnTrigger:
-  - yarnNodeName: Doomscrolling
-    triggerTime: 0
-    triggerMinute: 0
-    pauseClock: 1
+  thought: {fileID: 11400000, guid: 538e1133d1c0d0c4699a400be98f9422, type: 2}
