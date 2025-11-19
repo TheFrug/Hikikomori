@@ -507,7 +507,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 250, y: 0}
+  m_SizeDelta: {x: 400, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &656843673301358080
 CanvasRenderer:
@@ -529,13 +529,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76597316231e2b64b994646cdd9c8227, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bodyText: {fileID: 4881512364914016212}
+  _dialogue: {fileID: 0}
   background: {fileID: 1273846881808756762}
   namePanel: {fileID: 3433562124832199853}
   floatToCeilingSpeed: 150
   floatAwaySpeed: 40
   fadeOutDuration: 0.6
   fadeInDuration: 0.2
+  autoSize: 0
   padding: {x: 30, y: 30}
   minWidth: 100
   maxWidth: 500
