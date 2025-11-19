@@ -223,7 +223,7 @@ GameObject:
   - component: {fileID: 104704496883974279}
   - component: {fileID: 6598464357314487422}
   m_Layer: 5
-  m_Name: Description
+  m_Name: t_Desc
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -357,7 +357,7 @@ GameObject:
   - component: {fileID: 4781071103575922190}
   - component: {fileID: 7492000432467720010}
   m_Layer: 5
-  m_Name: Hunger
+  m_Name: t_Hunger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -492,7 +492,7 @@ GameObject:
   - component: {fileID: 1892329753934180863}
   - component: {fileID: 7189688223911108650}
   m_Layer: 5
-  m_Name: Button
+  m_Name: b_Select
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -612,7 +612,7 @@ GameObject:
   - component: {fileID: 2075859869088115979}
   - component: {fileID: 3464653151481678896}
   m_Layer: 5
-  m_Name: Title
+  m_Name: t_Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -747,12 +747,12 @@ GameObject:
   - component: {fileID: 3402452816161053386}
   - component: {fileID: 2323570117622569180}
   m_Layer: 5
-  m_Name: Button (1)
+  m_Name: b_DotheThing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5071798163798313338
 RectTransform:
   m_ObjectHideFlags: 0
@@ -901,7 +901,7 @@ GameObject:
   m_Component:
   - component: {fileID: 309388608096851071}
   m_Layer: 5
-  m_Name: panelAnchor
+  m_Name: rt_spoonPanelAnchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1260,7 +1260,7 @@ GameObject:
   - component: {fileID: 369274057394586930}
   - component: {fileID: 3712248948203075700}
   m_Layer: 5
-  m_Name: Time
+  m_Name: t_Time
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1394,7 +1394,7 @@ GameObject:
   - component: {fileID: 2235692846671743994}
   - component: {fileID: 4272755665652364384}
   m_Layer: 5
-  m_Name: ProgressBar
+  m_Name: s_ProgressBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1505,7 +1505,7 @@ GameObject:
   - component: {fileID: 6052916421512959566}
   - component: {fileID: 6027755431519267806}
   m_Layer: 5
-  m_Name: Spoons
+  m_Name: t_Spoons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1739,7 +1739,7 @@ MonoBehaviour:
   spoonPanelPrefab: {fileID: 4543407352607057748, guid: 54bfc0ba58eea724e87441ae5174deb6, type: 3}
   panelAnchor: {fileID: 309388608096851071}
   oneShotProgressBar: {fileID: 2235692846671743994}
-  confirmButton: {fileID: 0}
+  defaultOneShotSeconds: 0.6
 --- !u!1 &8587287004887433602
 GameObject:
   m_ObjectHideFlags: 0
@@ -1752,7 +1752,7 @@ GameObject:
   - component: {fileID: 1209399326492688138}
   - component: {fileID: 7218052230557729009}
   m_Layer: 5
-  m_Name: Cash
+  m_Name: t_Cash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

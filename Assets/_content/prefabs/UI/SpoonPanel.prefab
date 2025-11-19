@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6491681036417197316}
   m_Layer: 5
-  m_Name: SlotContainer
+  m_Name: rt_SlotContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -48,7 +48,7 @@ GameObject:
   - component: {fileID: 6247358315049514051}
   - component: {fileID: 5693538131821789399}
   m_Layer: 5
-  m_Name: TextBackground
+  m_Name: t_SpoonsUsed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -145,7 +145,7 @@ GameObject:
   - component: {fileID: 2096435932331226945}
   - component: {fileID: 5186441111078482481}
   m_Layer: 5
-  m_Name: Cancelbutton
+  m_Name: b_Cancel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -491,7 +491,7 @@ GameObject:
   - component: {fileID: 4156474027381531180}
   - component: {fileID: 1916953145462080980}
   m_Layer: 5
-  m_Name: Go
+  m_Name: b_DoTheThing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

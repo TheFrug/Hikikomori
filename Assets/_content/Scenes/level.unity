@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 0.5
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.32252967, g: 0.36003828, b: 0.41749734, a: 0.5}
+  m_IndirectSpecularColor: {r: 0.3225292, g: 0.3600378, b: 0.41749644, a: 0.5}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1498,7 +1498,7 @@ MonoBehaviour:
     bondMax: 100
   - key: Lady
     realName: Lady
-    partType: 
+    partType: Firefighter
     partDescription: 
     nameRevealed: 1
     bond: 20
@@ -1531,12 +1531,12 @@ MonoBehaviour:
     bondMax: 100
   - key: Soldier
     realName: Soldier
-    partType: 
+    partType: Manager
     partDescription: 
     nameRevealed: 0
-    bond: 0
+    bond: 50
     baseColor: {r: 1, g: 0.2626216, b: 0.13679248, a: 1}
-    font: {fileID: 0}
+    font: {fileID: 11400000, guid: 8ab7f08a3f6712a47bc07178080087fa, type: 2}
     bondToSaturation:
       serializedVersion: 2
       m_Curve:
@@ -1562,14 +1562,14 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     bondMax: 100
-  - key: Soldier
-    realName: Soldier
-    partType: 
+  - key: Wiki
+    realName: Wiki
+    partType: Manager
     partDescription: 
-    nameRevealed: 0
-    bond: 0
-    baseColor: {r: 0.40883204, g: 0.1372549, b: 1, a: 1}
-    font: {fileID: 0}
+    nameRevealed: 1
+    bond: 20
+    baseColor: {r: 0.6245283, g: 0.7906316, b: 1, a: 1}
+    font: {fileID: 11400000, guid: 8ab7f08a3f6712a47bc07178080087fa, type: 2}
     bondToSaturation:
       serializedVersion: 2
       m_Curve:

@@ -23,8 +23,5 @@ MonoBehaviour:
   hungerImpact: -30
   cashCost: -1
   icon: {fileID: 0}
-  yarnTrigger:
-  - yarnNodeName: GoblinThought
-    triggerTime: 0
-    triggerMinute: 0
-    pauseClock: 0
+  isScene: 0
+  thought: {fileID: 11400000, guid: 6dd52cfac56131a41aa97239e6ab9972, type: 2}
