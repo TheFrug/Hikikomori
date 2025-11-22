@@ -23,6 +23,14 @@ public class ResourceManager : MonoBehaviour
     private int stressThreshold = 40;
     private bool stressedOut = false;
 
+    [Header("Hope")]
+    public Slider hopeBar;
+    public TMP_Text hopeText;
+    public int maxHope = 100;
+    private int currentHope;
+    private int hopeLevel;
+    private int hopeLevelUpThreshold = 5;
+
     [Header("Spoons")]
     public SpoonDrawer spoonDrawer;
     public int maxSpoons = 10;

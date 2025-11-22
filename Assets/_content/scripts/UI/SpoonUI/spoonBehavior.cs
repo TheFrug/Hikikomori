@@ -215,24 +215,20 @@ public class spoonBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     // Restore a spent spoon back to the drawer using its savedRestPosition
     public void RestoreFromSpend()
     {
-        // Make sure Go is active and parented under the drawer
         gameObject.SetActive(true);
 
         if (SpoonDrawer.Instance != null && SpoonDrawer.Instance.spoonParent != null)
-        {
             rectTransform.SetParent(SpoonDrawer.Instance.spoonParent, false);
-        }
 
-        // re-enable visuals
+        // FIX #2 — always reset correct scale before animation
+        rectTransform.localScale = originalScale;
+
         CanvasGroup cg = GetComponent<CanvasGroup>();
         if (cg != null) cg.alpha = 0f;
-        if (image != null)
-        {
-            // reset color immediately
-            image.color = originalColor;
-        }
 
-        // Animate from current anchored position to savedRestPosition
+        if (image != null)
+            image.color = originalColor;
+
         StartCoroutine(AnimateRestoreTo(savedRestPosition));
     }
 

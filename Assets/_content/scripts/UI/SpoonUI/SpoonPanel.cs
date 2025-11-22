@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -132,22 +132,18 @@ public class SpoonPanel : MonoBehaviour
         if (filled >= requiredSpoons)
         {
             behaviorTriggered = true;
-            // notify the owner to enable its confirm UI if you used that approach previously
-            // but our new flow will run progress from the panel when player clicks Do-the-Thing
         }
     }
 
     // Do-the-Thing pressed inside the SpoonPanel
     private void OnDoTheThing()
     {
-        // If an owner choice is present, delegate running the progress UI to it
         if (ownerChoice != null)
         {
             ownerChoice.StartProgressFromPanel(this);
         }
         else
         {
-            // fallback: run panel-local behavior
             StartBehaviorRun();
         }
     }
@@ -175,7 +171,7 @@ public class SpoonPanel : MonoBehaviour
         }
     }
 
-    private System.Collections.IEnumerator RunOneShot()
+    private IEnumerator RunOneShot()
     {
         float seconds = oneShotBaseSeconds;
 
@@ -201,13 +197,29 @@ public class SpoonPanel : MonoBehaviour
         behaviorManager.BeginOneShotBehavior(behaviorData, this);
     }
 
-    // Called by owner Choice when the user cancels out from the Choice (or when the manager destroys panel).
+    // Called by user pressing Cancel
     public void CancelPanel()
     {
-        // restore spent spoons
+        // NEW — graceful closing, not instant destruction
+        ClosePanel();
+    }
+
+    // NEW — called by BehaviorManager also
+    public void ClosePanel()
+    {
+        StartCoroutine(CloseSequence());
+    }
+
+    // NEW — animates spoons back BEFORE destruction
+    private IEnumerator CloseSequence()
+    {
         RestoreSpentSpoons();
 
-        // notify owner to reset its UI
+        // wait for spoon animations to finish (0.35–0.45s usually)
+        yield return new WaitForSeconds(0.4f);
+
+        behaviorManager?.ClearPanel(this);
+
         ownerChoice?.NotifyPanelClosed();
 
         Destroy(gameObject);
@@ -222,7 +234,7 @@ public class SpoonPanel : MonoBehaviour
             if (spoon == null) continue;
 
             // restore spoon: make it visible and animate it back into drawer
-            spoon.RestoreFromSpend();
+            spoon.RestoreFromSpend();    // This now handles reset-scale
         }
 
         spentSpoons.Clear();

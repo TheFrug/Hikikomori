@@ -119,7 +119,7 @@ public class BehaviorPanel : MonoBehaviour
         }
 
         Debug.Log($"Behavior clicked: {data?.behaviorName ?? "null"}");
-        behaviorManager.QueueBehavior(data);
+        //behaviorManager.QueueBehavior(data);
     }
 
     /// <summary>

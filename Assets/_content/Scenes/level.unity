@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 0.5
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.3225292, g: 0.3600378, b: 0.41749644, a: 0.5}
+  m_IndirectSpecularColor: {r: 0.32252967, g: 0.36003828, b: 0.41749734, a: 0.5}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -4165,8 +4165,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5171364828562193029, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+      propertyPath: m_Pivot.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5171364828562193029, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5171364828562193029, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5171364828562193029, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 139
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 5391612024673573048, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: m_SizeDelta.x
@@ -23106,6 +23118,7 @@ MonoBehaviour:
   tooltipPanel: {fileID: 195048448}
   defaultBehavior: {fileID: 11400000, guid: b3f087cc1cda5f44ebc569e9fd5c686f, type: 2}
   secondsPerGameMinute: 0.1
+  activeSpoonPanel: {fileID: 0}
 --- !u!1001 &1979555601
 PrefabInstance:
   m_ObjectHideFlags: 0

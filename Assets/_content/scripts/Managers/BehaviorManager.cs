@@ -1,7 +1,6 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using ProjectHiki.UI; // <-- for ThoughtBubbleView
+using ProjectHiki.UI;
 
 public class BehaviorManager : MonoBehaviour
 {
@@ -18,18 +17,13 @@ public class BehaviorManager : MonoBehaviour
     [Header("Settings")]
     public float secondsPerGameMinute = 0.1f;
 
-    // Removed ThoughtManager — replaced by ThoughtBubbleView.Instance
-
     private BehaviorData currentBehavior;
     private bool isBusy = false;
     private Coroutine behaviorRoutine;
 
-    private Queue<BehaviorData> behaviorQueue = new Queue<BehaviorData>();
+    // The currently-open spoon panel (needed for cleanup timing)
+    public SpoonPanel activeSpoonPanel;
 
-
-    // ------------------------------
-    // Unity Lifecycle
-    // ------------------------------
     void Start()
     {
         if (clockManager != null)
@@ -44,43 +38,6 @@ public class BehaviorManager : MonoBehaviour
             clockManager.OnTick -= HandleClockTick;
     }
 
-
-    // ------------------------------
-    // Public API
-    // ------------------------------
-    public void StartBehavior(BehaviorData data)
-    {
-        if (isBusy)
-        {
-            ShowBusyTooltip();
-            return;
-        }
-
-        if (data == null)
-        {
-            Debug.LogWarning("StartBehavior called with NULL data!");
-            return;
-        }
-
-        if (behaviorRoutine != null)
-            StopCoroutine(behaviorRoutine);
-
-        currentBehavior = data;
-        isBusy = true;
-
-        Debug.Log($"Starting behavior: {data.behaviorName}");
-
-        // --- Thought Integration: use ThoughtBubbleView ---
-        if (data.thought != null && ThoughtBubbleView.Instance != null)
-        {
-            // Thought asset already knows whether it's automatic or interactive.
-            ThoughtBubbleView.Instance.SpawnThought(data.thought);
-        }
-
-        // Run duration + resources
-        behaviorRoutine = StartCoroutine(RunBehavior(data));
-    }
-
     public bool IsBusy() => isBusy;
 
     public void ShowBusyTooltip()
@@ -88,38 +45,83 @@ public class BehaviorManager : MonoBehaviour
         tooltipPanel?.ShowBusyMessage("Hiki is busy!");
     }
 
-    // -------------------------------------------------
-    // Legacy compatibility for SpoonPanel / BehaviorPanel
-    // -------------------------------------------------
-
+    // -----------------------------------------------------------------
+    // FIX #1 — WAIT FOR PANEL BEFORE STARTING BEHAVIOR
+    // -----------------------------------------------------------------
     public void BeginSceneBehavior(BehaviorData data, SpoonPanel panel)
     {
-        // Optional: hide the panel now that the player committed
         if (panel != null)
-            Destroy(panel.gameObject);
+        {
+            activeSpoonPanel = panel;
+            StartCoroutine(WaitForPanelAndRunScene(data, panel));
+        }
+        else
+        {
+            BeginSceneBehavior(data);
+        }
+    }
 
-        // Call your existing (one-param) method
+    private IEnumerator WaitForPanelAndRunScene(BehaviorData data, SpoonPanel panel)
+    {
+        panel.ClosePanel();
+
+        while (activeSpoonPanel != null)
+            yield return null;
+
         BeginSceneBehavior(data);
     }
 
     public void BeginOneShotBehavior(BehaviorData data, SpoonPanel panel)
     {
-        // Optional: hide the panel now that the player committed
         if (panel != null)
-            Destroy(panel.gameObject);
+        {
+            activeSpoonPanel = panel;
+            StartCoroutine(WaitForPanelAndRunOneShot(data, panel));
+        }
+        else
+        {
+            BeginOneShotBehavior(data);
+        }
+    }
 
-        // Call your existing (one-param) method
+    private IEnumerator WaitForPanelAndRunOneShot(BehaviorData data, SpoonPanel panel)
+    {
+        panel.ClosePanel();
+
+        while (activeSpoonPanel != null)
+            yield return null;
+
         BeginOneShotBehavior(data);
     }
 
-    // ------------------------------
-    // Actual 1-argument implementations
-    // ------------------------------
+    // -----------------------------------------------------------------
+    // PANEL STATE HELPERS
+    // -----------------------------------------------------------------
+    public bool HasOpenPanel()
+    {
+        return activeSpoonPanel != null;
+    }
 
+    public void RegisterPanel(SpoonPanel panel)
+    {
+        if (panel == null) return;
+        activeSpoonPanel = panel;
+    }
+
+    public void ClearPanel(SpoonPanel panel)
+    {
+        if (panel == null) return;
+        if (activeSpoonPanel == panel)
+            activeSpoonPanel = null;
+    }
+
+
+
+    // -----------------------------------------------------------------
+    // SCENE BEHAVIOR
+    // -----------------------------------------------------------------
     public void BeginSceneBehavior(BehaviorData data)
     {
-        // Scenes = interactive Thought → BehaviorManager does NOT run duration
-        // The ThoughtBubbleView handles the whole interactive sequence.
         if (data == null)
         {
             Debug.LogError("BeginSceneBehavior called with null data");
@@ -137,14 +139,13 @@ public class BehaviorManager : MonoBehaviour
 
         Debug.Log($"[BehaviorManager] BeginSceneBehavior: {data.behaviorName}");
 
-        // Launch interactive Thought
         if (data.thought != null && ThoughtBubbleView.Instance != null)
             ThoughtBubbleView.Instance.SpawnThought(data.thought);
-
-        // When thought ends, ThoughtBubbleView must call something like:
-        // BehaviorManager.CompleteSceneBehavior()
     }
 
+    // -----------------------------------------------------------------
+    // ONE-SHOT BEHAVIOR
+    // -----------------------------------------------------------------
     public void BeginOneShotBehavior(BehaviorData data)
     {
         if (data == null)
@@ -164,30 +165,18 @@ public class BehaviorManager : MonoBehaviour
 
         Debug.Log($"[BehaviorManager] BeginOneShotBehavior: {data.behaviorName}");
 
-        // One-shot thoughts (automatic)
         if (data.thought != null && ThoughtBubbleView.Instance != null)
             ThoughtBubbleView.Instance.SpawnThought(data.thought);
 
-        // Run the timed one-shot behavior
         if (behaviorRoutine != null)
             StopCoroutine(behaviorRoutine);
 
         behaviorRoutine = StartCoroutine(RunBehavior(data));
     }
 
-
-    // Only needed if your BehaviorPanel still calls QueueBehavior.
-    // If your new system will never queue, you can delete the calls in UI instead.
-    public void QueueBehavior(BehaviorData data)
-    {
-        StartBehavior(data);
-    }
-
-
-
-    // ------------------------------
-    // Default Behavior Loop
-    // ------------------------------
+    // -----------------------------------------------------------------
+    // DEFAULT BEHAVIOR LOOP
+    // -----------------------------------------------------------------
     private void StartDefaultBehavior()
     {
         if (defaultBehavior == null)
@@ -207,10 +196,9 @@ public class BehaviorManager : MonoBehaviour
         behaviorRoutine = StartCoroutine(RunBehavior(defaultBehavior));
     }
 
-
-    // ------------------------------
-    // Main Routine
-    // ------------------------------
+    // -----------------------------------------------------------------
+    // MAIN BEHAVIOR COROUTINE
+    // -----------------------------------------------------------------
     private IEnumerator RunBehavior(BehaviorData data)
     {
         if (resourceManager == null)
@@ -222,9 +210,7 @@ public class BehaviorManager : MonoBehaviour
         float secondsPerGameMinute = clockManager.realSecondsPerGameTick /
                                      clockManager.minutesPerTick;
 
-        // --------------------------------------
-        // Infinite-loop default behavior
-        // --------------------------------------
+        // Infinite default behavior
         if (data.isDefault)
         {
             while (currentBehavior == data)
@@ -235,8 +221,7 @@ public class BehaviorManager : MonoBehaviour
                 {
                     if (clockManager.CurrentState != ClockManager.ClockState.Paused)
                         elapsed += Time.deltaTime *
-                                   clockManager.TimeScaleMultiplier /
-                                   secondsPerGameMinute;
+                                    clockManager.TimeScaleMultiplier / secondsPerGameMinute;
 
                     yield return null;
                 }
@@ -251,44 +236,33 @@ public class BehaviorManager : MonoBehaviour
             yield break;
         }
 
-        // --------------------------------------
-        // Timed one-shot behavior
-        // --------------------------------------
+        // One-shot timed behavior
         int totalMinutes = Mathf.Max(1, data.durationMinutes);
         float elapsedMinutes = 0f;
 
         Debug.Log($"Running behavior '{data.behaviorName}' for {totalMinutes} minutes");
 
-        // Wait for the duration
         while (elapsedMinutes < totalMinutes)
         {
             if (clockManager.CurrentState != ClockManager.ClockState.Paused)
                 elapsedMinutes += Time.deltaTime *
-                                  clockManager.TimeScaleMultiplier /
-                                  secondsPerGameMinute;
+                                  clockManager.TimeScaleMultiplier / secondsPerGameMinute;
 
             yield return null;
         }
 
-        // Spend resources
         resourceManager.ModifyResources(
             data.spoonsCost,
             data.hungerImpact,
             data.cashCost
         );
 
-        // End and return to default
         isBusy = false;
         StartDefaultBehavior();
     }
 
-
-    // ------------------------------
-    // Clock Tick
-    // ------------------------------
     private void HandleClockTick()
     {
-        // No waiting logic in your posted version,
-        // but leaving the method to avoid null subscription warnings.
+        // no-op but required
     }
 }
