@@ -39,7 +39,7 @@ public class SpoonDrawer : MonoBehaviour
         List<GameObject> toDestroy = new List<GameObject>();
 
         foreach (Transform child in spoonParent)
-            if (child.name.ToLower().Contains("spoon"))
+            if (child.CompareTag("Spoon"))
                 toDestroy.Add(child.gameObject);
 
         foreach (var obj in toDestroy)
