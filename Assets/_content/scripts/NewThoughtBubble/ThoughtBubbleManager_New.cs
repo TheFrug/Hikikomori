@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 using TMPro;
 using ProjectHiki.UI;
@@ -91,9 +90,9 @@ public class ThoughtBubbleManager_New : MonoBehaviour
                 pos.y += riseSpeed * Time.deltaTime;
                 pos.x = Mathf.Lerp(rt.originalX, rt.originalX + sway, 0.5f);
 
-                if (pos.y >= ceiling)
+                if (pos.y >= rt.ceilingY) // use stored ceiling
                 {
-                    pos.y = ceiling;
+                    pos.y = rt.ceilingY;
                     rt.atCeiling = true;
                     rt.lingerTimer = 0f;
                 }
@@ -142,24 +141,26 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     public void ShowBubble(string speakerKey, string text)
     {
-        // GET VISUAL STYLE
-        Color color = FamilyManager.Instance.GetBubbleColor(speakerKey);
-        TMP_FontAsset font = FamilyManager.Instance.GetFontAsset(speakerKey);
-        string displayName = FamilyManager.Instance.GetDisplayName(speakerKey);
+        // GET VISUAL STYLE (do NOT pass displayName into InitializeAutomatic; pass speakerKey)
+        var fm = FamilyManager.Instance;
+        Color color = fm != null ? fm.GetBubbleColor(speakerKey) : Color.white;
+        TMP_FontAsset font = fm != null ? fm.GetFontAsset(speakerKey) : null;
+        // display name is computed inside the bubble
 
-        SpawnBubbleInternal(text, speakerKey, displayName, color, font, 3f);
+        SpawnBubbleInternal(text, speakerKey, color, font, 3f);
     }
 
     public void ShowBubble(Thought thought)
     {
-        Color color = FamilyManager.Instance.GetBubbleColor(thought.speakerKey);
-        TMP_FontAsset font = FamilyManager.Instance.GetFontAsset(thought.speakerKey);
-        string displayName = FamilyManager.Instance.GetDisplayName(thought.speakerKey);
+        if (thought == null) return;
+
+        var fm = FamilyManager.Instance;
+        TMP_FontAsset font = fm != null ? fm.GetFontAsset(thought.speakerKey) : null;
+        Color color = fm != null ? fm.GetBubbleColor(thought.speakerKey) : Color.white;
 
         SpawnBubbleInternal(
-            thought.previewText,
+            thought.previewText ?? string.Empty,
             thought.speakerKey,
-            displayName,
             color,
             font,
             thought.lifetime
@@ -169,18 +170,18 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     private void SpawnBubbleInternal(
         string text,
         string speakerKey,
-        string displayName,
         Color color,
         TMP_FontAsset font,
         float lifetime)
     {
         var bubble = GetBubbleFromPool();
 
+        // Pass speakerKey (so bubble can decide whether to display name via FamilyManager)
         bubble.InitializeAutomatic(
             text,
             color,
             font,
-            displayName,
+            speakerKey,
             null
         );
 

@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ThoughtBubbleController : MonoBehaviour
+public class ThoughtBubbleController_Brandon : MonoBehaviour
 {
-    public static ThoughtBubbleController Instance;
+    public static ThoughtBubbleController_Brandon Instance;
 
     [SerializeField] private RectTransform _bubbleParent;
-    [SerializeField] private ThoughtBubble _thoughtBubblePrefab;
+    [SerializeField] private ThoughtBubble_Brandon _thoughtBubblePrefab;
     [SerializeField] private int _poolSize = 10;
     [SerializeField] private RectTransform _top;
     [SerializeField] private RectTransform _spawn;
@@ -16,8 +16,8 @@ public class ThoughtBubbleController : MonoBehaviour
     [SerializeField] private float _swaySpeed = 0.5f;
     [SerializeField] private float _swayAmplitude = 20;
 
-    private List<ThoughtBubble> _bubblePool;
-    private List<ThoughtBubble> _activeBubbles;
+    private List<ThoughtBubble_Brandon> _bubblePool;
+    private List<ThoughtBubble_Brandon> _activeBubbles;
 
     private void Awake()
     {
@@ -36,7 +36,7 @@ public class ThoughtBubbleController : MonoBehaviour
 
         for (int i = 0; i < _activeBubbles.Count; i++)
         {
-            ThoughtBubble bubble = _activeBubbles[i];
+            ThoughtBubble_Brandon bubble = _activeBubbles[i];
             float top = _top.position.y;
             if (i >= 1)
             {
@@ -86,8 +86,8 @@ public class ThoughtBubbleController : MonoBehaviour
 
     private void InitPool()
     {
-        _bubblePool = new List<ThoughtBubble>(_poolSize);
-        _activeBubbles = new List<ThoughtBubble>();
+        _bubblePool = new List<ThoughtBubble_Brandon>(_poolSize);
+        _activeBubbles = new List<ThoughtBubble_Brandon>();
         for (int i = 0; i < _poolSize; i++)
         {
             var bubble = Instantiate(_thoughtBubblePrefab, _bubbleParent, false);
@@ -96,7 +96,7 @@ public class ThoughtBubbleController : MonoBehaviour
         }
     }
 
-    private ThoughtBubble GetFromPool()
+    private ThoughtBubble_Brandon GetFromPool()
     {
         if (_bubblePool.Count > 0)
         {
@@ -116,8 +116,8 @@ public class ThoughtBubbleController : MonoBehaviour
         }
     }
 
-    public static void ReturnBubbleToPoolStatic(ThoughtBubble bubble) => Instance.ReturnBubbleToPool(bubble);
-    public void ReturnBubbleToPool(ThoughtBubble bubble)
+    public static void ReturnBubbleToPoolStatic(ThoughtBubble_Brandon bubble) => Instance.ReturnBubbleToPool(bubble);
+    public void ReturnBubbleToPool(ThoughtBubble_Brandon bubble)
     {
         bubble.ResetBubble();
         if (_activeBubbles.Contains(bubble))

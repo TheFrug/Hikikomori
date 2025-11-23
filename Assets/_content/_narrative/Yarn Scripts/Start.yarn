@@ -1,6 +1,11 @@
 ﻿title: Start
 ---
-<<declare $Goblin = "???">>
+<<declare $Goblin = "Goblin">>
+<<declare $Lady = "Lady">>
+<<declare $Soldier = "Soldier">>
+<<declare $Wiki = "Wiki">>
+<<declare $Hiki = "You">>
+
 <<set $Goblin = GetPartDisplayName("Goblin")>>
 
 {$Goblin}: Wakey-wakeyyyyyyyyy

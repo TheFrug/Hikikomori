@@ -140,11 +140,27 @@ public class FamilyManager : MonoBehaviour
     private void Start() {
         var runner = FindObjectOfType<DialogueRunner>();
         if (runner == null) return;
+        Debug.Log("FamilyManager Start: Found runner = " + runner);
 
+        /*
         // Register functions that RETURN values:
         runner.AddFunction<string, string>("GetPartDisplayName", key => GetDisplayName(key));
         runner.AddFunction<string, bool>("IsNameRevealed", key => IsNameRevealed(key));
+        */
     }
+
+    private void OnEnable()
+    {
+        DialogueRunner runner = FindObjectOfType<DialogueRunner>();
+        if (runner != null) RegisterFunctions(runner);
+    }
+
+    private void RegisterFunctions(DialogueRunner runner)
+    {
+        runner.AddFunction<string, string>("GetPartDisplayName", key => GetDisplayName(key));
+        runner.AddFunction<string, bool>("IsNameRevealed", key => IsNameRevealed(key));
+    }
+
 
     // --- Yarn Commands ---
 

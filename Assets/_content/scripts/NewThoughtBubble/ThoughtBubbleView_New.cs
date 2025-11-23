@@ -20,7 +20,12 @@ public class ThoughtBubbleView_New : DialoguePresenterBase
 
     public override async YarnTask RunLineAsync(LocalizedLine line, LineCancellationToken token)
     {
-        StartThoughtBubble(line);
+        // Use Yarn's processed text so markup processors run.
+        string speaker = line.CharacterName ?? string.Empty;
+        string processedText = line.TextWithoutCharacterName.Text ?? line.RawText ?? string.Empty;
+
+        ThoughtBubbleManager_New.Instance.ShowBubble(speaker, processedText);
+
         await WaitForBubbleDone(token);
     }
 
@@ -30,30 +35,21 @@ public class ThoughtBubbleView_New : DialoguePresenterBase
         return YarnTask.FromResult<DialogueOption?>(null);
     }
 
-    private void StartThoughtBubble(LocalizedLine line)
-    {
-        string speaker = line.CharacterName ?? string.Empty;
-        string rawText = line.RawText ?? string.Empty;
-
-        ThoughtBubbleManager_New.Instance.ShowBubble(speaker, rawText);
-    }
-
     private async YarnTask WaitForBubbleDone(LineCancellationToken token)
     {
         bool finished = false;
 
-        // Yarn cancellation or skip
-        void OnTokenSkip()
+        // If Yarn requests next line (skip), bail out.
+        // Register manager callback which will set finished = true when a bubble finishes.
+        var mgr = ThoughtBubbleManager_New.Instance;
+        if (mgr == null)
         {
-            finished = true;
+            // Nothing to wait on
+            return;
         }
 
-        // Register with Yarn's line cancellation by polling IsNextLineRequested
-        // Manager will set OnBubbleFinished when a bubble exits screen
-        ThoughtBubbleManager_New.Instance.OnBubbleFinished = () =>
-        {
-            finished = true;
-        };
+        System.Action onFinish = () => finished = true;
+        mgr.OnBubbleFinished = onFinish;
 
         // Poll until manager signals finished OR Yarn asks to skip to next line
         while (!finished && !token.IsNextLineRequested)
@@ -62,6 +58,7 @@ public class ThoughtBubbleView_New : DialoguePresenterBase
         }
 
         // Clear callback to avoid accidental reuse
-        ThoughtBubbleManager_New.Instance.OnBubbleFinished = null;
+        if (mgr != null && mgr.OnBubbleFinished == onFinish)
+            mgr.OnBubbleFinished = null;
     }
 }

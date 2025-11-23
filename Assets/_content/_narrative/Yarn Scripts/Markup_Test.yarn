@@ -1,7 +1,9 @@
 ﻿title: Markup_Test
 ---
+<<set $Goblin = GetPartDisplayName("Goblin")>>
+<<set $Wiki = GetPartDisplayName("Wiki")>>
 //<<PauseClock ClockManager>>
-Goblin: Hello! [dread]This sentence should be red[/dread]. Testing... 
+{$Goblin}: Hello! [dread]This sentence should be red[/dread]. Testing... 
 //<<PlayClock ClockManager>>
-OK, [hype]this one should be green[/hype].
+{$Wiki}: OK, [hype]this one should be green[/hype].
 ===

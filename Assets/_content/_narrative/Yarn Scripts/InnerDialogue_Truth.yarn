@@ -1,7 +1,5 @@
 ﻿title: InnerDialogue_Truth
 ---
-<<declare $Lady = "Lady">>
-<<declare $Hiki = "You">>
 {$Lady}: Hiki... can you hear me?
 {$Hiki}: Hello? Who's speaking to me?
 {$Lady}: Hiki... can you hear me?

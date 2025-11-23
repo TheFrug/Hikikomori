@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-public class ThoughtBubble : MonoBehaviour
+public class ThoughtBubble_Brandon : MonoBehaviour
 {
     [SerializeField] private TMP_Text _dialogue;
     [SerializeField] private GameObject _speakerPanel;

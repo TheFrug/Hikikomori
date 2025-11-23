@@ -1,7 +1,5 @@
 ﻿title: WatchingAnime
 ---
-<<declare $Soldier = "" as string>>
-<<declare $Wiki = "" as string>>
 
 <<set $Goblin = GetPartDisplayName("Goblin")>>
 <<set $Lady = GetPartDisplayName("Lady")>>
