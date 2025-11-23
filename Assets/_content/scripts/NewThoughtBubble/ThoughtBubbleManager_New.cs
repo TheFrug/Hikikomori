@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using ProjectHiki.UI;
+using Yarn.Unity;
 
 public class ThoughtBubbleManager_New : MonoBehaviour
 {
@@ -164,9 +165,35 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     // Scriptable object entry
     public void ShowBubble(Thought thought)
     {
-        if (thought == null) return;
-        ShowBubbleInternal(thought.speakerKey, thought.previewText ?? string.Empty, thought.lifetime);
+        if (thought == null)
+        {
+            Debug.LogWarning("[ThoughtBubbleManager] Tried to spawn null Thought asset!");
+            return;
+        }
+
+        // Set mode based on type
+        //SetMode(thought.type == Thought.ThoughtType.Automatic ? ThoughtMode.Automatic : ThoughtMode.Interactive);
+
+        // If a Yarn node is defined, always run it — regardless of type
+        if (!string.IsNullOrEmpty(thought.yarnNodeName))
+        {
+            var runner = FindObjectOfType<DialogueRunner>();
+            if (runner == null)
+            {
+                Debug.LogWarning("[ThoughtBubbleManager] No DialogueRunner in scene!");
+                return;
+            }
+
+            // Start the Yarn node
+            runner.StartDialogue(thought.yarnNodeName);
+        }
+        else
+        {
+            // No Yarn node, do nothing (cannot spawn without a Thought)
+            Debug.LogWarning($"[ThoughtBubbleManager] Thought '{thought.name}' has no Yarn node defined, skipping spawn.");
+        }
     }
+
 
     private void ShowBubbleInternal(string speakerKey, string text, float lifetime)
     {

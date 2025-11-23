@@ -209,9 +209,6 @@ namespace ProjectHiki.UI
                 runner.StartDialogue(thought.yarnNodeName);
                 return; // Important: stop here so we don't also spawn a static bubble
             }
-
-            // If no Yarn node is defined, fall back to the simple preview bubble
-            SpawnThought(thought.speakerKey, thought.previewText, thought.lifetime, thought.riseDistance);
         }
         #endregion
 
