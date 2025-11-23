@@ -21,18 +21,27 @@ namespace ProjectHiki.UI
         [SerializeField] private float minHeight = 75f;
         [SerializeField] private float maxHeight = 300f;
 
-        private RectTransform rectTransform;
+        public RectTransform RectTransform { get; private set; } = null!;
+        [Header("Set at Runtime")]
+        public bool HasSpeaker;
+        public float TopTimer;
+        public float CenterX;
+        public float SwayTimer;
+        public float Duration;
+        public bool Done;
 
         private void Awake()
         {
-            rectTransform = GetComponent<RectTransform>();
+            RectTransform = GetComponent<RectTransform>();
             if (canvasGroup == null)
                 canvasGroup = GetComponent<CanvasGroup>();
         }
 
-        // NOTE: speakerKey is the key used by FamilyManager (so bubble controls whether to show a name panel).
-        public void InitializeAutomatic(string text, Color bubbleColor, TMP_FontAsset font, string speakerKey, object view)
+        // Initialize for automatic-floating mode (manager will position/activate)
+        // speakerKey is used to consult FamilyManager about name reveal.
+        public void InitializeAutomatic(string text, Color bubbleColor, TMP_FontAsset font, string speakerKey)
         {
+            // set text + font + color immediately
             ApplyText(text, font);
             ApplyColor(bubbleColor);
 
@@ -61,10 +70,33 @@ namespace ProjectHiki.UI
                 }
             }
 
+            // autosize (forces TMP mesh updates)
             if (autoSize)
                 ResizeToFitText();
 
-            canvasGroup.alpha = 1f;
+            // runtime state init (Brandon fields)
+            HasSpeaker = namePanel != null && namePanel.activeSelf;
+            TopTimer = 0f;
+            SwayTimer = 0f;
+            Done = false;
+
+            // Duration will be set by manager (manager can assign bubble.Duration after this call),
+            // but leave a default so nothing crashes.
+            if (Duration <= 0f) Duration = 3f;
+
+            // ensure visible
+            if (canvasGroup != null) canvasGroup.alpha = 1f;
+        }
+
+        // Called by controller when returning to pool
+        public void ResetBubble()
+        {
+            TopTimer = 0f;
+            Done = false;
+            SwayTimer = 0f;
+            Duration = 0f;
+            HasSpeaker = false;
+            gameObject.SetActive(false);
         }
 
         private void ApplyText(string text, TMP_FontAsset font)
@@ -73,6 +105,7 @@ namespace ProjectHiki.UI
             {
                 bodyText.text = text ?? string.Empty;
                 if (font != null) bodyText.font = font;
+                bodyText.ForceMeshUpdate();
             }
         }
 
@@ -82,13 +115,23 @@ namespace ProjectHiki.UI
             if (nameText != null) nameText.color = c;
         }
 
-        public RectTransform Rect => rectTransform;
-
         public CanvasGroup CanvasGroup => canvasGroup;
 
+        // Non-public helper but accessible for controller to know how tall the name area is
+        public float SpeakerHeight
+        {
+            get
+            {
+                if (namePanel == null) return 0f;
+                var rt = namePanel.GetComponent<RectTransform>();
+                return rt != null ? rt.rect.height : 0f;
+            }
+        }
+
+        // Resize function (keeps the same algorithm you already had)
         private void ResizeToFitText()
         {
-            if (bodyText == null || rectTransform == null) return;
+            if (bodyText == null || RectTransform == null) return;
 
             bodyText.enableWordWrapping = true;
             bodyText.enableAutoSizing = false;
@@ -111,8 +154,8 @@ namespace ProjectHiki.UI
             float finalWidth = Mathf.Clamp(contentWidth + padding.x, minWidth, maxWidth);
             float finalHeight = Mathf.Clamp(contentHeight + padding.y, minHeight, maxHeight);
 
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, finalWidth);
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, finalHeight);
+            RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, finalWidth);
+            RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, finalHeight);
 
             if (background != null)
             {
