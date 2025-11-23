@@ -9,6 +9,7 @@ using ProjectHiki.UI;
 public class FamilyManager : MonoBehaviour
 {
     public static FamilyManager Instance { get; private set; }
+    
 
     [System.Serializable]
     public class PartInfo
@@ -22,6 +23,7 @@ public class FamilyManager : MonoBehaviour
 
         [Header("Visuals")]
         public Color baseColor = Color.gray;
+        public Color textColor = Color.gray;
         public TMP_FontAsset font;
         public AnimationCurve bondToSaturation = AnimationCurve.Linear(0f, 0f, 1f, 1f); // 0-1 curve mapping
 

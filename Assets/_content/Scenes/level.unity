@@ -1462,6 +1462,40 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   parts:
+  - key: Hiki
+    realName: Hiki
+    partType: Self
+    partDescription: Hiki's truest self.
+    nameRevealed: 1
+    bond: 100
+    baseColor: {r: 0.18431373, g: 0.21176471, b: 0.2509804, a: 1}
+    textColor: {r: 0.9607843, g: 0.9647059, b: 0.98039216, a: 1}
+    font: {fileID: 11400000, guid: 8ab7f08a3f6712a47bc07178080087fa, type: 2}
+    bondToSaturation:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    bondMax: 100
   - key: Goblin
     realName: Goblin
     partType: Firefighter
@@ -1469,7 +1503,8 @@ MonoBehaviour:
       basest wants, and often does so '
     nameRevealed: 0
     bond: 10
-    baseColor: {r: 0.2783019, g: 1, b: 0.37210622, a: 1}
+    baseColor: {r: 0.29803923, g: 0.81960785, b: 0.21568628, a: 1}
+    textColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     font: {fileID: 11400000, guid: 8ab7f08a3f6712a47bc07178080087fa, type: 2}
     bondToSaturation:
       serializedVersion: 2
@@ -1502,7 +1537,8 @@ MonoBehaviour:
     partDescription: 
     nameRevealed: 1
     bond: 20
-    baseColor: {r: 1, g: 0.4481132, b: 0.96353257, a: 1}
+    baseColor: {r: 0.96630764, g: 0.53333336, b: 1, a: 1}
+    textColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     font: {fileID: 11400000, guid: 8ab7f08a3f6712a47bc07178080087fa, type: 2}
     bondToSaturation:
       serializedVersion: 2
@@ -1535,7 +1571,8 @@ MonoBehaviour:
     partDescription: 
     nameRevealed: 0
     bond: 50
-    baseColor: {r: 1, g: 0.2626216, b: 0.13679248, a: 1}
+    baseColor: {r: 0.9098039, g: 0.25490198, b: 0.09411765, a: 1}
+    textColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     font: {fileID: 11400000, guid: 8ab7f08a3f6712a47bc07178080087fa, type: 2}
     bondToSaturation:
       serializedVersion: 2
@@ -1568,7 +1605,8 @@ MonoBehaviour:
     partDescription: 
     nameRevealed: 1
     bond: 20
-    baseColor: {r: 0.6245283, g: 0.7906316, b: 1, a: 1}
+    baseColor: {r: 0, g: 0.65882355, b: 1, a: 1}
+    textColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     font: {fileID: 11400000, guid: 8ab7f08a3f6712a47bc07178080087fa, type: 2}
     bondToSaturation:
       serializedVersion: 2
