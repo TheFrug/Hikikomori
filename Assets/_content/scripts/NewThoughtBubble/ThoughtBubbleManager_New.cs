@@ -194,7 +194,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         }
     }
 
-
     private void ShowBubbleInternal(string speakerKey, string text, float lifetime)
     {
         if (_active.Count >= maxSimultaneous)

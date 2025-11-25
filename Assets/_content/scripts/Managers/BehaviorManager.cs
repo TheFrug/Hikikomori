@@ -115,8 +115,6 @@ public class BehaviorManager : MonoBehaviour
             activeSpoonPanel = null;
     }
 
-
-
     // -----------------------------------------------------------------
     // SCENE BEHAVIOR
     // -----------------------------------------------------------------

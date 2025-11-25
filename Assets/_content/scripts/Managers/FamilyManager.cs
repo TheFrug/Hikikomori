@@ -9,7 +9,6 @@ using ProjectHiki.UI;
 public class FamilyManager : MonoBehaviour
 {
     public static FamilyManager Instance { get; private set; }
-    
 
     [System.Serializable]
     public class PartInfo
