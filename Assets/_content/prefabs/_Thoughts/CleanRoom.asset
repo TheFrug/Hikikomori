@@ -12,10 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9f10a67163fe6f46a7bcde6b5c6919b, type: 3}
   m_Name: CleanRoom
   m_EditorClassIdentifier: 
-  type: 0
-  speakerKey: Goblin
-  previewText: 
-  lifetime: 10
-  riseDistance: 800
   yarnScript: {fileID: -8253061345870894857, guid: 5d47f184ff511ea49a3ecd4c175e4aa8, type: 3}
   yarnNodeName: Clean_the_Desk
+  type: 0
+  speed: 0
+  bubbleLifetimeOverride: 0
+  travelSpeedOverride: 0

@@ -3,11 +3,12 @@ using UnityEngine;
 using TMPro;
 using ProjectHiki.UI;
 using Yarn.Unity;
+using UnityEngine.Events;
 
 public class ThoughtBubbleManager_New : MonoBehaviour
 {
     public static ThoughtBubbleManager_New Instance { get; private set; }
-    public System.Action OnBubbleFinished;
+    public static UnityEvent BubbleFinished = new UnityEvent();
 
     [Header("References")]
     [SerializeField] private RectTransform spawnPoint;
@@ -18,7 +19,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     [SerializeField] private ThoughtBubble_New bubblePrefab;
     [SerializeField] private int poolSize = 20;
 
-    [Header("Float Settings (Brandon-style)")]
+    [Header("Float Settings (Base Values)")]
     [SerializeField] private float moveSpeed = 100f;
     [SerializeField] private float swaySpeed = 0.5f;
     [SerializeField] private float swayAmplitude = 20f;
@@ -27,11 +28,25 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     [Header("General")]
     [SerializeField] private int maxSimultaneous = 20;
 
+    [Header("Speed Multipliers")]
+    public float slowSpawnDelay = 1.2f;
+    public float normalSpawnDelay = 0.75f;
+    public float fastSpawnDelay = 0.35f;
+
+    public float CurrentSpawnDelay { get; private set; } = 0.75f; // default
+
+    public float slowTravelMultiplier = 0.75f;
+    public float normalTravelMultiplier = 1.0f;
+    public float fastTravelMultiplier = 1.4f;
+
     [Header("Debug")]
     [SerializeField] private Thought debugThought;
 
     private List<ThoughtBubble_New> _pool;
     private List<ThoughtBubble_New> _active;
+
+    private float nextSpawnAllowedTime = 0f;
+    private float currentTravelMultiplier = 1.0f;
 
     private void Awake()
     {
@@ -62,7 +77,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
             return b;
         }
 
-        // recycle oldest
         if (_active.Count > 0)
         {
             var oldest = _active[0];
@@ -72,7 +86,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
             return oldest;
         }
 
-        // fallback (shouldn't happen)
         var inst = Instantiate(bubblePrefab, container, false);
         _active.Add(inst);
         return inst;
@@ -87,17 +100,16 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     private void Update()
     {
-        // debug spawn
         if (Input.GetKeyDown(KeyCode.Alpha5) && debugThought != null)
         {
             ShowBubble(debugThought);
         }
 
-        // update active bubbles
+        // MOVE ACTIVE BUBBLES
         for (int i = 0; i < _active.Count; i++)
         {
             var bubble = _active[i];
-            // world-space positions like Brandon's controller
+
             float top = topPoint.position.y;
 
             if (i >= 1)
@@ -112,33 +124,30 @@ public class ThoughtBubbleManager_New : MonoBehaviour
                 top -= bubble.SpeakerHeight;
             }
 
-            // want top to be the Y where bubble's top edge should sit, convert to center Y
             top -= bubble.RectTransform.rect.height * 0.5f;
 
             var pos = bubble.RectTransform.position;
-            float y = pos.y + moveSpeed * Time.deltaTime;
+
+            // apply speed multiplier
+            float y = pos.y + (moveSpeed * currentTravelMultiplier) * Time.deltaTime;
 
             if (y < top)
             {
-                // still moving to top
                 pos.y = y;
             }
             else if (bubble.Done)
             {
-                // already finished waiting at top; continue moving off-screen then remove
                 pos.y = y;
                 if (y > topPoint.position.y + bubble.RectTransform.rect.height * 2f)
                 {
                     ReturnBubbleToPool(bubble);
-                    OnBubbleFinished.Invoke();
-                    // adjust index because pool removed one element in list update? We remove from _active inside ReturnBubbleToPool
+                    BubbleFinished.Invoke();
                     i--;
                     continue;
                 }
             }
             else
             {
-                // reached top and not yet done: run the top timer
                 bubble.TopTimer += Time.deltaTime;
                 if (bubble.TopTimer >= bubble.Duration)
                 {
@@ -146,7 +155,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
                 }
             }
 
-            // sway and horizontal movement
             bubble.SwayTimer += Time.deltaTime * swaySpeed;
             pos.x = bubble.CenterX + Mathf.Sin(bubble.SwayTimer) * swayAmplitude;
 
@@ -154,15 +162,9 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         }
     }
 
-    // Public entry points (string-based)
-    public void ShowBubble(string speakerKey, string text)
-    {
-        // default lifetime pulled from Thought or fallback
-        float lifetime = 3f;
-        ShowBubbleInternal(speakerKey, text, lifetime);
-    }
-
-    // Scriptable object entry
+    // -------------------------------------------
+    // PUBLIC ENTRY (Thought asset)
+    // -------------------------------------------
     public void ShowBubble(Thought thought)
     {
         if (thought == null)
@@ -171,10 +173,8 @@ public class ThoughtBubbleManager_New : MonoBehaviour
             return;
         }
 
-        // Set mode based on type
-        //SetMode(thought.type == Thought.ThoughtType.Automatic ? ThoughtMode.Automatic : ThoughtMode.Interactive);
+        SetSpeedFromThought(thought);
 
-        // If a Yarn node is defined, always run it — regardless of type
         if (!string.IsNullOrEmpty(thought.yarnNodeName))
         {
             var runner = FindObjectOfType<DialogueRunner>();
@@ -184,54 +184,84 @@ public class ThoughtBubbleManager_New : MonoBehaviour
                 return;
             }
 
-            // Start the Yarn node
             runner.StartDialogue(thought.yarnNodeName);
+            return;
         }
-        else
-        {
-            // No Yarn node, do nothing (cannot spawn without a Thought)
-            Debug.LogWarning($"[ThoughtBubbleManager] Thought '{thought.name}' has no Yarn node defined, skipping spawn.");
-        }
+
+        Debug.LogWarning($"[ThoughtBubbleManager] Thought '{thought.name}' has no Yarn node defined, skipping spawn.");
     }
 
+    private void SetSpeedFromThought(Thought t)
+    {
+        switch (t.speed)
+        {
+            case Thought.ThoughtSpeed.Slow:
+                CurrentSpawnDelay = slowSpawnDelay;
+                currentTravelMultiplier = slowTravelMultiplier;
+                break;
+
+            case Thought.ThoughtSpeed.Fast:
+                CurrentSpawnDelay = fastSpawnDelay;
+                currentTravelMultiplier = fastTravelMultiplier;
+                break;
+
+            default:
+                CurrentSpawnDelay = normalSpawnDelay;
+                currentTravelMultiplier = normalTravelMultiplier;
+                break;
+        }
+        nextSpawnAllowedTime = Time.time + CurrentSpawnDelay;
+    }
+
+    // -------------------------------------------
+    // PUBLIC ENTRY (string-based)
+    // -------------------------------------------
+    public void ShowBubble(string speakerKey, string text)
+    {
+        ShowBubbleInternal(speakerKey, text, 3f);
+    }
+
+    // -------------------------------------------
+    // INTERNAL SPAWN LOGIC
+    // -------------------------------------------
     private void ShowBubbleInternal(string speakerKey, string text, float lifetime)
     {
+        if (Time.time < nextSpawnAllowedTime)
+            return;
+
+        nextSpawnAllowedTime = Time.time + normalSpawnDelay;
+
         if (_active.Count >= maxSimultaneous)
         {
-            // recycle oldest immediately
             var oldest = _active[0];
             _active.RemoveAt(0);
             ReturnBubbleToPool(oldest);
         }
 
         var bubble = GetFromPool();
-
-        // Activate first so TMP/rect size calculations are reliable
         bubble.gameObject.SetActive(true);
 
-        // Initialize visuals & autosize
-        bubble.InitializeAutomatic(text, FamilyManager.Instance != null ? FamilyManager.Instance.GetBubbleColor(speakerKey) : Color.white,
-                                   FamilyManager.Instance != null ? FamilyManager.Instance.GetFontAsset(speakerKey) : null,
-                                   speakerKey);
+        bubble.InitializeAutomatic(
+            text,
+            FamilyManager.Instance != null ? FamilyManager.Instance.GetBubbleColor(speakerKey) : Color.white,
+            FamilyManager.Instance != null ? FamilyManager.Instance.GetFontAsset(speakerKey) : null,
+            speakerKey
+        );
 
-        // set duration
         bubble.Duration = lifetime > 0f ? lifetime : 3f;
 
-        // position at spawn
         var pos = spawnPoint.position;
-        // adjust spawn downwards by bubble height + optional speaker height so it starts below spawn like Brandon
-        float extra = bubble.HasSpeaker ? bubble.SpeakerHeight : 0f;
-        pos.y -= bubble.RectTransform.rect.height * 1f + extra;
-        bubble.RectTransform.position = pos;
 
-        // record center X for sway
+        float extra = bubble.HasSpeaker ? bubble.SpeakerHeight : 0f;
+        pos.y -= bubble.RectTransform.rect.height + extra;
+
+        bubble.RectTransform.position = pos;
         bubble.CenterX = bubble.RectTransform.position.x;
 
-        // ensure visible
-        if (bubble.CanvasGroup != null) bubble.CanvasGroup.alpha = 1f;
+        if (bubble.CanvasGroup != null)
+            bubble.CanvasGroup.alpha = 1f;
     }
 
-    // external clear
     public void ClearAll()
     {
         for (int i = _active.Count - 1; i >= 0; i--)
