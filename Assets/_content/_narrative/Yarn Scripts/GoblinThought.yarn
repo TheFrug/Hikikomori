@@ -2,9 +2,10 @@
 ---
 <<set $Goblin = GetPartDisplayName("Goblin")>>
 <<set $Lady = GetPartDisplayName("Lady")>>
+<<set $Hiki = GetPartDisplayName("Hiki")>>
 {$Goblin}: You really think that was a good idea?
 <<wait 3.0>>
-{$Goblin}: Probably not.
+{$Hiki}: Probably not.
 <<wait 3.0>>
 {$Lady}: Heh... we’ll see.
 ===

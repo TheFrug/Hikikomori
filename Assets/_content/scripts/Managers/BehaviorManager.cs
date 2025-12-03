@@ -4,15 +4,11 @@ using ProjectHiki.UI;
 
 public class BehaviorManager : MonoBehaviour
 {
-    private bool waitingForNextTick = false;
+    // Removed: waitingForNextTick, clockManager, defaultBehavior
 
     [Header("References")]
     public ResourceManager resourceManager;
-    public ClockManager clockManager;
     public TooltipPanel tooltipPanel;
-
-    [Header("Default Behavior")]
-    public BehaviorData defaultBehavior;
 
     [Header("Settings")]
     public float secondsPerGameMinute = 0.1f;
@@ -22,20 +18,17 @@ public class BehaviorManager : MonoBehaviour
     private Coroutine behaviorRoutine;
 
     // The currently-open spoon panel (needed for cleanup timing)
-    public SpoonPanel activeSpoonPanel;
+    public SpoonSlotPanel activeSpoonPanel;
 
     void Start()
     {
-        if (clockManager != null)
-            clockManager.OnTick += HandleClockTick;
-
-        StartDefaultBehavior();
+        // Removed clock subscription
+        // Removed StartDefaultBehavior()
     }
 
     void OnDestroy()
     {
-        if (clockManager != null)
-            clockManager.OnTick -= HandleClockTick;
+        // Removed clock unsubscribe
     }
 
     public bool IsBusy() => isBusy;
@@ -46,9 +39,9 @@ public class BehaviorManager : MonoBehaviour
     }
 
     // -----------------------------------------------------------------
-    // FIX #1 — WAIT FOR PANEL BEFORE STARTING BEHAVIOR
+    // WAIT FOR PANEL BEFORE STARTING BEHAVIOR
     // -----------------------------------------------------------------
-    public void BeginSceneBehavior(BehaviorData data, SpoonPanel panel)
+    public void BeginSceneBehavior(BehaviorData data, SpoonSlotPanel panel)
     {
         if (panel != null)
         {
@@ -61,9 +54,9 @@ public class BehaviorManager : MonoBehaviour
         }
     }
 
-    private IEnumerator WaitForPanelAndRunScene(BehaviorData data, SpoonPanel panel)
+    private IEnumerator WaitForPanelAndRunScene(BehaviorData data, SpoonSlotPanel panel)
     {
-        panel.ClosePanel();
+        panel.CloseAfterConfirmedBehavior();
 
         while (activeSpoonPanel != null)
             yield return null;
@@ -71,7 +64,7 @@ public class BehaviorManager : MonoBehaviour
         BeginSceneBehavior(data);
     }
 
-    public void BeginOneShotBehavior(BehaviorData data, SpoonPanel panel)
+    public void BeginOneShotBehavior(BehaviorData data, SpoonSlotPanel panel)
     {
         if (panel != null)
         {
@@ -84,9 +77,9 @@ public class BehaviorManager : MonoBehaviour
         }
     }
 
-    private IEnumerator WaitForPanelAndRunOneShot(BehaviorData data, SpoonPanel panel)
+    private IEnumerator WaitForPanelAndRunOneShot(BehaviorData data, SpoonSlotPanel panel)
     {
-        panel.ClosePanel();
+        panel.CloseAfterConfirmedBehavior();
 
         while (activeSpoonPanel != null)
             yield return null;
@@ -102,13 +95,13 @@ public class BehaviorManager : MonoBehaviour
         return activeSpoonPanel != null;
     }
 
-    public void RegisterPanel(SpoonPanel panel)
+    public void RegisterPanel(SpoonSlotPanel panel)
     {
         if (panel == null) return;
         activeSpoonPanel = panel;
     }
 
-    public void ClearPanel(SpoonPanel panel)
+    public void ClearPanel(SpoonSlotPanel panel)
     {
         if (panel == null) return;
         if (activeSpoonPanel == panel)
@@ -116,86 +109,43 @@ public class BehaviorManager : MonoBehaviour
     }
 
     // -----------------------------------------------------------------
-    // SCENE BEHAVIOR
+    // REMOVED DUPLICATED METHODS — keeping the real ones below
     // -----------------------------------------------------------------
+
     public void BeginSceneBehavior(BehaviorData data)
     {
-        if (data == null)
-        {
-            Debug.LogError("BeginSceneBehavior called with null data");
-            return;
-        }
-
         if (isBusy)
         {
             ShowBusyTooltip();
             return;
         }
-
-        isBusy = true;
-        currentBehavior = data;
-
-        Debug.Log($"[BehaviorManager] BeginSceneBehavior: {data.behaviorName}");
-
-        if (data.thought != null && ThoughtBubbleView.Instance != null)
-            ThoughtBubbleView.Instance.SpawnThought(data.thought);
-    }
-
-    // -----------------------------------------------------------------
-    // ONE-SHOT BEHAVIOR
-    // -----------------------------------------------------------------
-    public void BeginOneShotBehavior(BehaviorData data)
-    {
-        if (data == null)
-        {
-            Debug.LogError("BeginOneShotBehavior called with null data");
-            return;
-        }
-
-        if (isBusy)
-        {
-            ShowBusyTooltip();
-            return;
-        }
-
-        isBusy = true;
-        currentBehavior = data;
-
-        Debug.Log($"[BehaviorManager] BeginOneShotBehavior: {data.behaviorName}");
-
-        if (data.thought != null && ThoughtBubbleView.Instance != null)
-            ThoughtBubbleView.Instance.SpawnThought(data.thought);
 
         if (behaviorRoutine != null)
             StopCoroutine(behaviorRoutine);
 
+        currentBehavior = data;
+        isBusy = true;
+        behaviorRoutine = StartCoroutine(RunBehavior(data));
+    }
+
+    public void BeginOneShotBehavior(BehaviorData data)
+    {
+        if (isBusy)
+        {
+            ShowBusyTooltip();
+            return;
+        }
+
+        if (behaviorRoutine != null)
+            StopCoroutine(behaviorRoutine);
+
+        currentBehavior = data;
+        isBusy = true;
         behaviorRoutine = StartCoroutine(RunBehavior(data));
     }
 
     // -----------------------------------------------------------------
-    // DEFAULT BEHAVIOR LOOP
-    // -----------------------------------------------------------------
-    private void StartDefaultBehavior()
-    {
-        if (defaultBehavior == null)
-        {
-            Debug.LogWarning("No default behavior assigned!");
-            return;
-        }
-
-        Debug.Log($"Falling back to default behavior: {defaultBehavior.behaviorName}");
-
-        if (behaviorRoutine != null)
-            StopCoroutine(behaviorRoutine);
-
-        currentBehavior = defaultBehavior;
-        isBusy = false;
-
-        behaviorRoutine = StartCoroutine(RunBehavior(defaultBehavior));
-    }
-
-    // -----------------------------------------------------------------
-    // MAIN BEHAVIOR COROUTINE
+    // MAIN BEHAVIOR COROUTINE — now ONLY handles one-shot timed behaviors
     // -----------------------------------------------------------------
     private IEnumerator RunBehavior(BehaviorData data)
     {
@@ -205,36 +155,8 @@ public class BehaviorManager : MonoBehaviour
             yield break;
         }
 
-        float secondsPerGameMinute = clockManager.realSecondsPerGameTick /
-                                     clockManager.minutesPerTick;
+        // Removed all clock calculations
 
-        // Infinite default behavior
-        if (data.isDefault)
-        {
-            while (currentBehavior == data)
-            {
-                float elapsed = 0f;
-
-                while (elapsed < 1f)
-                {
-                    if (clockManager.CurrentState != ClockManager.ClockState.Paused)
-                        elapsed += Time.deltaTime *
-                                    clockManager.TimeScaleMultiplier / secondsPerGameMinute;
-
-                    yield return null;
-                }
-
-                resourceManager.ModifyResources(
-                    data.spoonsCost,
-                    data.hungerImpact,
-                    data.cashCost
-                );
-            }
-
-            yield break;
-        }
-
-        // One-shot timed behavior
         int totalMinutes = Mathf.Max(1, data.durationMinutes);
         float elapsedMinutes = 0f;
 
@@ -242,10 +164,7 @@ public class BehaviorManager : MonoBehaviour
 
         while (elapsedMinutes < totalMinutes)
         {
-            if (clockManager.CurrentState != ClockManager.ClockState.Paused)
-                elapsedMinutes += Time.deltaTime *
-                                  clockManager.TimeScaleMultiplier / secondsPerGameMinute;
-
+            elapsedMinutes += Time.deltaTime / secondsPerGameMinute;
             yield return null;
         }
 
@@ -255,12 +174,14 @@ public class BehaviorManager : MonoBehaviour
             data.cashCost
         );
 
-        isBusy = false;
-        StartDefaultBehavior();
-    }
+        // Close spoon panel if tied to this behavior
+        if (activeSpoonPanel != null)
+        {
+            var panelToClose = activeSpoonPanel;
+            activeSpoonPanel = null;
+            panelToClose.CloseAfterConfirmedBehavior();
+        }
 
-    private void HandleClockTick()
-    {
-        // no-op but required
+        isBusy = false;
     }
 }

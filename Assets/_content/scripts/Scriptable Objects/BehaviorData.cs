@@ -17,9 +17,11 @@ public class BehaviorData : ScriptableObject
     [Header("Costs / Impacts")]
     public int spoonsCost = 0;
     public bool hideSpoonsCost = false;
-    public int hungerImpact = 0;
+    public int hopeGain = 0;
+    public int stresGain = 0;
+    public int hungerImpact = 0; //deprecated
     [Tooltip("-1 = none")]
-    public float cashCost = -1f;
+    public float cashCost = -1f; //deprecated
 
     [Header("Visuals")]
     public Sprite icon;

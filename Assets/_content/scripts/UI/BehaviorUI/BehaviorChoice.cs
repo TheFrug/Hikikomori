@@ -25,7 +25,7 @@ public class BehaviorChoice : MonoBehaviour
     public float defaultOneShotSeconds = 0.6f;
 
     private BehaviorData data;
-    private SpoonPanel currentSpoonPanel;
+    private SpoonSlotPanel currentSpoonPanel;
     private Coroutine progressRoutine;
 
     public void Configure(BehaviorData behaviorData, BehaviorManager mgr)
@@ -94,7 +94,7 @@ public class BehaviorChoice : MonoBehaviour
 
         // Spawn a new one and register it
         var panelGO = Instantiate(spoonPanelPrefab, panelAnchor != null ? panelAnchor : transform);
-        var panel = panelGO.GetComponent<SpoonPanel>();
+        var panel = panelGO.GetComponent<SpoonSlotPanel>();
 
         if (panel == null)
         {
@@ -110,7 +110,7 @@ public class BehaviorChoice : MonoBehaviour
         currentSpoonPanel = panel;
     }
 
-    public void StartProgressFromPanel(SpoonPanel panel)
+    public void StartProgressFromPanel(SpoonSlotPanel panel)
     {
         if (progressRoutine != null)
             return;
@@ -136,7 +136,7 @@ public class BehaviorChoice : MonoBehaviour
         }
     }
 
-    private IEnumerator RunProgressThenStart(float seconds, bool isScene, SpoonPanel panel)
+    private IEnumerator RunProgressThenStart(float seconds, bool isScene, SpoonSlotPanel panel)
     {
         float elapsed = 0f;
         oneShotProgressBar.value = 0f;
