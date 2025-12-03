@@ -238,6 +238,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     // -------------------------------------------
     public void ShowBubble(Thought thought)
     {
+        ClearAll();
         if (thought == null)
         {
             Debug.LogWarning("[ThoughtBubbleManager] Tried to spawn null Thought asset!");

@@ -3,5 +3,6 @@
 <<set $Goblin = GetPartDisplayName("Goblin")>>
 <<set $Wiki = GetPartDisplayName("Wiki")>>
 {$Goblin}: Hello! [dread]This sentence should be red[/dread]. Testing... 
+<<wait  2.0>>
 {$Wiki}: OK, [hype]this one should be green[/hype].
 ===

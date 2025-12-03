@@ -3,8 +3,8 @@
 <<set $Goblin = GetPartDisplayName("Goblin")>>
 <<set $Lady = GetPartDisplayName("Lady")>>
 {$Goblin}: You really think that was a good idea?
-<<wait 5.0>>
+<<wait 3.0>>
 {$Goblin}: Probably not.
-<<wait 5.0>>
+<<wait 3.0>>
 {$Lady}: Heh... we’ll see.
 ===
