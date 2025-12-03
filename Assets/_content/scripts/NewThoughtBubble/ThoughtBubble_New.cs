@@ -21,6 +21,7 @@ namespace ProjectHiki.UI
         [SerializeField] private float minHeight = 75f;
         [SerializeField] private float maxHeight = 300f;
 
+
         public RectTransform RectTransform { get; private set; } = null!;
         [Header("Set at Runtime")]
         public bool HasSpeaker;
