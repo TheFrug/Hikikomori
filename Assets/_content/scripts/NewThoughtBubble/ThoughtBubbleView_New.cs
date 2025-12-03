@@ -7,6 +7,9 @@ using UnityEngine;
 
 public class ThoughtBubbleView_New : DialoguePresenterBase
 {
+
+    private bool yarnFinished = false;
+
     public override YarnTask OnDialogueStartedAsync()
     {
         return YarnTask.CompletedTask;
@@ -14,8 +17,18 @@ public class ThoughtBubbleView_New : DialoguePresenterBase
 
     public override YarnTask OnDialogueCompleteAsync()
     {
-        ThoughtBubbleManager_New.Instance?.ClearAll();
+        yarnFinished = true;
+        TryClearIfDone();
         return YarnTask.CompletedTask;
+    }
+
+    private void TryClearIfDone()
+    {
+        if (yarnFinished && ThoughtBubbleManager_New.Instance._active.Count == 0)
+        {
+            ThoughtBubbleManager_New.Instance.ClearAll();
+            yarnFinished = false;
+        }
     }
 
     public override async YarnTask RunLineAsync(LocalizedLine line, LineCancellationToken token)
@@ -28,8 +41,6 @@ public class ThoughtBubbleView_New : DialoguePresenterBase
             return;
 
         mgr.ShowBubble(speaker, processedText);
-
-        await WaitForNextThought(mgr.CurrentSpawnDelay, token);
     }
 
     public override YarnTask<DialogueOption?> RunOptionsAsync(DialogueOption[] options, CancellationToken cancellationToken)
@@ -46,4 +57,13 @@ public class ThoughtBubbleView_New : DialoguePresenterBase
             await YarnTask.Yield();
     }
 
+    private void OnEnable()
+    {
+        ThoughtBubbleManager_New.BubbleFinished.AddListener(TryClearIfDone);
+    }
+
+    private void OnDisable()
+    {
+        ThoughtBubbleManager_New.BubbleFinished.RemoveListener(TryClearIfDone);
+    }
 }

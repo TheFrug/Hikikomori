@@ -128,7 +128,7 @@ namespace ProjectHiki.UI
                 nameText = namePanel.GetComponentInChildren<TMP_Text>(true);
         }
 
-        public void InitializeInteractive(string text, Color color, TMP_FontAsset? font, string speakerKey, ThoughtBubbleView owner)
+        public void InitializeInteractive(string text, Color color, TMP_FontAsset font, string speakerKey, ThoughtBubbleView owner)
         {
             EnsureComponents();
 

@@ -165,7 +165,7 @@ public class ResourceManager : MonoBehaviour
         int randomVariance = Random.Range(-3, 2);
         currentSpoons = Mathf.Clamp(baseSpoons + randomVariance, 1, maxSpoons);
 
-        Debug.Log($"Daily spoons set to {currentSpoons} (Hunger: {currentHunger}/{maxHunger})");
+        //Debug.Log($"Daily spoons set to {currentSpoons} (Hunger: {currentHunger}/{maxHunger})");
 
         // Only refresh if UI for this scene exists
         if (uiInitialized && spoonDrawer != null)

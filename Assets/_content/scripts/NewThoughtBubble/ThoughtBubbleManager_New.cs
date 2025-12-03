@@ -42,11 +42,12 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private Thought debugThought;
 
-    private List<ThoughtBubble_New> _pool;
-    private List<ThoughtBubble_New> _active;
+    public List<ThoughtBubble_New> _pool;
+    public List<ThoughtBubble_New> _active;
 
-    private float nextSpawnAllowedTime = 0f;
     private float currentTravelMultiplier = 1.0f;
+
+    public float CurrentTravelMultiplier => currentTravelMultiplier;
 
     private void Awake()
     {
@@ -210,7 +211,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
                 currentTravelMultiplier = normalTravelMultiplier;
                 break;
         }
-        nextSpawnAllowedTime = Time.time + CurrentSpawnDelay;
+        //nextSpawnAllowedTime = Time.time + CurrentSpawnDelay;
     }
 
     // -------------------------------------------
@@ -226,11 +227,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     // -------------------------------------------
     private void ShowBubbleInternal(string speakerKey, string text, float lifetime)
     {
-        if (Time.time < nextSpawnAllowedTime)
-            return;
-
-        nextSpawnAllowedTime = Time.time + normalSpawnDelay;
-
         if (_active.Count >= maxSimultaneous)
         {
             var oldest = _active[0];
@@ -264,6 +260,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     public void ClearAll()
     {
+        print("Clearing all bubbles");
         for (int i = _active.Count - 1; i >= 0; i--)
         {
             ReturnBubbleToPool(_active[i]);
