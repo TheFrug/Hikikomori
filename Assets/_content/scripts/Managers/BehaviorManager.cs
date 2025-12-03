@@ -224,11 +224,7 @@ public class BehaviorManager : MonoBehaviour
                     yield return null;
                 }
 
-                resourceManager.ModifyResources(
-                    data.spoonsCost,
-                    data.hungerImpact,
-                    data.cashCost
-                );
+                resourceManager.ModifyResources(data.spoonsCost);
             }
 
             yield break;
@@ -249,11 +245,7 @@ public class BehaviorManager : MonoBehaviour
             yield return null;
         }
 
-        resourceManager.ModifyResources(
-            data.spoonsCost,
-            data.hungerImpact,
-            data.cashCost
-        );
+        resourceManager.ModifyResources(data.spoonsCost);
 
         isBusy = false;
         StartDefaultBehavior();
