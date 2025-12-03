@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class SpoonSlotPanel : MonoBehaviour
+public class SpoonPanel : MonoBehaviour
 {
-    public static SpoonSlotPanel ActivePanel;   // GLOBAL ACCESS
+    public static SpoonPanel ActivePanel;   // GLOBAL ACCESS
 
     [Header("Config")]
     public BehaviorData behaviorData;
@@ -94,7 +94,7 @@ public class SpoonSlotPanel : MonoBehaviour
         // Avoid double-register
         if (spentSpoons.Contains(spoon)) return;
 
-        // Mark spoon spent (visual fade + deactivate)
+        // Mark spoon spent (visual fade + deactivation)
         spoon.Spend();
 
         spentSpoons.Add(spoon);
@@ -116,7 +116,9 @@ public class SpoonSlotPanel : MonoBehaviour
 
     public void OnSlotChanged()
     {
-        // only block UI updates after we've already triggered a confirmed behavior
+        if (behaviorTriggered)
+            return;
+
         int filled = CurrentFilledSpoons();
 
         // update UI text
@@ -127,74 +129,23 @@ public class SpoonSlotPanel : MonoBehaviour
         if (doThingButton != null)
             doThingButton.interactable = (filled >= requiredSpoons);
 
-        // set flag when enough are present so subsequent UI changes don't retrigger logic
         if (filled >= requiredSpoons)
+        {
             behaviorTriggered = true;
+        }
     }
 
     // Do-the-Thing pressed inside the SpoonPanel
-    public void OnDoTheThing()
+    private void OnDoTheThing()
     {
-        // Defensive: ensure enough spoons visually
-        int filled = CurrentFilledSpoons();
-        if (filled < requiredSpoons)
+        if (ownerChoice != null)
         {
-            Debug.LogWarning("Not enough visual spoons to perform behavior.");
-            return;
-        }
-
-        behaviorTriggered = true;
-        if (doThingButton != null) doThingButton.interactable = false;
-        if (cancelButton != null) cancelButton.interactable = false;
-
-        // Spend spoons via authoritative ResourceManager
-        //bool success = ResourceManager.Instance != null && ResourceManager.Instance.TrySpendSpoons(requiredSpoons);
-
-        if (!success)
-        {
-            Debug.LogWarning("Not enough spoons to perform behavior. Restoring spent spoons.");
-            RestoreSpentSpoons();
-            StartCoroutine(CloseSequence(false));
-            return;
-        }
-
-        // Run the progress bar + behavior
-        StartCoroutine(RunBehaviorWithProgress());
-    }
-
-    private IEnumerator RunBehaviorWithProgress()
-    {
-        // Compute duration for progress bar
-        float seconds = oneShotBaseSeconds;
-        if (behaviorData.durationMinutes > 0)
-            seconds = Mathf.Max(0.2f, oneShotBaseSeconds * (behaviorData.durationMinutes / 30f));
-
-        // Show progress bar
-        if (progressBar != null)
-        {
-            progressBar.gameObject.SetActive(true);
-            progressBar.value = 0f;
-        }
-
-        float elapsed = 0f;
-        while (elapsed < seconds)
-        {
-            elapsed += Time.deltaTime;
-            if (progressBar != null)
-                progressBar.value = Mathf.Clamp01(elapsed / seconds);
-            yield return null;
-        }
-
-        // After progress bar finishes, run the behavior
-        if (behaviorData.isScene || (behaviorData.thought != null && behaviorData.thought.type == Thought.ThoughtType.Interactive))
-        {
-            behaviorManager?.BeginSceneBehavior(behaviorData, this);
+            ownerChoice.StartProgressFromPanel(this);
         }
         else
         {
-            behaviorManager?.BeginOneShotBehavior(behaviorData, this);
+            StartBehaviorRun();
         }
-
     }
 
     // Legacy fallback when ownerChoice isn't provided
@@ -243,29 +194,26 @@ public class SpoonSlotPanel : MonoBehaviour
             yield return null;
         }
 
-        // After panel's local progress finishes, hand over to BehaviorManager
-        behaviorManager?.BeginOneShotBehavior(behaviorData, this);
+        behaviorManager.BeginOneShotBehavior(behaviorData, this);
     }
 
-    // Called by user pressing Cancel (no spend)
+    // Called by user pressing Cancel
     public void CancelPanel()
     {
-        // Close without confirming (will restore)
-        StartCoroutine(CloseSequence(false));
+        // NEW — graceful closing, not instant destruction
+        ClosePanel();
     }
 
-    // Called externally by BehaviorManager to close the panel after confirmed behavior completes
-    public void CloseAfterConfirmedBehavior()
+    // NEW — called by BehaviorManager also
+    public void ClosePanel()
     {
-        StartCoroutine(CloseSequence(true));
+        StartCoroutine(CloseSequence());
     }
 
-    // NEW — animates spoons back BEFORE destruction or not depending on confirmed flag
-    private IEnumerator CloseSequence(bool behaviorConfirmed)
+    // NEW — animates spoons back BEFORE destruction
+    private IEnumerator CloseSequence()
     {
-        // If the behavior was NOT confirmed, return spent spoons visually
-        if (!behaviorConfirmed)
-            RestoreSpentSpoons();
+        RestoreSpentSpoons();
 
         // wait for spoon animations to finish (0.35–0.45s usually)
         yield return new WaitForSeconds(0.4f);

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using ProjectHiki.UI;
@@ -36,7 +36,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     private ThoughtBubble_New lastBubbleSpawned;
 
-    public float CurrentSpawnDelay { get; private set; } = 0.75f;
+    public float CurrentSpawnDelay { get; private set; } = 0.75f; // default
     public float slowTravelMultiplier = 0.75f;
     public float normalTravelMultiplier = 1.0f;
     public float fastTravelMultiplier = 1.4f;
@@ -50,26 +50,12 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     private float currentTravelMultiplier = 1.0f;
     public float CurrentTravelMultiplier => currentTravelMultiplier;
 
-
-    // -------------------------
-    // LIFECYCLE
-    // -------------------------
-
     private void Awake()
     {
-        // Set singleton instance and build bubble pool
         Instance = this;
         InitPool();
     }
 
-
-    // -------------------------
-    // POOLING
-    // -------------------------
-
-    /// <summary>
-    /// Creates the initial pool of bubble objects and sets active list.
-    /// </summary>
     private void InitPool()
     {
         _pool = new List<ThoughtBubble_New>(poolSize);
@@ -83,9 +69,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Fetches an available bubble. Reuses from pool or resets the oldest active bubble if empty.
-    /// </summary>
     private ThoughtBubble_New GetFromPool()
     {
         if (_pool.Count > 0)
@@ -110,9 +93,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         return inst;
     }
 
-    /// <summary>
-    /// Returns a bubble to the pool, resetting its visuals and state.
-    /// </summary>
     private void ReturnBubbleToPool(ThoughtBubble_New bubble)
     {
         bubble.ResetBubble();
@@ -120,18 +100,11 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         if (!_pool.Contains(bubble)) _pool.Add(bubble);
     }
 
-
-    // -------------------------
-    // UPDATE LOOP
-    // -------------------------
-
     private void Update()
     {
-        // Debug spawn
         if (Input.GetKeyDown(KeyCode.Alpha5) && debugThought != null)
             ShowBubble(debugThought);
 
-        // Update movement + sway for all active bubbles
         for (int i = 0; i < _active.Count; i++)
         {
             var bubble = _active[i];
@@ -140,20 +113,14 @@ public class ThoughtBubbleManager_New : MonoBehaviour
             ApplySway(bubble);
         }
 
-        // Detect when all bubbles have reached their stacking positions
         if (!allAtTop && AreAllBubblesAtTarget())
             allAtTop = true;
     }
 
-
     // -------------------------
-    // MOVEMENT + LAYOUT HELPERS
+    // HELPER METHODS
     // -------------------------
 
-    /// <summary>
-    /// Calculates the Y-position the bubble should stack to at the top area.
-    /// Ensures bubble spacing and adjusts for speaker label height.
-    /// </summary>
     private float CalculateTargetTopPosition(int index, ThoughtBubble_New bubble)
     {
         float top = topPoint.position.y;
@@ -173,10 +140,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         return top;
     }
 
-    /// <summary>
-    /// Moves a bubble upward, handles sticking at the top, duration timing,
-    /// and floating away once Done becomes true.
-    /// </summary>
     private void UpdateBubbleMovement(ThoughtBubble_New bubble, float targetTop)
     {
         var pos = bubble.RectTransform.position;
@@ -184,17 +147,14 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
         if (y < targetTop)
         {
-            // Still rising toward target
             pos.y = y;
         }
         else
         {
-            // Reached target area
             pos.y = targetTop;
 
             if (!bubble.Done)
             {
-                // Count time spent at the top until duration met
                 bubble.TopTimer += Time.deltaTime;
 
                 if (allAtTop && bubble.TopTimer >= bubble.Duration)
@@ -202,10 +162,8 @@ public class ThoughtBubbleManager_New : MonoBehaviour
             }
             else
             {
-                // Bubble is done → move upward to float offscreen
                 pos.y = y;
 
-                // If newly reaching top after being done
                 if (!bubble.Done && pos.y >= targetTop)
                     HandleBubbleAtTop(bubble);
             }
@@ -214,25 +172,16 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         bubble.RectTransform.position = pos;
     }
 
-    /// <summary>
-    /// Handles special timing logic when bubbles reach their top stacking location.
-    /// Controls when all bubbles are marked Done.
-    /// </summary>
     private void HandleBubbleAtTop(ThoughtBubble_New bubble)
     {
-        bubble.RectTransform.position = new Vector3(
-            bubble.RectTransform.position.x,
-            CalculateTargetTopPosition(_active.IndexOf(bubble), bubble),
-            bubble.RectTransform.position.z);
+        bubble.RectTransform.position = new Vector3(bubble.RectTransform.position.x, CalculateTargetTopPosition(_active.IndexOf(bubble), bubble), bubble.RectTransform.position.z);
 
         if (bubble != lastBubbleSpawned)
         {
-            // Earlier bubbles only reset timer; they do not drive the global Done state
             bubble.TopTimer = 0f;
         }
         else
         {
-            // Final bubble controls the moment all bubbles become Done
             bubble.TopTimer += Time.deltaTime;
 
             if (bubble.TopTimer >= bubble.Duration)
@@ -244,9 +193,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Applies horizontal sine-wave sway for a floating effect.
-    /// </summary>
     private void ApplySway(ThoughtBubble_New bubble)
     {
         bubble.SwayTimer += Time.deltaTime * swaySpeed;
@@ -255,9 +201,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         bubble.RectTransform.position = pos;
     }
 
-    /// <summary>
-    /// Checks whether all bubbles have reached their vertical target position.
-    /// </summary>
     private bool AreAllBubblesAtTarget()
     {
         for (int i = 0; i < _active.Count; i++)
@@ -270,10 +213,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// Places a newly spawned bubble at the spawn point just below the screen.
-    /// Sets its initial X anchoring and alpha.
-    /// </summary>
     private void SpawnBubbleAtStartPosition(ThoughtBubble_New bubble)
     {
         var pos = spawnPoint.position;
@@ -287,15 +226,10 @@ public class ThoughtBubbleManager_New : MonoBehaviour
             bubble.CanvasGroup.alpha = 1f;
     }
 
-
     // -------------------------
-    // PUBLIC SPAWN & CONTROL
+    // PUBLIC SPAWN METHODS
     // -------------------------
 
-    /// <summary>
-    /// Starts a new thought: clears existing bubbles, applies speed settings,
-    /// and forwards to Yarn dialogue for spawning individual bubbles.
-    /// </summary>
     public void ShowBubble(Thought thought)
     {
         ClearAll();
@@ -323,9 +257,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         Debug.LogWarning($"[ThoughtBubbleManager] Thought '{thought.name}' has no Yarn node defined, skipping spawn.");
     }
 
-    /// <summary>
-    /// Sets spawn and travel speed parameters based on the Thought asset's speed category.
-    /// </summary>
     private void SetSpeedFromThought(Thought t)
     {
         switch (t.speed)
@@ -345,18 +276,11 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Spawns a bubble from Yarn with explicit speaker and text.
-    /// </summary>
     public void ShowBubble(string speakerKey, string text)
     {
         ShowBubbleInternal(speakerKey, text, 3f);
     }
 
-    /// <summary>
-    /// Core internal bubble spawn function. Pulls from pool, initializes content,
-    /// positions at spawn point, and registers lastBubbleSpawned.
-    /// </summary>
     private void ShowBubbleInternal(string speakerKey, string text, float lifetime)
     {
         if (_active.Count >= maxSimultaneous)
@@ -383,9 +307,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         lastBubbleSpawned = bubble;
     }
 
-    /// <summary>
-    /// Clears all active bubbles and resets state for a new thought.
-    /// </summary>
     public void ClearAll()
     {
         allAtTop = false;

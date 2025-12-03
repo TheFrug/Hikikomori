@@ -5,12 +5,12 @@ public class SpoonSlot : MonoBehaviour
 {
     public int spoonCount = 0;
 
-    private SpoonSlotPanel parentPanel;
+    private SpoonPanel parentPanel;
 
     private Transform originalParent;
     private Vector2 originalAnchoredPos;
 
-    public void Initialize(SpoonSlotPanel panel)
+    public void Initialize(SpoonPanel panel)
     {
         parentPanel = panel;
     }

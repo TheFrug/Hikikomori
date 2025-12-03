@@ -103,9 +103,9 @@ public class spoonBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             image.color = originalColor;
 
         // Try to accept into slot
-        if (SpoonSlotPanel.ActivePanel != null)
+        if (SpoonPanel.ActivePanel != null)
         {
-            foreach (var slot in SpoonSlotPanel.ActivePanel.slots)
+            foreach (var slot in SpoonPanel.ActivePanel.slots)
             {
                 slot.TryAcceptSpoon(this);
                 if (!insideDrawer) return; // accepted -> stop further processing
