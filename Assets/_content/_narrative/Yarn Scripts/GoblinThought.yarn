@@ -5,6 +5,6 @@
 {$Goblin}: You really think that was a good idea?
 <<wait 5.0>>
 {$Goblin}: Probably not.
-<<wait 7.0>>
+<<wait 5.0>>
 {$Lady}: Heh... we’ll see.
 ===

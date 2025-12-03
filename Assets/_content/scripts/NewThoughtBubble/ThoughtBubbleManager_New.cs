@@ -27,11 +27,14 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     [Header("General")]
     [SerializeField] private int maxSimultaneous = 20;
+    private bool allAtTop = false;
 
     [Header("Speed Multipliers")]
     public float slowSpawnDelay = 1.2f;
     public float normalSpawnDelay = 0.75f;
     public float fastSpawnDelay = 0.35f;
+
+    private ThoughtBubble_New lastBubbleSpawned;
 
     public float CurrentSpawnDelay { get; private set; } = 0.75f; // default
 
@@ -136,30 +139,97 @@ public class ThoughtBubbleManager_New : MonoBehaviour
             {
                 pos.y = y;
             }
-            else if (bubble.Done)
-            {
-                pos.y = y;
-                if (y > topPoint.position.y + bubble.RectTransform.rect.height * 2f)
-                {
-                    ReturnBubbleToPool(bubble);
-                    BubbleFinished.Invoke();
-                    i--;
-                    continue;
-                }
-            }
             else
             {
-                bubble.TopTimer += Time.deltaTime;
-                if (bubble.TopTimer >= bubble.Duration)
+                // Bubble *has reached top* this frame
+                pos.y = top;
+
+                if (!bubble.Done)
                 {
-                    bubble.Done = true;
+                    bubble.TopTimer += Time.deltaTime;
+
+                    if (allAtTop && bubble.TopTimer >= bubble.Duration)
+                        bubble.Done = true;
+                }
+                else
+                {
+                    // DONE bubbles keep moving past top
+                    pos.y = y;
+                    // If bubble reached its stacking position, lock it there
+                    if (!bubble.Done && pos.y >= top)
+                    {
+
+                        // snap to the top slot
+                        pos.y = top;
+
+                        // If this is NOT the last bubble, no timer is used
+                        if (bubble != lastBubbleSpawned)
+                        {
+                            bubble.TopTimer = 0f;       // ensure it doesn't accumulate
+                                                        // Only becomes done when final bubble triggers the synchronized release
+                        }
+                        else
+                        {
+                            // This IS the final bubble
+                            bubble.TopTimer += Time.deltaTime;
+
+                            // When the last bubble finishes its duration:
+                            if (bubble.TopTimer >= bubble.Duration)
+                            {
+                                allAtTop = true;
+
+                                // Mark all active bubbles as done simultaneously
+                                foreach (var b in _active)
+                                {
+                                    b.Done = true;
+                                }
+                            }
+                        }
+                    }
                 }
             }
+
 
             bubble.SwayTimer += Time.deltaTime * swaySpeed;
             pos.x = bubble.CenterX + Mathf.Sin(bubble.SwayTimer) * swayAmplitude;
 
             bubble.RectTransform.position = pos;
+        }
+
+        // ------------------------------------------------------
+        // STEP 2 — Detect when every bubble has reached its top
+        // ------------------------------------------------------
+        if (!allAtTop)
+        {
+            bool everyBubbleAtTop = true;
+
+            for (int i = 0; i < _active.Count; i++)
+            {
+                var b = _active[i];
+
+                float targetTop = topPoint.position.y;
+
+                if (i >= 1)
+                {
+                    var prev = _active[i - 1];
+                    float prevTop = prev.RectTransform.position.y - spacingBetweenBubbles;
+                    targetTop = Mathf.Min(topPoint.position.y, prevTop);
+                }
+
+                if (b.HasSpeaker)
+                    targetTop -= b.SpeakerHeight;
+
+                targetTop -= b.RectTransform.rect.height * 0.5f;
+
+                if (b.RectTransform.position.y < targetTop)
+                {
+                    everyBubbleAtTop = false;
+                    break;
+                }
+            }
+
+            if (everyBubbleAtTop)
+                allAtTop = true;
         }
     }
 
@@ -256,11 +326,14 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
         if (bubble.CanvasGroup != null)
             bubble.CanvasGroup.alpha = 1f;
+
+        lastBubbleSpawned = bubble;
     }
 
     public void ClearAll()
     {
         print("Clearing all bubbles");
+        allAtTop = false;
         for (int i = _active.Count - 1; i >= 0; i--)
         {
             ReturnBubbleToPool(_active[i]);
