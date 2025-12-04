@@ -60,8 +60,8 @@ namespace ProjectHiki.UI
         private bool interactiveAdvanceRequested = false;
 
         [Header("Debug Thought assets (assign in inspector)")]
-        [SerializeField] private Thought goblinThought = null!;
-        [SerializeField] private Thought innerThought = null!;
+        [SerializeField] private ThoughtData goblinThought = null!;
+        [SerializeField] private ThoughtData innerThought = null!;
 
         private void Awake()
         {
@@ -176,7 +176,7 @@ namespace ProjectHiki.UI
 
         #region SpawnThought (ScriptableObject-based)
         // Uses only yarnNodeName from the Thought asset. DOES NOT touch YarnProject.
-        public void SpawnThought(Thought thought)
+        public void SpawnThought(ThoughtData thought)
         {
             if (thought == null)
             {
@@ -185,7 +185,7 @@ namespace ProjectHiki.UI
             }
 
             // Set mode based on type
-            SetMode(thought.type == Thought.ThoughtType.Automatic ? ThoughtMode.Automatic : ThoughtMode.Interactive);
+            SetMode(thought.type == ThoughtData.ThoughtType.Automatic ? ThoughtMode.Automatic : ThoughtMode.Interactive);
 
             // If a Yarn node is defined, always run it — regardless of type
             if (!string.IsNullOrEmpty(thought.yarnNodeName))

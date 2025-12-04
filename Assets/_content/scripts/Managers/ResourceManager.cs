@@ -1,6 +1,5 @@
-// ResourceManager.cs (REPLACEMENT / DROP-IN)
-// Notes: paste this over your existing ResourceManager. It keeps your existing fields and behavior
-// but adds clear public APIs, Yarn commands, and a Shutdown/Doomscroll coroutine.
+// ResourceManager.cs
+// Drop-in replacement / augmentation to match BehaviorManager expectations.
 
 using System.Collections;
 using UnityEngine;
@@ -29,7 +28,7 @@ public class ResourceManager : MonoBehaviour
     public int maxHope = 100;
     private int currentHope;
     private int hopeLevel;
-    private int hopeLevelUpThreshold = 5; // number of XP to gain a hopeLevel (adjust to design)
+    private int hopeLevelUpThreshold = 5;
 
     [Header("Spoons")]
     public SpoonDrawer spoonDrawer;
@@ -37,11 +36,10 @@ public class ResourceManager : MonoBehaviour
     public int currentSpoons;
 
     [Header("Shutdown / Doomscroll settings")]
-    [Tooltip("When stress == maxStress, enter shutdown mode.")]
     public bool isShutdownMode = false;
     public float doomscrollTickSeconds = 1.0f;
-    public int doomscrollStressRecoveryPerTick = 1; // stress reduced per tick while doomscrolling
-    public int doomscrollHopeDrainPerTick = 1;     // hope lost per tick while doomscrolling
+    public int doomscrollStressRecoveryPerTick = 1;
+    public int doomscrollHopeDrainPerTick = 1;
 
     private bool uiInitialized = false;
 
@@ -65,7 +63,6 @@ public class ResourceManager : MonoBehaviour
 
     void Start()
     {
-        // default starting values (tweak as you like)
         currentStress = 0;
         currentHope = 0;
         hopeLevel = 0;
@@ -108,7 +105,6 @@ public class ResourceManager : MonoBehaviour
         if (spoonDrawer == null)
         {
             Debug.LogWarning("ResourceManager: No SpoonDrawer found in this scene.");
-            // continue — spoon drawer optional for scenes without it
         }
 
         uiInitialized = true;
@@ -126,7 +122,6 @@ public class ResourceManager : MonoBehaviour
     // --- Setup & Update UI ---
     void SetupBars()
     {
-
         if (stressBar != null)
         {
             stressBar.maxValue = maxStress;
@@ -157,7 +152,6 @@ public class ResourceManager : MonoBehaviour
             if (hopeLevelText) hopeLevelText.text = $"{hopeLevel}";
         }
 
-        // Stress threshold tinting (keeps your original colors)
         if (stressBar?.fillRect != null)
         {
             Image stressFill = stressBar.fillRect.GetComponent<Image>();
@@ -173,13 +167,55 @@ public class ResourceManager : MonoBehaviour
         }
     }
 
+    // --- Public API additions for BehaviorManager compatibility ---
+
+    // Return whether there are enough spoons to pay this cost
+    public bool HasEnoughSpoons(int cost)
+    {
+        return currentSpoons >= Mathf.Max(0, cost);
+    }
+
+    // Expose current stress and max stress in the exact names expected
+    public int CurrentStress => currentStress;
+    public int MaxStress => maxStress;
+
+    // Apply behavior's base resource changes (safely handles null)
+    public void ModifyResources(BehaviorData data)
+    {
+        if (data == null) return;
+
+        // Consume spoons (cost is positive in data, we subtract)
+        if (data.spoonsCost != 0)
+            ModifySpoons(-data.spoonsCost);
+
+        // Apply stress/hope deltas (assumed fields; change names if your BehaviorData differs)
+        if (data.stressImpact != 0)
+            ModifyStress(data.stressImpact);
+
+        if (data.hopeImpact != 0)
+            ModifyHope(data.hopeImpact);
+
+        UpdateUI();
+    }
+
+    // Called by BehaviorManager after interactive dialogues finish; placeholder for Yarn-driven changes
+    public void ApplyPendingDialogueChanges()
+    {
+        // If you collect dialogue-driven resource changes in a queue, process them here.
+        // For now this is a safe no-op (keeps BehaviorManager happy).
+    }
+
+    // BehaviorManager expects this to trigger UI refresh hooks
+    public void UpdateAllUI()
+    {
+        UpdateUI();
+        if (uiInitialized && spoonDrawer != null)
+            spoonDrawer.RefreshDrawer(currentSpoons);
+    }
+
     // --- Core Logic / Public APIs ---
 
     // SPOONS
-    /// <summary>
-    /// Change the current spoons by delta. Positive adds spoons, negative consumes spoons.
-    /// Clamped to [0, maxSpoons]. Updates the SpoonDrawer immediately if present.
-    /// </summary>
     public void ModifySpoons(int delta)
     {
         currentSpoons = Mathf.Clamp(currentSpoons + delta, 0, maxSpoons);
@@ -189,26 +225,10 @@ public class ResourceManager : MonoBehaviour
         UpdateUI();
     }
 
-    /// <summary>
-    /// Backwards-compatible multi-purpose modifier. Use explicit ModifySpoons/ModifyStress/ModifyHope when possible.
-    /// spoonDelta/hungerDelta/cashDelta are applied as additive deltas (positive = increase).
-    /// </summary>
-    public void ModifyResources(float spoonDelta)
-    {
-        // Spoon: convert float to int delta
-        if (spoonDelta != 0f)
-            ModifySpoons(Mathf.RoundToInt(spoonDelta));
-
-        UpdateUI();
-    }
-
     // STRESS
-    /// <summary>
-    /// Change Stress by delta. Positive increases stress. If stress reaches maxStress, Shutdown mode triggers.
-    /// </summary>
     public void ModifyStress(int delta)
     {
-        if (isShutdownMode) return; // don't allow external increases while shutdown is running
+        if (isShutdownMode) return;
 
         currentStress = Mathf.Clamp(currentStress + delta, 0, maxStress);
         UpdateUI();
@@ -220,9 +240,6 @@ public class ResourceManager : MonoBehaviour
     }
 
     // HOPE
-    /// <summary>
-    /// Change Hope XP by delta. Positive increases XP. Will check for level-up.
-    /// </summary>
     public void ModifyHope(int deltaXP)
     {
         currentHope = Mathf.Clamp(currentHope + deltaXP, 0, maxHope);
@@ -230,19 +247,14 @@ public class ResourceManager : MonoBehaviour
         CheckHopeThreshold();
     }
 
-    /// <summary>
-    /// Check if currentHope meets the threshold for a level-up; if so increase hopeLevel and expand max spoons.
-    /// </summary>
     public void CheckHopeThreshold()
     {
         while (currentHope >= hopeLevelUpThreshold)
         {
             currentHope -= hopeLevelUpThreshold;
             hopeLevel++;
-            // Example effect on leveling: increase max spoons by 1 (tweak design as you like)
             maxSpoons = Mathf.Min(20, maxSpoons + 1);
             Debug.Log($"Hope level up! New level: {hopeLevel}. maxSpoons => {maxSpoons}");
-            // Visual feedback hook: you can instantiate level-up VFX here, or signal UI
         }
         UpdateUI();
     }
@@ -268,27 +280,21 @@ public class ResourceManager : MonoBehaviour
         if (isShutdownMode) return;
         isShutdownMode = true;
         Debug.Log("Entering Shutdown/Doomscroll mode due to max stress.");
-        // Optional: lock inputs globally (your own InputManager or UI blocker should be used here).
         StartCoroutine(DoomscrollCoroutine());
     }
 
     private IEnumerator DoomscrollCoroutine()
     {
-        // This simple implementation reduces stress and drains hope until stress is zero.
         while (currentStress > 0)
         {
             yield return new WaitForSeconds(doomscrollTickSeconds);
 
-            // Recover a bit of stress each tick
             currentStress = Mathf.Max(0, currentStress - doomscrollStressRecoveryPerTick);
-
-            // Drain hope as penalty
             currentHope = Mathf.Max(0, currentHope - doomscrollHopeDrainPerTick);
 
             UpdateUI();
         }
 
-        // Fully recovered
         isShutdownMode = false;
         Debug.Log("Shutdown/Doomscroll ended; stress is zero.");
         UpdateUI();
@@ -301,7 +307,6 @@ public class ResourceManager : MonoBehaviour
         {
             Debug.Log($"Hiki is stressed: {currentStress}/{maxStress} >= threshold {stressThreshold}.");
             stressedOut = true;
-            // TODO: hook UI warning flash/effect
         }
 
         if (stressedOut && (currentStress < stressThreshold))
@@ -311,16 +316,16 @@ public class ResourceManager : MonoBehaviour
         }
     }
 
-    // --- Debug Keys (updated to use clear APIs) ---
+    // --- Debug Keys ---
     void DebugControls()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha3)) ModifyStress(-10);          // stress -10
-        if (Input.GetKeyDown(KeyCode.Alpha4)) ModifyStress(10);           // stress +10
-        if (Input.GetKeyDown(KeyCode.Alpha5)) ModifySpoons(-1);           // consume 1 spoon
-        if (Input.GetKeyDown(KeyCode.Alpha6)) ModifySpoons(1);            // gain 1 spoon
+        if (Input.GetKeyDown(KeyCode.Alpha3)) ModifyStress(-10);
+        if (Input.GetKeyDown(KeyCode.Alpha4)) ModifyStress(10);
+        if (Input.GetKeyDown(KeyCode.Alpha5)) ModifySpoons(-1);
+        if (Input.GetKeyDown(KeyCode.Alpha6)) ModifySpoons(1);
     }
 
-    // --- Optional helpers for debugging from other scripts ---
+    // --- Optional helpers for other scripts ---
     public int GetCurrentStress() => currentStress;
     public int GetCurrentHope() => currentHope;
     public int GetHopeLevel() => hopeLevel;

@@ -14,8 +14,6 @@ public class TooltipPanel : MonoBehaviour
     public TMP_Text descText;
     public TMP_Text timeText;
     public TMP_Text spoonsText;
-    public TMP_Text hungerText;
-    public TMP_Text cashText;
     public Image iconImage;
 
     [Header("Message UI")]
@@ -113,17 +111,7 @@ public class TooltipPanel : MonoBehaviour
         titleText.text = data.behaviorName;
         descText.text = data.behaviorDescription;
 
-        if (data.isToggle)
-            timeText.text = "Time: Toggle (player controlled)";
-        else if (data.durationMinutes > 0)
-            timeText.text = FormatDuration(data.durationMinutes);
-        else
-            timeText.text = "";
-
         spoonsText.text = data.hideSpoonsCost ? "Spoons: ???" : $"Spoons: {data.spoonsCost}";
-        hungerText.text = data.hungerImpact != 0 ? FormatHunger(data.hungerImpact) : "";
-        cashText.text = data.cashCost > 0 ? $"Cost: ${data.cashCost:0.00}" : "";
-
         if (iconImage != null) iconImage.sprite = data.icon;
 
         // show visuals without deactivating this GameObject
@@ -204,7 +192,6 @@ public class TooltipPanel : MonoBehaviour
         messageText.enabled = false;
         messageRoutine = null;
     }
-
 
     // ---- helper helpers ----
     bool IsPanelVisualActive()

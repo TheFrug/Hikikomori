@@ -2,7 +2,7 @@ using UnityEngine;
 using Yarn.Unity;
 
 [CreateAssetMenu(menuName = "Hiki/Thought", fileName = "NewThought")]
-public class Thought : ScriptableObject
+public class ThoughtData : ScriptableObject
 {
     public enum ThoughtType
     {

@@ -42,7 +42,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     public float fastTravelMultiplier = 1.4f;
 
     [Header("Debug")]
-    [SerializeField] private Thought debugThought;
+    [SerializeField] private ThoughtData debugThought;
 
     public List<ThoughtBubble_New> _pool;
     public List<ThoughtBubble_New> _active;
@@ -103,7 +103,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Alpha5) && debugThought != null)
-            ShowBubble(debugThought);
+            StartThought(debugThought);
 
         for (int i = 0; i < _active.Count; i++)
         {
@@ -230,7 +230,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     // PUBLIC SPAWN METHODS
     // -------------------------
 
-    public void ShowBubble(Thought thought)
+    public void StartThought(ThoughtData thought)
     {
         ClearAll();
         if (thought == null)
@@ -257,15 +257,15 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         Debug.LogWarning($"[ThoughtBubbleManager] Thought '{thought.name}' has no Yarn node defined, skipping spawn.");
     }
 
-    private void SetSpeedFromThought(Thought t)
+    private void SetSpeedFromThought(ThoughtData t)
     {
         switch (t.speed)
         {
-            case Thought.ThoughtSpeed.Slow:
+            case ThoughtData.ThoughtSpeed.Slow:
                 CurrentSpawnDelay = slowSpawnDelay;
                 currentTravelMultiplier = slowTravelMultiplier;
                 break;
-            case Thought.ThoughtSpeed.Fast:
+            case ThoughtData.ThoughtSpeed.Fast:
                 CurrentSpawnDelay = fastSpawnDelay;
                 currentTravelMultiplier = fastTravelMultiplier;
                 break;

@@ -14,8 +14,8 @@ public class SpoonPanel : MonoBehaviour
     public RectTransform slotContainer;
     public GameObject slotPrefab;
     public Button cancelButton;
-    public Button doThingButton;        // NEW: "Do the Thing" inside panel
-    public TMP_Text spoonsUsedText;     // NEW: "Spoons Used: a / b"
+    public Button doThingButton;
+    public TMP_Text spoonsUsedText;
     public Slider progressBar; // optional visual; mainly kept for legacy/visual feedback
     public float oneShotBaseSeconds = 0.6f;
 
@@ -157,13 +157,12 @@ public class SpoonPanel : MonoBehaviour
             return;
         }
 
-        bool isScene = behaviorData.isScene ||
-                       (behaviorData.thought != null &&
-                        behaviorData.thought.type == Thought.ThoughtType.Interactive);
+        bool isScene = (behaviorData.thought != null &&
+                        behaviorData.thought.type == ThoughtData.ThoughtType.Interactive);
 
         if (isScene)
         {
-            behaviorManager.BeginSceneBehavior(behaviorData, this);
+            behaviorManager.RunBehavior(ownerChoice);
         }
         else
         {
@@ -194,7 +193,7 @@ public class SpoonPanel : MonoBehaviour
             yield return null;
         }
 
-        behaviorManager.BeginOneShotBehavior(behaviorData, this);
+        behaviorManager.RunBehavior(ownerChoice);
     }
 
     // Called by user pressing Cancel

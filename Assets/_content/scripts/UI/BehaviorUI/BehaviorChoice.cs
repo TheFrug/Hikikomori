@@ -1,3 +1,4 @@
+// BehaviorChoice.cs
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,8 +11,7 @@ public class BehaviorChoice : MonoBehaviour
     public TMP_Text descText;
     public TMP_Text timeText;
     public TMP_Text spoonsText;
-    public TMP_Text hungerText;
-    public TMP_Text cashText;
+    public TMP_Text hopeText;
     public Image iconImage;
 
     [Header("Hook-ins")]
@@ -27,33 +27,26 @@ public class BehaviorChoice : MonoBehaviour
     private BehaviorData data;
     private SpoonPanel currentSpoonPanel;
     private Coroutine progressRoutine;
+    private ThoughtData myThought;
+
+    public bool usedToday = false;
+
+    public BehaviorData BehaviorData { get { return data; } }
 
     public void Configure(BehaviorData behaviorData, BehaviorManager mgr)
     {
         data = behaviorData;
         behaviorManager = mgr;
+        myThought = data.thought;
 
         titleText.text = behaviorData.behaviorName;
         descText.text = behaviorData.behaviorDescription;
-
-        if (behaviorData.isToggle)
-            timeText.text = "Time: Toggle";
-        else if (behaviorData.durationMinutes > 0)
-            timeText.text = FormatDuration(behaviorData.durationMinutes);
-        else
-            timeText.text = "";
 
         spoonsText.text = behaviorData.hideSpoonsCost
             ? "Spoons: ???"
             : $"Spoons: {behaviorData.spoonsCost}";
 
-        hungerText.text = behaviorData.hungerImpact != 0
-            ? FormatHunger(behaviorData.hungerImpact)
-            : "";
-
-        cashText.text = behaviorData.cashCost > 0
-            ? $"Cost: ${behaviorData.cashCost:0.00}"
-            : "";
+        hopeText.text = $"Hope: {behaviorData.hopeImpact}";
 
         if (iconImage != null)
             iconImage.sprite = behaviorData.icon;
@@ -70,52 +63,51 @@ public class BehaviorChoice : MonoBehaviour
 
     private void OnSelected()
     {
-        if (behaviorManager == null || data == null)
-            return;
+        if (behaviorManager == null || data == null) return;
 
-        if (behaviorManager.IsBusy())
-        {
-            behaviorManager.ShowBusyTooltip();
-            return;
-        }
-
+        // If no spoon cost, start immediately
         if (data.spoonsCost <= 0)
         {
-            StartProgressFromPanel(null);
+            StartBehaviorConfirm(null);
             return;
         }
 
-        // If another choice has an open panel, close it
-        if (behaviorManager.HasOpenPanel())
+        // If a panel for this choice is already open, keep it (toggle close handled by panel)
+        if (currentSpoonPanel != null)
         {
-            Destroy(behaviorManager.activeSpoonPanel.gameObject);
-            behaviorManager.ClearPanel(behaviorManager.activeSpoonPanel);
+            // Panel already open — do nothing (panel has its own controls)
+            return;
         }
 
-        // Spawn a new one and register it
-        var panelGO = Instantiate(spoonPanelPrefab, panelAnchor != null ? panelAnchor : transform);
+        // Spawn a new panel anchored under panelAnchor or this transform
+        if (spoonPanelPrefab == null)
+        {
+            Debug.LogWarning("BehaviorChoice: spoonPanelPrefab is null.");
+            return;
+        }
+
+        var parent = panelAnchor != null ? panelAnchor : transform;
+        var panelGO = Instantiate(spoonPanelPrefab, parent);
         var panel = panelGO.GetComponent<SpoonPanel>();
 
         if (panel == null)
         {
+            Debug.LogWarning("BehaviorChoice: spawned spoonPanel prefab missing SpoonPanel component.");
             Destroy(panelGO);
             return;
         }
 
+        // Panel will call back to this BehaviorChoice (NotifyPanelClosed / StartBehaviorConfirm)
         panel.Setup(data, behaviorManager, this);
-
-        // NEW: BehaviorManager is in charge
-        behaviorManager.RegisterPanel(panel);
-
         currentSpoonPanel = panel;
     }
 
-    public void StartProgressFromPanel(SpoonPanel panel)
+    // Called by SpoonPanel when the player confirms/presses the "Do the Thing" button
+    public void StartBehaviorConfirm(SpoonPanel panel)
     {
-        if (progressRoutine != null)
-            return;
+        if (progressRoutine != null) return;
 
-        bool isScene = data.isScene || (data.thought != null && data.thought.type == Thought.ThoughtType.Interactive);
+        bool isInteractive = (data.thought != null && data.thought.type == ThoughtData.ThoughtType.Interactive);
 
         float seconds = Mathf.Max(
             0.2f,
@@ -125,18 +117,19 @@ public class BehaviorChoice : MonoBehaviour
         if (oneShotProgressBar != null)
         {
             oneShotProgressBar.gameObject.SetActive(true);
-            progressRoutine = StartCoroutine(RunProgressThenStart(seconds, isScene, panel));
+            progressRoutine = StartCoroutine(RunConfirmBarThenRun(seconds, isInteractive, panel));
         }
         else
         {
-            if (isScene)
-                behaviorManager.BeginSceneBehavior(data, panel);
-            else
-                behaviorManager.BeginOneShotBehavior(data, panel);
+            // Directly ask BehaviorManager to run the behavior (unified entry point)
+            behaviorManager.RunBehavior(this);
+            // close panel after requesting run (panel usually closes itself)
+            if (panel != null) panel.ClosePanel();
+            currentSpoonPanel = null;
         }
     }
 
-    private IEnumerator RunProgressThenStart(float seconds, bool isScene, SpoonPanel panel)
+    private IEnumerator RunConfirmBarThenRun(float seconds, bool isInteractive, SpoonPanel panel)
     {
         float elapsed = 0f;
         oneShotProgressBar.value = 0f;
@@ -148,17 +141,19 @@ public class BehaviorChoice : MonoBehaviour
             yield return null;
         }
 
-        if (isScene)
-            behaviorManager.BeginSceneBehavior(data, panel);
-        else
-            behaviorManager.BeginOneShotBehavior(data, panel);
+        // After confirmation bar completes, tell BehaviorManager to run this BehaviorChoice
+        behaviorManager.RunBehavior(this);
+
+        // Close panel if present
+        if (panel != null) panel.ClosePanel();
+        currentSpoonPanel = null;
 
         progressRoutine = null;
-
         oneShotProgressBar.value = 0f;
         oneShotProgressBar.gameObject.SetActive(false);
     }
 
+    // Called by SpoonPanel when it closes (user cancelled or finished)
     public void NotifyPanelClosed()
     {
         if (progressRoutine != null)
@@ -176,6 +171,13 @@ public class BehaviorChoice : MonoBehaviour
         currentSpoonPanel = null;
     }
 
+    // Compatibility wrapper: old code calls StartProgressFromPanel(panel)
+    public void StartProgressFromPanel(SpoonPanel panel)
+    {
+        // Delegate to the new method (StartBehaviorConfirm / StartProgressFromPanel semantics)
+        StartBehaviorConfirm(panel); // if your method name is StartBehaviorConfirm
+    }
+
     string FormatDuration(int minutes)
     {
         if (minutes <= 0) return "Time: <1m";
@@ -183,12 +185,5 @@ public class BehaviorChoice : MonoBehaviour
         int m = minutes % 60;
         if (h > 0) return $"Time: {h}h {m}m";
         return $"Time: {m}m";
-    }
-
-    string FormatHunger(int delta)
-    {
-        if (delta == 0) return "Hunger: None";
-        if (delta > 0) return $"Hunger: +{delta}";
-        return $"Hunger: {delta}";
     }
 }

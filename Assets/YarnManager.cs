@@ -18,6 +18,21 @@ public class YarnManager : MonoBehaviour
         Instance = this;
     }
 
+    // FamilyManager Methods
+
+    [YarnCommand("reveal_name")]
+    public static void Yarn_RevealName(string key)
+    {
+        FamilyManager.Instance?.RevealName(key);
+    }
+
+    [YarnCommand("add_bond")]
+    public static void Yarn_AddBond(string key, float amount)
+    {
+        FamilyManager.Instance?.AddBond(key, amount);
+    }
+
+    // ResourceManager Methods
     [YarnCommand("modify_spoons")]
     public static void Yarn_ModifySpoons(int delta)
     {

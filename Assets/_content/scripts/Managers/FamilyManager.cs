@@ -4,7 +4,6 @@ using System.Text;
 using UnityEngine;
 using Yarn.Unity;
 using TMPro;
-using ProjectHiki.UI;
 
 public class FamilyManager : MonoBehaviour
 {
@@ -97,7 +96,6 @@ public class FamilyManager : MonoBehaviour
             return part.realName;
 
         return "???";
-        //return GenerateGrawlix(key);
     }
 
     public void RevealName(string key)
@@ -105,18 +103,6 @@ public class FamilyManager : MonoBehaviour
         var part = parts.Find(p => p.key == key);
         if (part != null)
             part.nameRevealed = true;
-    }
-
-    private string GenerateGrawlix(string seed)
-    {
-        string[] symbols = { "#", "@", "%", "&", "$", "!", "?" };
-        StringBuilder sb = new StringBuilder();
-        int length = Random.Range(4, 8);
-        for (int i = 0; i < length; i++)
-        {
-            sb.Append(symbols[Random.Range(0, symbols.Length)]);
-        }
-        return sb.ToString();
     }
 
     public void AddBond(string key, float amount)
@@ -140,14 +126,7 @@ public class FamilyManager : MonoBehaviour
         var runner = FindObjectOfType<DialogueRunner>();
         if (runner == null) return;
         Debug.Log("FamilyManager Start: Found runner = " + runner);
-
-        /*
-        // Register functions that RETURN values:
-        runner.AddFunction<string, string>("GetPartDisplayName", key => GetDisplayName(key));
-        runner.AddFunction<string, bool>("IsNameRevealed", key => IsNameRevealed(key));
-        */
     }
-
     private void OnEnable()
     {
         DialogueRunner runner = FindObjectOfType<DialogueRunner>();
@@ -158,26 +137,5 @@ public class FamilyManager : MonoBehaviour
     {
         runner.AddFunction<string, string>("GetPartDisplayName", key => GetDisplayName(key));
         runner.AddFunction<string, bool>("IsNameRevealed", key => IsNameRevealed(key));
-    }
-
-
-    // --- Yarn Commands ---
-
-    [YarnCommand("reveal_name")]
-    public static void Yarn_RevealName(string key)
-    {
-        Instance?.RevealName(key);
-    }
-
-    [YarnCommand("add_bond")]
-    public static void Yarn_AddBond(string key, float amount)
-    {
-        Instance?.AddBond(key, amount);
-    }
-
-    [YarnCommand("RandomThought")]
-    public static void Yarn_RandomThought(string key, string text) {
-        var style = Instance.GetBubbleColor(key);
-        ThoughtBubbleView.Instance.SpawnThought(key, text);
     }
 }
