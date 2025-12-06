@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8250705317301208015}
   m_Layer: 5
   m_Name: SpoonPrefab
-  m_TagString: Untagged
+  m_TagString: Spoon
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

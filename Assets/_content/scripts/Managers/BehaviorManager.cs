@@ -23,6 +23,7 @@ public class BehaviorManager : MonoBehaviour
     // -----------------------------------------------------------------
     // PUBLIC UNIFIED ENTRY POINT
     // -----------------------------------------------------------------
+    // DEPRECATED
     public void RunBehavior(BehaviorChoice choice)
     {
         if (choice == null || choice.BehaviorData == null)
@@ -149,15 +150,4 @@ public class BehaviorManager : MonoBehaviour
         // OPTION B: simple removal (no pooled cleanup yet)
     }
 
-
-    // -----------------------------------------------------------------
-    // DEPRECATED LEGACY METHODS (REMOVED)
-    // -----------------------------------------------------------------
-    // - WaitForPanelAndRunScene
-    // - WaitForPanelAndRunOneShot
-    // - BeginSceneBehavior
-    // - BeginOneShotBehavior
-    //
-    // These existed in your version but are now obsolete and removed.
-    // If needed for reference, I can re-add stubs marked "OBSOLETE".
 }

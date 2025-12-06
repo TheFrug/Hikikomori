@@ -32,7 +32,7 @@ public class ResourceManager : MonoBehaviour
 
     [Header("Spoons")]
     public SpoonDrawer spoonDrawer;
-    public int maxSpoons = 10;
+    public int maxSpoons = 4;
     public int currentSpoons;
 
     [Header("Shutdown / Doomscroll settings")]
@@ -42,6 +42,7 @@ public class ResourceManager : MonoBehaviour
     public int doomscrollHopeDrainPerTick = 1;
 
     private bool uiInitialized = false;
+    private bool suppressDrawerRefresh = false;
 
     // --- Lifecycle ---
     private void Awake()
@@ -182,6 +183,7 @@ public class ResourceManager : MonoBehaviour
     // Apply behavior's base resource changes (safely handles null)
     public void ModifyResources(BehaviorData data)
     {
+        Debug.Log($"ModifyResources called: spoonsCost={data.spoonsCost}, stressImpact={data.stressImpact}, hopeImpact={data.hopeImpact}");
         if (data == null) return;
 
         // Consume spoons (cost is positive in data, we subtract)
@@ -218,8 +220,11 @@ public class ResourceManager : MonoBehaviour
     // SPOONS
     public void ModifySpoons(int delta)
     {
+        int previous = currentSpoons;
         currentSpoons = Mathf.Clamp(currentSpoons + delta, 0, maxSpoons);
-        if (uiInitialized && spoonDrawer != null)
+
+        // Only refresh drawer when the canonical count actually changed and refresh is not suppressed.
+        if (!suppressDrawerRefresh && uiInitialized && spoonDrawer != null && previous != currentSpoons)
             spoonDrawer.RefreshDrawer(currentSpoons);
 
         UpdateUI();
@@ -242,6 +247,7 @@ public class ResourceManager : MonoBehaviour
     // HOPE
     public void ModifyHope(int deltaXP)
     {
+        Debug.Log($"ModifyHope called: deltaXP={deltaXP} (before currHope={currentHope})");
         currentHope = Mathf.Clamp(currentHope + deltaXP, 0, maxHope);
         UpdateUI();
         CheckHopeThreshold();
@@ -315,6 +321,18 @@ public class ResourceManager : MonoBehaviour
             stressedOut = false;
         }
     }
+
+    public void BeginCommit()
+    {
+        suppressDrawerRefresh = true;
+    }
+
+    public void EndCommit()
+    {
+        suppressDrawerRefresh = false;
+        // No automatic refresh — the drawer state after dragging is the final state.
+    }
+
 
     // --- Debug Keys ---
     void DebugControls()
