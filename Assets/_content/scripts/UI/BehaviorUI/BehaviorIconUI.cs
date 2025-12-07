@@ -27,11 +27,6 @@ public class BehaviorIconUI : MonoBehaviour
         roomCtrl = FindObjectOfType<BehaviorIconRoomController>();
     }
 
-    void Update()
-    {
-
-    }
-
     public void SetVisible(bool visible)
     {
         StopAllCoroutines();
