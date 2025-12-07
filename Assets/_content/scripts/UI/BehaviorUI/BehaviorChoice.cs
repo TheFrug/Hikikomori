@@ -1,4 +1,3 @@
-// BehaviorChoice.cs
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,7 +24,7 @@ public class BehaviorChoice : MonoBehaviour
     public float defaultOneShotSeconds = 0.6f;
 
     private BehaviorData data;
-    private SpoonPanel currentSpoonPanel;
+    public SpoonPanel currentSpoonPanel;
     private Coroutine progressRoutine;
     private ThoughtData myThought;
 
@@ -63,23 +62,34 @@ public class BehaviorChoice : MonoBehaviour
 
     private void OnSelected()
     {
-        if (behaviorManager == null || data == null) return;
+        if (behaviorManager == null || data == null)
+            return;
 
-        // If no spoon cost, start immediately
+        // If zero-cost behavior, run immediately
         if (data.spoonsCost <= 0)
         {
             StartBehaviorConfirm(null);
             return;
         }
 
-        // If a panel for this choice is already open, keep it (toggle close handled by panel)
+        // If this choice already has an open panel, do nothing
         if (currentSpoonPanel != null)
-        {
-            // Panel already open — do nothing (panel has its own controls)
             return;
+
+        // Only one global SpoonPanel allowed at a time
+        if (SpoonPanel.ActivePanel != null)
+        {
+            var old = SpoonPanel.ActivePanel;
+
+            // Hard close instantly, skip animations + delays
+            old.ForceCloseImmediate();
+
+            // Now the static is definitely clear
+            SpoonPanel.ActivePanel = null;
         }
 
-        // Spawn a new panel anchored under panelAnchor or this transform
+
+        // Spawn new SpoonPanel
         if (spoonPanelPrefab == null)
         {
             Debug.LogWarning("BehaviorChoice: spoonPanelPrefab is null.");
@@ -97,34 +107,41 @@ public class BehaviorChoice : MonoBehaviour
             return;
         }
 
-        // Panel will call back to this BehaviorChoice (NotifyPanelClosed / StartBehaviorConfirm)
+        // Setup panel
         panel.Setup(data, behaviorManager, this);
         currentSpoonPanel = panel;
     }
 
-    // Called by SpoonPanel when the player confirms/presses the "Do the Thing" button
+    // Called when panel confirms (“Do the Thing”)
     public void StartBehaviorConfirm(SpoonPanel panel)
     {
-        if (progressRoutine != null) return;
+        if (progressRoutine != null)
+            return;
 
-        bool isInteractive = (data.thought != null && data.thought.type == ThoughtData.ThoughtType.Interactive);
+        bool isInteractive = (data.thought != null &&
+                              data.thought.type == ThoughtData.ThoughtType.Interactive);
 
         float seconds = Mathf.Max(
             0.2f,
-            defaultOneShotSeconds * (data.durationMinutes > 0 ? (data.durationMinutes / 30f) : 1f)
+            defaultOneShotSeconds * (data.durationMinutes > 0
+                ? (data.durationMinutes / 30f)
+                : 1f)
         );
 
         if (oneShotProgressBar != null)
         {
             oneShotProgressBar.gameObject.SetActive(true);
-            progressRoutine = StartCoroutine(RunConfirmBarThenRun(seconds, isInteractive, panel));
+            progressRoutine = StartCoroutine(
+                RunConfirmBarThenRun(seconds, isInteractive, panel)
+            );
         }
         else
         {
-            // Directly ask BehaviorManager to run the behavior (unified entry point)
             behaviorManager.RunBehavior(this);
-            // close panel after requesting run (panel usually closes itself)
-            if (panel != null) panel.ClosePanel();
+
+            if (panel != null)
+                panel.ClosePanel();
+
             currentSpoonPanel = null;
         }
     }
@@ -141,11 +158,11 @@ public class BehaviorChoice : MonoBehaviour
             yield return null;
         }
 
-        // After confirmation bar completes, tell BehaviorManager to run this BehaviorChoice
         behaviorManager.RunBehavior(this);
 
-        // Close panel if present
-        if (panel != null) panel.ClosePanel();
+        if (panel != null)
+            panel.ClosePanel();
+
         currentSpoonPanel = null;
 
         progressRoutine = null;
@@ -153,7 +170,6 @@ public class BehaviorChoice : MonoBehaviour
         oneShotProgressBar.gameObject.SetActive(false);
     }
 
-    // Called by SpoonPanel when it closes (user cancelled or finished)
     public void NotifyPanelClosed()
     {
         if (progressRoutine != null)
@@ -171,19 +187,8 @@ public class BehaviorChoice : MonoBehaviour
         currentSpoonPanel = null;
     }
 
-    // Compatibility wrapper: old code calls StartProgressFromPanel(panel)
     public void StartProgressFromPanel(SpoonPanel panel)
     {
-        // Delegate to the new method (StartBehaviorConfirm / StartProgressFromPanel semantics)
-        StartBehaviorConfirm(panel); // if your method name is StartBehaviorConfirm
-    }
-
-    string FormatDuration(int minutes)
-    {
-        if (minutes <= 0) return "Time: <1m";
-        int h = minutes / 60;
-        int m = minutes % 60;
-        if (h > 0) return $"Time: {h}h {m}m";
-        return $"Time: {m}m";
+        StartBehaviorConfirm(panel);
     }
 }

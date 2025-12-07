@@ -701,7 +701,6 @@ GameObject:
   - component: {fileID: 6090067838677511176}
   - component: {fileID: 5943320810701497972}
   - component: {fileID: 4205566760514420928}
-  - component: {fileID: 4759907194895902572}
   m_Layer: 5
   m_Name: img_TabConnector (1)
   m_TagString: Untagged
@@ -766,18 +765,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!210 &4759907194895902572
-SortingGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1923537431632170588}
-  m_Enabled: 1
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: -1
-  m_SortAtRoot: 0
 --- !u!1 &2138020819390510890
 GameObject:
   m_ObjectHideFlags: 0
@@ -2809,13 +2796,13 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8312725476023982551}
   - {fileID: 5171364828562193029}
+  - {fileID: 8312725476023982551}
   m_Father: {fileID: 6340737141442494722}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -380, y: -662}
+  m_AnchoredPosition: {x: -651, y: -662}
   m_SizeDelta: {x: 300, y: 240}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8664367028434370682
@@ -2839,7 +2826,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.28235295, g: 0.23822674, b: 0.20784314, a: 1}
+  m_Color: {r: 0.28235295, g: 0.23822674, b: 0.20784314, a: 0.8}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6195,6 +6182,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -218.75
       objectReference: {fileID: 0}
+    - target: {fileID: 451546026160112575, guid: aba0e89ea8dccb047ae88b0b9a2805c3, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1614195829726527686, guid: aba0e89ea8dccb047ae88b0b9a2805c3, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -6265,7 +6256,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2491614938920773825, guid: aba0e89ea8dccb047ae88b0b9a2805c3, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -256
+      value: -37
       objectReference: {fileID: 0}
     - target: {fileID: 2491614938920773825, guid: aba0e89ea8dccb047ae88b0b9a2805c3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -6278,6 +6269,18 @@ PrefabInstance:
     - target: {fileID: 2491614938920773825, guid: aba0e89ea8dccb047ae88b0b9a2805c3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3610058872067259183, guid: aba0e89ea8dccb047ae88b0b9a2805c3, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3918619558525036424, guid: aba0e89ea8dccb047ae88b0b9a2805c3, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5354949502518645438, guid: aba0e89ea8dccb047ae88b0b9a2805c3, type: 3}
+      propertyPath: xOffset
+      value: 270
       objectReference: {fileID: 0}
     - target: {fileID: 5374971150963417515, guid: aba0e89ea8dccb047ae88b0b9a2805c3, type: 3}
       propertyPath: m_Color.b

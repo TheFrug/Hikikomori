@@ -1,4 +1,4 @@
-using System.Collections;
+// BehaviorIconRoomController.cs
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,7 +13,8 @@ public class BehaviorIconRoomController : MonoBehaviour
     void Awake()
     {
         icons = new List<BehaviorIconUI>(FindObjectsOfType<BehaviorIconUI>());
-        camManager.OnCameraChanged += UpdateIcons;
+        if (camManager != null)
+            camManager.OnCameraChanged += UpdateIcons;
 
         backButton.gameObject.SetActive(false);
         backButton.onClick.RemoveAllListeners();
@@ -28,7 +29,7 @@ public class BehaviorIconRoomController : MonoBehaviour
     void Update()
     {
         // DEBUG: Close focused icon with keyboard
-        if (Input.GetKeyDown(KeyCode.Minus))     // Customize this key if you want
+        if (Input.GetKeyDown(KeyCode.Minus))
         {
             DebugCloseCommand();
         }
@@ -80,11 +81,19 @@ public class BehaviorIconRoomController : MonoBehaviour
 
     public void Focus(BehaviorIconUI icon)
     {
+        // If there is an already-focused icon, force it closed first
+        if (focusedIcon != null && focusedIcon != icon)
+        {
+            focusedIcon.ForceCloseChoices();
+        }
+
         focusedIcon = icon;
     }
 
     public void Unfocus()
     {
         focusedIcon = null;
+        // Ensure UIState is reset when unfocusing
+        UIStateController.Instance?.SetState(UIState.Idle);
     }
 }

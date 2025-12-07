@@ -6,7 +6,7 @@ using TMPro;
 
 public class SpoonPanel : MonoBehaviour
 {
-    public static SpoonPanel ActivePanel;   // GLOBAL ACCESS
+    public static SpoonPanel ActivePanel;
 
     [Header("Config")]
     public BehaviorData behaviorData;
@@ -16,7 +16,7 @@ public class SpoonPanel : MonoBehaviour
     public Button cancelButton;
     public Button doThingButton;
     public TMP_Text spoonsUsedText;
-    public Slider progressBar; // optional visual; mainly kept for legacy/visual feedback
+    public Slider progressBar;
     public float oneShotBaseSeconds = 0.6f;
 
     [HideInInspector] public List<SpoonSlot> slots = new List<SpoonSlot>();
@@ -24,16 +24,17 @@ public class SpoonPanel : MonoBehaviour
     private int requiredSpoons = 0;
     private bool behaviorTriggered = false;
 
-    // runtime: list of spoonBehavior objects that have been consumed/staged
     private List<spoonBehavior> stagedSpoons = new List<spoonBehavior>();
 
-    // owner
     private BehaviorChoice ownerChoice;
-
-    // Whether player confirmed (Do the Thing) — used to decide destroy vs restore
     private bool committed = false;
 
-    // ----- Lifecycle -----
+    // NEW — prevents double restore/destroy during closing + OnDestroy
+    private bool panelClosed = false;
+
+    // NEW — prevents ClosePanel multiple times
+    private bool closeInProgress = false;
+
     void OnEnable()
     {
         ActivePanel = this;
@@ -45,19 +46,14 @@ public class SpoonPanel : MonoBehaviour
             ActivePanel = null;
     }
 
-    // Prevent relying on Start for setup. Setup must be explicitly called by owner.
     void Start()
     {
-        // If data was pre-populated and ownerChoice set before Start, ensure it's initialized.
         if (behaviorData != null && behaviorManager != null && ownerChoice != null)
         {
             Setup(behaviorData, behaviorManager, ownerChoice);
         }
     }
 
-    /// <summary>
-    /// Initialize the panel. Must be called by the code that spawns this panel (BehaviorChoice).
-    /// </summary>
     public void Setup(BehaviorData data, BehaviorManager mgr, BehaviorChoice owner)
     {
         if (data == null || mgr == null)
@@ -73,20 +69,20 @@ public class SpoonPanel : MonoBehaviour
         requiredSpoons = Mathf.Max(0, data.spoonsCost);
         behaviorTriggered = false;
         committed = false;
+        panelClosed = false;
+        closeInProgress = false;
 
-        // Clear old slots/spoons in the UI
         foreach (Transform t in slotContainer)
             Destroy(t.gameObject);
 
         slots.Clear();
         stagedSpoons.Clear();
 
-        // Only ONE slot (this slot can accept multiple spoons)
         var go = Instantiate(slotPrefab, slotContainer);
         var slot = go.GetComponent<SpoonSlot>();
         if (slot == null)
         {
-            Debug.LogError("SpoonPanel.Setup: slotPrefab does not contain SpoonSlot.");
+            Debug.LogError("slotPrefab missing SpoonSlot.");
         }
         else
         {
@@ -94,7 +90,6 @@ public class SpoonPanel : MonoBehaviour
             slots.Add(slot);
         }
 
-        // Wire buttons safely
         if (cancelButton != null)
         {
             cancelButton.onClick.RemoveAllListeners();
@@ -115,22 +110,18 @@ public class SpoonPanel : MonoBehaviour
             progressBar.gameObject.SetActive(false);
     }
 
-    // Called by a SpoonSlot when it accepts a spoon
+    // -------------------------------------------------------------
+    // Slot & Spoon registration
+    // -------------------------------------------------------------
+
     public void RegisterSpentSpoon(spoonBehavior spoon)
     {
         if (spoon == null) return;
-
-        // Avoid double-register
         if (stagedSpoons.Contains(spoon)) return;
 
-        // Mark spoon visually spent (fade + deactivate) — keep the GameObject for possible restore
-        // This preserves the user's expectation that the spoon disappears at time of dragging.
-        spoon.Spend();
-
-        // Add to staged list for later commit/restore
+        spoon.Spend(); // fade + deactivate
         stagedSpoons.Add(spoon);
 
-        // Notify slot change logic
         OnSlotChanged();
     }
 
@@ -140,62 +131,53 @@ public class SpoonPanel : MonoBehaviour
         foreach (var s in slots)
             slotCount += s.spoonCount;
 
-        // stagedSpoons holds the actual consumed/staged spoon objects.
-        // Return the maximum of the two to handle any sync mismatches.
         return Mathf.Max(slotCount, stagedSpoons.Count);
     }
 
     public void OnSlotChanged()
     {
-        if (behaviorTriggered)
-            return;
+        if (behaviorTriggered) return;
 
         int filled = CurrentFilledSpoons();
 
-        // update UI text
         if (spoonsUsedText != null)
             spoonsUsedText.text = $"Spoons Used: {filled} / {requiredSpoons}";
 
-        // enable do-the-thing once enough spoons present
         if (doThingButton != null)
             doThingButton.interactable = (filled >= requiredSpoons);
 
         if (filled >= requiredSpoons)
-        {
             behaviorTriggered = true;
-            // Optionally we could auto-trigger UI animation / highlight here
-        }
     }
 
-    // Do-the-Thing pressed inside the SpoonPanel
+    // -------------------------------------------------------------
+    // Confirm behavior
+    // -------------------------------------------------------------
+
     private void OnDoTheThing()
     {
-        if (behaviorTriggered == false && CurrentFilledSpoons() < requiredSpoons)
+        if (!behaviorTriggered && CurrentFilledSpoons() < requiredSpoons)
         {
-            Debug.LogWarning("SpoonPanel: DoTheThing pressed but not enough spoons.");
+            Debug.LogWarning("DoTheThing pressed but not enough spoons.");
             return;
         }
 
-        // mark committed so CloseSequence won't restore staged spoons
         committed = true;
 
-        // If ownerChoice is present, let it drive the behavior (preferred)
         if (ownerChoice != null)
         {
             ownerChoice.StartProgressFromPanel(this);
             return;
         }
 
-        // Fallback: start behavior run directly using stored BehaviorData and BehaviorManager
         StartBehaviorRun();
     }
 
-    // Legacy fallback when ownerChoice isn't provided
     private void StartBehaviorRun()
     {
         if (behaviorManager == null)
         {
-            Debug.LogError("SpoonPanel: BehaviorManager missing!");
+            Debug.LogError("BehaviorManager missing!");
             return;
         }
 
@@ -204,8 +186,6 @@ public class SpoonPanel : MonoBehaviour
 
         if (isScene)
         {
-            // If we don't have a real BehaviorChoice, we can't fully validate via BehaviorManager.
-            // This mirrors the old fallback behavior but is fragile — better to call ownerChoice.
             behaviorManager.RunBehavior(null);
         }
         else
@@ -217,7 +197,6 @@ public class SpoonPanel : MonoBehaviour
     private IEnumerator RunOneShot()
     {
         float seconds = oneShotBaseSeconds;
-
         if (behaviorData.durationMinutes > 0)
             seconds = Mathf.Max(0.2f, oneShotBaseSeconds * (behaviorData.durationMinutes / 30f));
 
@@ -240,50 +219,53 @@ public class SpoonPanel : MonoBehaviour
         behaviorManager.RunBehavior(ownerChoice);
     }
 
-    // Called by user pressing Cancel
+    // -------------------------------------------------------------
+    // Closing logic
+    // -------------------------------------------------------------
+
     public void CancelPanel()
     {
-        // NEW — graceful closing, not instant destruction
         ClosePanel();
     }
 
-    // NEW — called by BehaviorManager also
     public void ClosePanel()
     {
+        if (closeInProgress) return;
+        closeInProgress = true;
         StartCoroutine(CloseSequence());
     }
 
-    // NEW — animates spoons back BEFORE destruction
     private IEnumerator CloseSequence()
     {
+        if (panelClosed) yield break;
+        panelClosed = true;
+
+        bool hadSpentSpoons = (stagedSpoons != null && stagedSpoons.Count > 0);
+
         if (committed)
         {
-            // If confirmed, destroy staged spoon GOs so they don't get restored and
-            // duplicate with the newly spawned drawer spoons (spawned by ResourceManager).
-            if (stagedSpoons != null && stagedSpoons.Count > 0)
-            {
-                foreach (var spoon in stagedSpoons)
-                {
-                    if (spoon == null) continue;
-                    // destroy the GO immediately; SpoonDrawer.RefreshDrawer will recreate canonical visuals
-                    Destroy(spoon.gameObject);
-                }
-                stagedSpoons.Clear();
-            }
+            foreach (var spoon in stagedSpoons)
+                if (spoon != null) Destroy(spoon.gameObject);
         }
         else
         {
-            // Cancel flow — return staged spoons to drawer visually
             RestoreSpentSpoons();
         }
 
-        // wait for spoon animations to finish (0.35–0.45s usually)
+        // Skip the delay if no spoons spent
+        if (!hadSpentSpoons)
+        {
+            behaviorManager?.ClearPanel(this);
+            ownerChoice?.NotifyPanelClosed();
+            Destroy(gameObject);
+            yield break;
+        }
+
+        // Otherwise do the normal visual delay
         yield return new WaitForSeconds(0.4f);
 
         behaviorManager?.ClearPanel(this);
-
         ownerChoice?.NotifyPanelClosed();
-
         Destroy(gameObject);
     }
 
@@ -294,56 +276,69 @@ public class SpoonPanel : MonoBehaviour
         foreach (var spoon in stagedSpoons)
         {
             if (spoon == null) continue;
-
-            // restore spoon: make it visible and animate it back into drawer
-            spoon.RestoreFromSpend();    // This now handles reset-scale
+            spoon.RestoreFromSpend();
         }
 
         stagedSpoons.Clear();
 
-        // Reset slot counts (slot visuals may have their own children — ForceReturnSpoon handles that)
         foreach (var slot in slots)
             slot.ForceReturnSpoon();
     }
 
     void OnDestroy()
     {
-        // extra failsafe so spoons never get stranded
-        RestoreSpentSpoons();
+        if (!panelClosed)
+        {
+            // Only restore if we were NOT properly closed by CloseSequence
+            if (!committed)
+                RestoreSpentSpoons();
+            // If committed, do nothing — spoons should remain destroyed
+        }
     }
 
-    // Utility for tests / editor: immediate force close (skips animation)
-    public void ForceCloseImmediate()
+    // -------------------------------------------------------------
+    // Utility options
+    // -------------------------------------------------------------
+
+    // NEW — purely visual hide, does NOT close the panel
+    public void HideImmediately()
     {
-        // restore spoons synchronously if not committed
-        if (!committed)
+        var cg = GetComponent<CanvasGroup>();
+        if (cg != null)
         {
-            if (stagedSpoons != null)
-            {
-                foreach (var spoon in stagedSpoons)
-                {
-                    if (spoon == null) continue;
-                    spoon.RestoreFromSpend();
-                }
-                stagedSpoons.Clear();
-            }
+            cg.alpha = 0f;
+            cg.interactable = false;
+            cg.blocksRaycasts = false;
         }
         else
         {
-            // committed -> destroy
-            if (stagedSpoons != null)
-            {
-                foreach (var spoon in stagedSpoons)
-                {
-                    if (spoon == null) continue;
-                    Destroy(spoon.gameObject);
-                }
-                stagedSpoons.Clear();
-            }
+            gameObject.SetActive(false);
         }
+    }
+
+    // Immediate, full close — skips animations
+    public void ForceCloseImmediate()
+    {
+        if (panelClosed) return;
+        panelClosed = true;
+
+        if (!committed)
+        {
+            foreach (var spoon in stagedSpoons)
+                spoon?.RestoreFromSpend();
+        }
+        else
+        {
+            foreach (var spoon in stagedSpoons)
+                if (spoon != null) Destroy(spoon.gameObject);
+        }
+
+        stagedSpoons.Clear();
 
         behaviorManager?.ClearPanel(this);
         ownerChoice?.NotifyPanelClosed();
+        ownerChoice.currentSpoonPanel = null; // ADD THIS
+
         Destroy(gameObject);
     }
 }

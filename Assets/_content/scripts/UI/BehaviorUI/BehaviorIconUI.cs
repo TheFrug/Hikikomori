@@ -1,3 +1,4 @@
+// BehaviorIconUI.cs
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -23,7 +24,6 @@ public class BehaviorIconUI : MonoBehaviour
 
     void Start()
     {
-        // The back button is hidden by default
         roomCtrl = FindObjectOfType<BehaviorIconRoomController>();
     }
 
@@ -36,7 +36,7 @@ public class BehaviorIconUI : MonoBehaviour
     IEnumerator Fade(float target)
     {
         if (group == null)
-            group = gameObject.GetComponent<CanvasGroup>() 
+            group = gameObject.GetComponent<CanvasGroup>()
                 ?? gameObject.AddComponent<CanvasGroup>();
 
         float start = group.alpha;
@@ -55,10 +55,18 @@ public class BehaviorIconUI : MonoBehaviour
 
     public void OnClick()
     {
+        // NEW: consult UIStateController before opening an icon
+        if (UIStateController.Instance != null && !UIStateController.Instance.CanOpenIcon)
+            return;
+
         if (isOpen) return;
 
         BehaviorIconRoomController roomCtrl = FindObjectOfType<BehaviorIconRoomController>();
         roomCtrl.Focus(this);
+
+        // Tell UIStateController an icon is open (locks camera)
+        UIStateController.Instance?.EnterIconOpen(this);
+
         // Fade out all icons INCLUDING this one
         foreach (var icon in roomCtrl.icons)
             icon.SetVisible(false);
@@ -81,7 +89,7 @@ public class BehaviorIconUI : MonoBehaviour
         isOpen = true;
 
         float radius = 1.5f;
-        float step = 360f / behaviors.Count;
+        float step = behaviors.Count > 0 ? 360f / behaviors.Count : 360f;
 
         for (int i = 0; i < behaviors.Count; i++)
         {
@@ -118,5 +126,8 @@ public class BehaviorIconUI : MonoBehaviour
         }
 
         activePanels.Clear();
+
+        // Restore UI state now that choices are closed
+        UIStateController.Instance?.ExitIconOpen();
     }
 }
