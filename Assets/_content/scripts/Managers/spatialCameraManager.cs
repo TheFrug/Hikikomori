@@ -23,21 +23,23 @@ public class spatialCameraManager : MonoBehaviour
     protected bool isMoving = false;
 
     public System.Action<int> OnCameraChanged;
+    public System.Action<int> OnCameraSwitchStarted;
 
     // Called to switch the camera to a new predefined position using an animation.
     public void SwitchCamera(Transform activeCam)
     {
-        // NEW: consult UIStateController — prevent camera switching when UI disallows it
         if (UIStateController.Instance != null && !UIStateController.Instance.CanClickRoomButtons)
             return;
 
-        if (isMoving) return; // If camera is already animating, do nothing
+        if (isMoving) return;
 
         int targetIndex = GetCamIndex(activeCam);
-
-        if (currentCamIndex == targetIndex) return; // Avoid redundant switches
+        if (currentCamIndex == targetIndex) return;
 
         FindObjectOfType<BehaviorIconRoomController>()?.FadeAllIconsOut();
+
+        // FIRE EVENT immediately — tells UI: "Start lerping colors"
+        OnCameraSwitchStarted?.Invoke(targetIndex);
 
         string animName = $"Cam{currentCamIndex}To{targetIndex}";
         camAnimator.Play(animName);

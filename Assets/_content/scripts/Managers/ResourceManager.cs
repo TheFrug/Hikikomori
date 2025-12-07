@@ -1,12 +1,10 @@
-// ResourceManager.cs
-// Drop-in replacement / augmentation to match BehaviorManager expectations.
-
 using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Yarn.Unity;
+using System.Collections.Generic;
 
 public class ResourceManager : MonoBehaviour
 {
@@ -25,10 +23,9 @@ public class ResourceManager : MonoBehaviour
     public Slider hopeBar;
     public TMP_Text hopeText;
     public TMP_Text hopeLevelText;
-    public int maxHope = 100;
+    private int hopeLevelUpThreshold = 5;
     private int currentHope;
     private int hopeLevel;
-    private int hopeLevelUpThreshold = 5;
 
     [Header("Spoons")]
     public SpoonDrawer spoonDrawer;
@@ -43,6 +40,13 @@ public class ResourceManager : MonoBehaviour
 
     private bool uiInitialized = false;
     private bool suppressDrawerRefresh = false;
+
+    private Coroutine stressAnimRoutine;
+    private Coroutine hopeAnimRoutine;
+
+    public static event System.Action<int> OnHopeLevelUp;
+    [Header("Hope Levels")]
+    public List<HopeLevelData> hopeLevels = new List<HopeLevelData>();
 
     // --- Lifecycle ---
     private void Awake()
@@ -131,7 +135,7 @@ public class ResourceManager : MonoBehaviour
 
         if (hopeBar != null)
         {
-            hopeBar.maxValue = maxHope;
+            hopeBar.maxValue = hopeLevelUpThreshold;
             hopeBar.value = currentHope;
         }
     }
@@ -148,6 +152,7 @@ public class ResourceManager : MonoBehaviour
 
         if (hopeBar != null)
         {
+            hopeBar.maxValue = hopeLevelUpThreshold;
             hopeBar.value = currentHope;
             if (hopeText) hopeText.text = $"{currentHope}/{hopeLevelUpThreshold}";
             if (hopeLevelText) hopeLevelText.text = $"{hopeLevel}";
@@ -235,35 +240,90 @@ public class ResourceManager : MonoBehaviour
     {
         if (isShutdownMode) return;
 
+        int old = currentStress;
         currentStress = Mathf.Clamp(currentStress + delta, 0, maxStress);
-        UpdateUI();
+
+        // Stop any existing animation
+        if (stressAnimRoutine != null)
+            StopCoroutine(stressAnimRoutine);
+
+        if (stressBar != null)
+        {
+            stressAnimRoutine = StartCoroutine(
+                AnimateSlider(stressBar, stressText, old, currentStress, maxStress)
+            );
+        }
+        else
+        {
+            UpdateUI();
+        }
 
         if (currentStress >= maxStress && !isShutdownMode)
-        {
             StartShutdownMode();
-        }
     }
 
     // HOPE
     public void ModifyHope(int deltaXP)
     {
-        Debug.Log($"ModifyHope called: deltaXP={deltaXP} (before currHope={currentHope})");
-        currentHope = Mathf.Clamp(currentHope + deltaXP, 0, maxHope);
-        UpdateUI();
+        int old = currentHope;
+        currentHope += deltaXP; // DO NOT clamp here!
+
+        if (hopeAnimRoutine != null)
+            StopCoroutine(hopeAnimRoutine);
+
+        if (hopeBar != null)
+        {
+            hopeAnimRoutine = StartCoroutine(
+                AnimateSlider(hopeBar, hopeText, old, currentHope, hopeLevels[Mathf.Min(hopeLevel, hopeLevels.Count - 1)].hopeLevelUpThreshold)
+            );
+        }
+        else
+        {
+            UpdateUI();
+        }
+
         CheckHopeThreshold();
     }
 
     public void CheckHopeThreshold()
     {
-        while (currentHope >= hopeLevelUpThreshold)
+        // Only proceed if we have another level
+        while (hopeLevels.Count > hopeLevel && currentHope >= hopeLevels[hopeLevel].hopeLevelUpThreshold)
         {
-            currentHope -= hopeLevelUpThreshold;
+            var levelData = hopeLevels[hopeLevel];
+
+            // Subtract threshold from currentHope (handles overflow)
+            currentHope -= levelData.hopeLevelUpThreshold;
+
+            // Update maxSpoons based on this level
+            maxSpoons = Random.Range(levelData.spoonRange.x, levelData.spoonRange.y + 1);
+            if (uiInitialized && spoonDrawer != null)
+                spoonDrawer.RefreshDrawer(currentSpoons);
+
+            // Trigger any inspector UnityEvent
+            levelData.onLevelUp?.Invoke();
+
+            // Unlock behavior if set
+            if (!string.IsNullOrEmpty(levelData.unlockBehavior))
+            {
+                Debug.Log($"Unlocked behavior: {levelData.unlockBehavior}");
+            }
+
+            // Spawn thought if set
+            if (levelData.thoughtToSpawn != null)
+            {
+                ThoughtBubbleManager_New.Instance?.StartThought(levelData.thoughtToSpawn);
+            }
+
             hopeLevel++;
-            maxSpoons = Mathf.Min(20, maxSpoons + 1);
-            Debug.Log($"Hope level up! New level: {hopeLevel}. maxSpoons => {maxSpoons}");
+            OnHopeLevelUp?.Invoke(hopeLevel);
+
+            Debug.Log($"Hope leveled up to {hopeLevel}");
         }
+
         UpdateUI();
     }
+
 
     public int GetCurrentSpoons() => currentSpoons;
 
@@ -322,6 +382,38 @@ public class ResourceManager : MonoBehaviour
         }
     }
 
+    private IEnumerator AnimateSlider(
+    Slider slider,
+    TMP_Text text,
+    int startValue,
+    int endValue,
+    int maxValue,
+    float duration = 2.0f)
+    {
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            // SmoothStep = fast start, slows at end
+            float v = Mathf.SmoothStep(startValue, endValue, t);
+            int iv = Mathf.RoundToInt(v);
+
+            slider.value = iv;
+            if (text != null)
+                text.text = $"{iv}/{maxValue}";
+
+            yield return null;
+        }
+
+        // Snap final values
+        slider.value = endValue;
+        if (text != null)
+            text.text = $"{endValue}/{maxValue}";
+    }
+
     public void BeginCommit()
     {
         suppressDrawerRefresh = true;
@@ -333,12 +425,13 @@ public class ResourceManager : MonoBehaviour
         // No automatic refresh — the drawer state after dragging is the final state.
     }
 
-
     // --- Debug Keys ---
     void DebugControls()
     {
         if (Input.GetKeyDown(KeyCode.Alpha3)) ModifyStress(-10);
         if (Input.GetKeyDown(KeyCode.Alpha4)) ModifyStress(10);
+        if (Input.GetKeyDown(KeyCode.Alpha3)) ModifyHope(-1);
+        if (Input.GetKeyDown(KeyCode.Alpha4)) ModifyHope(1);
         if (Input.GetKeyDown(KeyCode.Alpha5)) ModifySpoons(-1);
         if (Input.GetKeyDown(KeyCode.Alpha6)) ModifySpoons(1);
     }
