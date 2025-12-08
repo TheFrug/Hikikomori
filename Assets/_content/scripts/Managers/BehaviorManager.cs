@@ -61,7 +61,7 @@ public class BehaviorManager : MonoBehaviour
 
         if (thought.type == ThoughtData.ThoughtType.Automatic)
         {
-            ThoughtBubbleView.Instance?.SpawnThought(thought);
+            ThoughtBubbleManager_New.Instance?.StartThought(thought);
             FinishBehavior(choice);
         }
         else
@@ -98,7 +98,7 @@ public class BehaviorManager : MonoBehaviour
         // Cooldowns / once-per-day lockouts
         if (!data.repeatable && choice.usedToday)
         {
-            tooltipPanel?.ShowBusyMessage("You can't do that again today.");
+            print("You can't do that again today.");
             return false;
         }
 

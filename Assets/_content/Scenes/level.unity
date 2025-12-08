@@ -1638,7 +1638,7 @@ MonoBehaviour:
     bond: 20
     baseColor: {r: 0.19339621, g: 0.7248057, b: 1, a: 1}
     textColor: {r: 0.18431373, g: 0.21176471, b: 0.2509804, a: 1}
-    font: {fileID: 11400000, guid: 8ab7f08a3f6712a47bc07178080087fa, type: 2}
+    font: {fileID: 11400000, guid: c3503757fb4f7414787840e2c5a0cee2, type: 2}
     bondToSaturation:
       serializedVersion: 2
       m_Curve:
