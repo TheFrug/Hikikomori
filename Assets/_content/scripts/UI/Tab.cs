@@ -40,6 +40,13 @@ public class Tab : MonoBehaviour
         StartCoroutine(SlideCoroutine());
     }
 
+    public void CloseIfOpen()
+    {
+        if (inFrame && !isSliding)
+            ToggleTab();
+    }
+
+
     private IEnumerator SlideCoroutine()
     {
         isSliding = true;

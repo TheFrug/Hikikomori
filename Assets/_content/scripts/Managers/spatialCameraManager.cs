@@ -25,6 +25,9 @@ public class spatialCameraManager : MonoBehaviour
     public System.Action<int> OnCameraChanged;
     public System.Action<int> OnCameraSwitchStarted;
 
+    [SerializeField]
+    private Tab CameraControlTab;
+
     // Called to switch the camera to a new predefined position using an animation.
     public void SwitchCamera(Transform activeCam)
     {
@@ -45,6 +48,8 @@ public class spatialCameraManager : MonoBehaviour
         camAnimator.Play(animName);
         StartCoroutine(WaitForAnimation(camAnimator, animName));
         currentCamIndex = targetIndex;
+
+        CameraControlTab.CloseIfOpen();
     }
 
     private int GetCamIndex(Transform cam)

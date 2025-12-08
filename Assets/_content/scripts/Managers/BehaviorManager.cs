@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using ProjectHiki.UI;
+using System;
 
 public class BehaviorManager : MonoBehaviour
 {
@@ -11,6 +12,8 @@ public class BehaviorManager : MonoBehaviour
 
     private bool behaviorRunning = false;
     private BehaviorChoice pendingChoice;     // Stored until interactive thought finishes
+
+    public static event Action OnBehaviorStarted;
 
     // -----------------------------------------------------------------
     // BUSY TOOLTIP

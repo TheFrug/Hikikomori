@@ -29,15 +29,24 @@ public class SpoonPanel : MonoBehaviour
     private BehaviorChoice ownerChoice;
     private bool committed = false;
 
-    // NEW — prevents double restore/destroy during closing + OnDestroy
     private bool panelClosed = false;
 
-    // NEW — prevents ClosePanel multiple times
     private bool closeInProgress = false;
+
+    private BehaviorIconRoomController iconController;
+    private UIStateController uiState;
+    private Tab SpoonDrawerTab;
+
 
     void OnEnable()
     {
         ActivePanel = this;
+        iconController = FindObjectOfType<BehaviorIconRoomController>();
+        uiState = UIStateController.Instance;
+
+        var drawer = GameObject.Find("p_SpoonDrawer"); // rename if needed
+        if (drawer != null)
+            SpoonDrawerTab = drawer.GetComponent<Tab>();
     }
 
     void OnDisable()
@@ -163,6 +172,10 @@ public class SpoonPanel : MonoBehaviour
         }
 
         committed = true;
+
+        // CLOSE SPOON DRAWER TAB IF FOUND
+        if (SpoonDrawerTab != null)
+            SpoonDrawerTab.CloseIfOpen();
 
         if (ownerChoice != null)
         {
