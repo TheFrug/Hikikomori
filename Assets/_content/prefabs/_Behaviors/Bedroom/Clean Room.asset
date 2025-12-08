@@ -14,18 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorName: Clean the Desk
   behaviorDescription: Clean your puter, pig
-  isDefault: 0
+  repeatable: 0
   startsLocked: 0
   durationMinutes: 90
-  isToggle: 0
   spoonsCost: 2
   hideSpoonsCost: 1
-  hungerImpact: 10
-  cashCost: 0
+  hopeImpact: 0
+  stressImpact: 0
   icon: {fileID: 0}
-  thought: {fileID: 11400000, guid: 6dd52cfac56131a41aa97239e6ab9972, type: 2}
-  yarnTrigger:
-  - yarnNodeName: Clean_the_desk
-    triggerTime: 0
-    triggerMinute: 0
-    pauseClock: 0
+  thought: {fileID: 11400000, guid: d713413d9a5fb144f857db48985531a5, type: 2}

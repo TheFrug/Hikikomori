@@ -23442,11 +23442,15 @@ PrefabInstance:
       objectReference: {fileID: 304256886}
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: hopeLevels.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: hopeLevels.Array.data[0].rank
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
+      propertyPath: doomscrollStressRecoveryPerTick
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: hopeLevels.Array.data[0].spoonRange.x
@@ -23454,6 +23458,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: hopeLevels.Array.data[0].spoonRange.y
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
+      propertyPath: hopeLevels.Array.data[1].spoonRange.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
+      propertyPath: hopeLevels.Array.data[1].spoonRange.y
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
@@ -23461,8 +23473,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: 6dd52cfac56131a41aa97239e6ab9972, type: 2}
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
+      propertyPath: hopeLevels.Array.data[1].thoughtToSpawn
+      value: 
+      objectReference: {fileID: 11400000, guid: d713413d9a5fb144f857db48985531a5, type: 2}
+    - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: hopeLevels.Array.data[0].hopeLevelUpThreshold
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
+      propertyPath: hopeLevels.Array.data[1].hopeLevelUpThreshold
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 5058838860029216890, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: m_Name
