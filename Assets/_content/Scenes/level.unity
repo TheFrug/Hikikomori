@@ -4260,10 +4260,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: UI + Dialogue System
       objectReference: {fileID: 0}
-    - target: {fileID: 8009355297261482683, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: -651
-      objectReference: {fileID: 0}
     - target: {fileID: 8031985899181815594, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: behaviorManager
       value: 
