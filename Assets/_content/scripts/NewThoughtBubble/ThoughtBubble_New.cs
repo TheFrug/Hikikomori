@@ -37,12 +37,17 @@ public class ThoughtBubble_New : MonoBehaviour
     }
 
     // Initialize for automatic-floating mode (manager will position/activate)
-    // speakerKey is used to consult FamilyManager about name reveal.
-    public void InitializeAutomatic(string text, Color bubbleColor, TMP_FontAsset font, string speakerKey)
+    // Initialize for automatic-floating mode (manager will position/activate)
+    public void InitializeAutomatic(string text, Color bubbleColor, TMP_FontAsset font, string speakerKey, Color textColor)
     {
         // set text + font + color immediately
         ApplyText(text, font);
         ApplyColor(bubbleColor);
+
+        if (bodyText != null)
+        {
+            bodyText.color = textColor; // <-- apply textColor here
+        }
 
         // Name logic: consult FamilyManager to determine whether to show name panel
         var fm = FamilyManager.Instance;
@@ -66,6 +71,12 @@ public class ThoughtBubble_New : MonoBehaviour
             {
                 nameText.text = displayName;
                 if (font != null) nameText.font = font;
+                if (fm != null)
+                {
+                    var part = fm.parts.Find(p => p.key == speakerKey);
+                    if (part != null)
+                        nameText.color = part.textColor; // optional: match name text color too
+                }
             }
         }
 
@@ -73,19 +84,17 @@ public class ThoughtBubble_New : MonoBehaviour
         if (autoSize)
             ResizeToFitText();
 
-        // runtime state init (Brandon fields)
+        // runtime state init
         HasSpeaker = namePanel != null && namePanel.activeSelf;
         TopTimer = 0f;
         SwayTimer = 0f;
         Done = false;
 
-        // Duration will be set by manager (manager can assign bubble.Duration after this call),
-        // but leave a default so nothing crashes.
         if (Duration <= 0f) Duration = 3f;
 
-        // ensure visible
         if (canvasGroup != null) canvasGroup.alpha = 1f;
     }
+
 
     // Called by controller when returning to pool
     public void ResetBubble()

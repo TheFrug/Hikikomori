@@ -293,11 +293,23 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         var bubble = GetFromPool();
         bubble.gameObject.SetActive(true);
 
+        Color bubbleColor = FamilyManager.Instance != null ? FamilyManager.Instance.GetBubbleColor(speakerKey) : Color.white;
+        TMP_FontAsset font = FamilyManager.Instance != null ? FamilyManager.Instance.GetFontAsset(speakerKey) : null;
+        Color textColor = Color.white;
+
+        if (FamilyManager.Instance != null)
+        {
+            var part = FamilyManager.Instance.parts.Find(p => p.key == speakerKey);
+            if (part != null)
+                textColor = part.textColor;
+        }
+
         bubble.InitializeAutomatic(
             text,
-            FamilyManager.Instance != null ? FamilyManager.Instance.GetBubbleColor(speakerKey) : Color.white,
-            FamilyManager.Instance != null ? FamilyManager.Instance.GetFontAsset(speakerKey) : null,
-            speakerKey
+            bubbleColor,
+            font,
+            speakerKey,
+            textColor // <-- pass textColor here
         );
 
         bubble.Duration = lifetime > 0f ? lifetime : 3f;
