@@ -87,7 +87,7 @@ public class FamilyManager : MonoBehaviour
 
     public string GetDisplayName(string key)
     {
-        Debug.Log("Getting Display name for" + key);
+        //Debug.Log("Getting Display name for" + key);
         var part = parts.Find(p => p.key == key);
         if (part == null)
             return "???";

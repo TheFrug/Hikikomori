@@ -232,14 +232,14 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     public void StartThought(ThoughtData thought)
     {
-        ClearAll();
+        //ClearAll();
         if (thought == null)
         {
             Debug.LogWarning("[ThoughtBubbleManager] Tried to spawn null Thought asset!");
             return;
         }
 
-        SetSpeedFromThought(thought);
+        //SetSpeedFromThought(thought);
 
         if (!string.IsNullOrEmpty(thought.yarnNodeName))
         {

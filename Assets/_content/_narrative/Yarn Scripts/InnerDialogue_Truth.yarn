@@ -1,5 +1,8 @@
 ﻿title: InnerDialogue_Truth
 ---
+<<set $Lady = GetPartDisplayName("Lady")>>
+<<set $Hiki = GetPartDisplayName("Hiki")>>
+
 {$Lady}: Hiki... can you hear me?
 {$Hiki}: Hello? Who's speaking to me?
 {$Lady}: Hiki... can you hear me?
