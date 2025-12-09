@@ -1,15 +1,20 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 
 public class ThoughtBubble_New : MonoBehaviour
 {
     [Header("UI")]
     [SerializeField] private TMP_Text bodyText = null!;
-    [SerializeField] private GameObject namePanel = null!;      // panel (enable/disable)
-    [SerializeField] private TMP_Text nameText = null!;         // text inside namePanel
+    [SerializeField] private GameObject namePanel = null!;
+    [SerializeField] private TMP_Text nameText = null!;
     [SerializeField] private Image background = null!;
     [SerializeField] private CanvasGroup canvasGroup = null!;
+
+    [Header("Option UI (optional)")]
+    [SerializeField] private Button optionButton = null;
+    [SerializeField] private TMP_Text optionNumberText = null;
 
     [Header("Auto-sizing")]
     [SerializeField] private bool autoSize = true;
@@ -19,9 +24,7 @@ public class ThoughtBubble_New : MonoBehaviour
     [SerializeField] private float minHeight = 75f;
     [SerializeField] private float maxHeight = 300f;
 
-
     public RectTransform RectTransform { get; private set; } = null!;
-    [Header("Set at Runtime")]
     public bool HasSpeaker;
     public float TopTimer;
     public float CenterX;
@@ -29,27 +32,44 @@ public class ThoughtBubble_New : MonoBehaviour
     public float Duration;
     public bool Done;
 
+    public bool IsOption { get; private set; } = false;
+    private Action<int>? onOptionSelected;
+    private int optionIndex = -1;
+
     private void Awake()
     {
         RectTransform = GetComponent<RectTransform>();
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
+
+        // Always hide option-specific UI unless manually enabled
+        if (optionNumberText != null) optionNumberText.gameObject.SetActive(false);
+        if (optionButton != null)
+        {
+            optionButton.gameObject.SetActive(false);
+            optionButton.onClick.RemoveAllListeners();
+            optionButton.onClick.AddListener(OnOptionButtonClickedInternal);
+        }
     }
 
-    // Initialize for automatic-floating mode (manager will position/activate)
-    // Initialize for automatic-floating mode (manager will position/activate)
-    public void InitializeAutomatic(string text, Color bubbleColor, TMP_FontAsset font, string speakerKey, Color textColor)
+    public void InitializeAutomatic(
+        string text, Color bubbleColor, TMP_FontAsset font,
+        string speakerKey, Color textColor)
     {
-        // set text + font + color immediately
+        // ensure option UI is disabled for non-option bubbles
+        IsOption = false;
+        onOptionSelected = null;
+        optionIndex = -1;
+
+        if (optionNumberText != null) optionNumberText.gameObject.SetActive(false);
+        if (optionButton != null) optionButton.gameObject.SetActive(false);
+
         ApplyText(text, font);
         ApplyColor(bubbleColor);
 
         if (bodyText != null)
-        {
-            bodyText.color = textColor; // <-- apply textColor here
-        }
+            bodyText.color = textColor;
 
-        // Name logic: consult FamilyManager to determine whether to show name panel
         var fm = FamilyManager.Instance;
         bool showName = false;
         string displayName = string.Empty;
@@ -75,28 +95,66 @@ public class ThoughtBubble_New : MonoBehaviour
                 {
                     var part = fm.parts.Find(p => p.key == speakerKey);
                     if (part != null)
-                        nameText.color = part.textColor; // optional: match name text color too
+                        nameText.color = part.textColor;
                 }
             }
         }
 
-        // autosize (forces TMP mesh updates)
         if (autoSize)
             ResizeToFitText();
 
-        // runtime state init
         HasSpeaker = namePanel != null && namePanel.activeSelf;
         TopTimer = 0f;
         SwayTimer = 0f;
         Done = false;
+        Duration = Duration <= 0f ? 3f : Duration;
 
-        if (Duration <= 0f) Duration = 3f;
-
-        if (canvasGroup != null) canvasGroup.alpha = 1f;
+        if (canvasGroup != null)
+            canvasGroup.alpha = 1f;
     }
 
+    public void InitializeOption(
+        string text, Color bubbleColor, TMP_FontAsset font,
+        int optionNumber, Action<int> onSelected)
+    {
+        ApplyText(text, font);
+        ApplyColor(bubbleColor);
 
-    // Called by controller when returning to pool
+        IsOption = true;
+        optionIndex = optionNumber;
+        onOptionSelected = onSelected;
+
+        if (namePanel != null)
+            namePanel.SetActive(false);
+
+        // Show number bubble ONLY for options
+        if (optionNumberText != null)
+        {
+            optionNumberText.gameObject.SetActive(true);
+            optionNumberText.text = (optionNumber + 1).ToString();
+        }
+
+        if (optionButton != null)
+            optionButton.gameObject.SetActive(true);
+
+        ResizeToFitText();
+
+        TopTimer = 0f;
+        SwayTimer = 0f;
+        Done = false;
+        Duration = Mathf.Infinity;
+        HasSpeaker = false;
+
+        if (canvasGroup != null)
+            canvasGroup.alpha = 1f;
+    }
+
+    private void OnOptionButtonClickedInternal()
+    {
+        if (IsOption && onOptionSelected != null)
+            onOptionSelected.Invoke(optionIndex);
+    }
+
     public void ResetBubble()
     {
         TopTimer = 0f;
@@ -104,6 +162,13 @@ public class ThoughtBubble_New : MonoBehaviour
         SwayTimer = 0f;
         Duration = 0f;
         HasSpeaker = false;
+        IsOption = false;
+        onOptionSelected = null;
+        optionIndex = -1;
+
+        if (optionNumberText != null) optionNumberText.gameObject.SetActive(false);
+        if (optionButton != null) optionButton.gameObject.SetActive(false);
+
         gameObject.SetActive(false);
     }
 
@@ -125,7 +190,6 @@ public class ThoughtBubble_New : MonoBehaviour
 
     public CanvasGroup CanvasGroup => canvasGroup;
 
-    // Non-public helper but accessible for controller to know how tall the name area is
     public float SpeakerHeight
     {
         get
@@ -136,7 +200,6 @@ public class ThoughtBubble_New : MonoBehaviour
         }
     }
 
-    // Resize function (keeps the same algorithm you already had)
     private void ResizeToFitText()
     {
         if (bodyText == null || RectTransform == null) return;

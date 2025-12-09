@@ -4,10 +4,8 @@
 <<set $Hiki = GetPartDisplayName("Hiki")>>
 
 {$Lady}: Hiki... can you hear me?
-{$Hiki}: Hello? Who's speaking to me?
-{$Lady}: Hiki... can you hear me?
-{$Hiki}: Hello? Who's speaking to me?
-{$Lady}: Hiki... can you hear me?
+{$Hiki}: (Silent)
+{$Lady}: I know you're there, Hiki!
 {$Hiki}: Hello? Who's speaking to me?
 {$Lady}: You’ve come far... but you’re still hiding something.
 -> “I’m not hiding anything.” 
