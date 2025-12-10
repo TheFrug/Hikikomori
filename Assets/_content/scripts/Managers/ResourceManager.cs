@@ -69,6 +69,7 @@ public class ResourceManager : MonoBehaviour
     private Coroutine hopeAnimRoutine;
 
     public static event System.Action<int> OnHopeLevelUp;
+    public static event System.Action<int, HopeLevelData> OnHopeLevelUpUI;
 
     // visual config
     [Header("Animation")]
@@ -403,6 +404,7 @@ public class ResourceManager : MonoBehaviour
                     ThoughtBubbleManager_New.Instance?.StartThought(levelData.thoughtToSpawn);
 
                 OnHopeLevelUp?.Invoke(hopeLevel);
+                OnHopeLevelUpUI?.Invoke(hopeLevel, levelData);
 
                 // Visual: reset bar to 0 for next level
                 int nextThreshold = GetCurrentHopeThreshold();
