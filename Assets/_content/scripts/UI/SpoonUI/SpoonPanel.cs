@@ -37,7 +37,6 @@ public class SpoonPanel : MonoBehaviour
     private UIStateController uiState;
     private Tab SpoonDrawerTab;
 
-
     void OnEnable()
     {
         ActivePanel = this;
@@ -81,21 +80,29 @@ public class SpoonPanel : MonoBehaviour
         panelClosed = false;
         closeInProgress = false;
 
+        // clear any existing UI
         foreach (Transform t in slotContainer)
             Destroy(t.gameObject);
 
         slots.Clear();
         stagedSpoons.Clear();
 
-        var go = Instantiate(slotPrefab, slotContainer);
-        var slot = go.GetComponent<SpoonSlot>();
-        if (slot == null)
+        // Create exactly requiredSpoons slots (one per required spoon)
+        // If requiredSpoons == 0, still create one slot visually so UI doesn't break
+        int spawnCount = Mathf.Max(1, requiredSpoons);
+        for (int i = 0; i < spawnCount; i++)
         {
-            Debug.LogError("slotPrefab missing SpoonSlot.");
-        }
-        else
-        {
+            var go = Instantiate(slotPrefab, slotContainer);
+            var slot = go.GetComponent<SpoonSlot>();
+            if (slot == null)
+            {
+                Debug.LogWarning("SpoonPanel: slotPrefab missing SpoonSlot component. Using placeholder.");
+                // create a placeholder SpoonSlot if needed
+                slot = go.AddComponent<SpoonSlot>();
+            }
             slot.Initialize(this);
+            // ensure slot starts empty visually
+            TrySetSlotFilledVisual(slot, false);
             slots.Add(slot);
         }
 
@@ -128,19 +135,30 @@ public class SpoonPanel : MonoBehaviour
         if (spoon == null) return;
         if (stagedSpoons.Contains(spoon)) return;
 
+        int filled = CurrentFilledSpoons();
+
+        // Prevent overfilling: if we've already enough, restore the spoon immediately
+        if (filled >= requiredSpoons)
+        {
+            // Give immediate feedback by restoring spoon
+            spoon.RestoreFromSpend();
+            return;
+        }
+
+        // Accept this spoon
         spoon.Spend(); // fade + deactivate
         stagedSpoons.Add(spoon);
+
+        // Update the slot visuals: mark the next empty slot filled
+        UpdateSlotVisuals();
 
         OnSlotChanged();
     }
 
+    // CurrentFilledSpoons is determined by accepted staged spoons (one spoon per slot)
     public int CurrentFilledSpoons()
     {
-        int slotCount = 0;
-        foreach (var s in slots)
-            slotCount += s.spoonCount;
-
-        return Mathf.Max(slotCount, stagedSpoons.Count);
+        return stagedSpoons != null ? stagedSpoons.Count : 0;
     }
 
     public void OnSlotChanged()
@@ -157,6 +175,84 @@ public class SpoonPanel : MonoBehaviour
 
         if (filled >= requiredSpoons)
             behaviorTriggered = true;
+    }
+
+    // -------------------------------------------------------------
+    // Update slot visuals based on stagedSpoons count
+    // -------------------------------------------------------------
+    private void UpdateSlotVisuals()
+    {
+        int filled = CurrentFilledSpoons();
+
+        for (int i = 0; i < slots.Count; i++)
+        {
+            var slot = slots[i];
+            bool shouldBeFilled = i < filled;
+            TrySetSlotFilledVisual(slot, shouldBeFilled);
+        }
+    }
+
+    // Tries several strategies to set a slot's visual filled/unfilled.
+    // - If SpoonSlot exposes SetFilled(bool) method, calls it.
+    // - Otherwise tries to find child Image named "filled"/"img_filled"/"fill"/"img_fill" and enable/disable it.
+    private void TrySetSlotFilledVisual(SpoonSlot slot, bool filled)
+    {
+        if (slot == null) return;
+
+        // Preferred: SpoonSlot implements SetFilled(bool)
+        var slotType = slot.GetType();
+        var setFilledMethod = slotType.GetMethod("SetFilled");
+        if (setFilledMethod != null)
+        {
+            setFilledMethod.Invoke(slot, new object[] { filled });
+            return;
+        }
+
+        // Fallback: search for child images by name
+        var images = slot.GetComponentsInChildren<Image>(true);
+        if (images != null && images.Length > 0)
+        {
+            // look for explicit "filled" image
+            for (int i = 0; i < images.Length; i++)
+            {
+                var img = images[i];
+                if (img == null) continue;
+                string n = img.gameObject.name.ToLowerInvariant();
+                if (n.Contains("filled") || n.Contains("img_filled") || n.Contains("fill") || n.Contains("img_fill"))
+                {
+                    img.gameObject.SetActive(filled);
+                    // Also try to find an "empty" image sibling and invert
+                    var parent = img.transform.parent;
+                    if (parent != null)
+                    {
+                        foreach (Transform child in parent)
+                        {
+                            var cimg = child.GetComponent<Image>();
+                            if (cimg != null && child.gameObject != img.gameObject)
+                            {
+                                // If this child looks like an empty indicator, toggle opposite
+                                string cn = child.gameObject.name.ToLowerInvariant();
+                                if (cn.Contains("empty") || cn.Contains("silhouette") || cn.Contains("bg") || cn.Contains("outline"))
+                                {
+                                    child.gameObject.SetActive(!filled);
+                                }
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+
+            // If no named filled image found, as a last resort toggle the first child image's alpha
+            var fallbackImg = images[0];
+            if (fallbackImg != null)
+            {
+                var c = fallbackImg.color;
+                c.a = filled ? 1f : 0.25f;
+                fallbackImg.color = c;
+            }
+            return;
+        }
     }
 
     // -------------------------------------------------------------
@@ -270,6 +366,7 @@ public class SpoonPanel : MonoBehaviour
         {
             behaviorManager?.ClearPanel(this);
             ownerChoice?.NotifyPanelClosed();
+            ownerChoice.currentSpoonPanel = null;
             Destroy(gameObject);
             yield break;
         }
@@ -279,6 +376,7 @@ public class SpoonPanel : MonoBehaviour
 
         behaviorManager?.ClearPanel(this);
         ownerChoice?.NotifyPanelClosed();
+        ownerChoice.currentSpoonPanel = null;
         Destroy(gameObject);
     }
 
@@ -294,8 +392,9 @@ public class SpoonPanel : MonoBehaviour
 
         stagedSpoons.Clear();
 
+        // Reset slot visuals
         foreach (var slot in slots)
-            slot.ForceReturnSpoon();
+            TrySetSlotFilledVisual(slot, false);
     }
 
     void OnDestroy()
@@ -350,7 +449,8 @@ public class SpoonPanel : MonoBehaviour
 
         behaviorManager?.ClearPanel(this);
         ownerChoice?.NotifyPanelClosed();
-        ownerChoice.currentSpoonPanel = null; // ADD THIS
+        if (ownerChoice != null)
+            ownerChoice.currentSpoonPanel = null;
 
         Destroy(gameObject);
     }

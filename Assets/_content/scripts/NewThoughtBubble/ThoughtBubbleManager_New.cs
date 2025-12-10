@@ -107,7 +107,8 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
         // ensure prompt hidden at start
         if (advancePrompt != null)
-            advancePrompt.Hide(true);
+            advancePrompt.Hide(true); // hide instantly, but DO NOT deactivate object
+
     }
 
     private void InitPool()

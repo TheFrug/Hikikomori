@@ -515,7 +515,8 @@ public class ResourceManager : MonoBehaviour
     {
         int baseSpoons = Mathf.RoundToInt(maxSpoons);
         int randomVariance = Random.Range(-3, 2);
-        currentSpoons = Mathf.Clamp(baseSpoons + randomVariance, 1, maxSpoons);
+        //currentSpoons = Mathf.Clamp(baseSpoons + randomVariance, 1, maxSpoons);
+        currentSpoons = maxSpoons;
 
         if (uiInitialized && spoonDrawer != null)
             spoonDrawer.RefreshDrawer(currentSpoons);
