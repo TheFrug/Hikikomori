@@ -1,11 +1,12 @@
-using System.Collections.Generic;
-using UnityEngine;
-using TMPro;
 using ProjectHiki.UI;
-using Yarn.Unity;
-using UnityEngine.Events;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+using Yarn.Unity;
 
 public class ThoughtBubbleManager_New : MonoBehaviour
 {
@@ -61,6 +62,9 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     private float currentTravelMultiplier = 1.0f;
     public float CurrentTravelMultiplier => currentTravelMultiplier;
+
+    private Queue<ThoughtData> thoughtQueue = new Queue<ThoughtData>();
+    private bool isThoughtActive = false; // tracks if a thought is currently playing
 
     // --- OPTION STATE ---
     private bool awaitingOptionSelection = false;
@@ -162,6 +166,9 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Alpha9)) 
+            StartThought(startThought);
+
         // Update regular active bubbles (skip options in floating logic)
         int indexForFloating = 0;
         for (int i = 0; i < _active.Count; i++)
@@ -352,41 +359,78 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     {
         if (thought == null)
         {
-            Debug.LogWarning("[ThoughtBubbleManager] Tried to spawn null Thought asset!");
+            Debug.LogWarning("[ThoughtBubbleManager] Tried to start null Thought.");
             return;
         }
 
-        // Reset per-session flag
-        hasFiredBubbleFinished = false;
+        if (isThoughtActive)
+        {
+            thoughtQueue.Enqueue(thought);
+            return;
+        }
 
-        // Set interactive flag for this session so presenter/manager know how to behave.
-        isInteractiveSession = (thought.type == ThoughtData.ThoughtType.Interactive);
+        StartThoughtInternal(thought);
+    }
 
-        // Reset state for a new session
+    private void StartThoughtInternal(ThoughtData thought)
+    {
+        isThoughtActive = true;
         allAtTop = false;
         lastBubbleSpawned = null;
+        hasFiredBubbleFinished = false;
 
-        // If interactive, ensure input is disabled until the first delay expires
+        isInteractiveSession = thought.type == ThoughtData.ThoughtType.Interactive;
+
         if (isInteractiveSession)
-        {
             DisableInputImmediate();
-        }
 
         if (!string.IsNullOrEmpty(thought.yarnNodeName))
         {
             var runner = FindObjectOfType<DialogueRunner>();
             if (runner == null)
             {
-                Debug.LogWarning("[ThoughtBubbleManager] No DialogueRunner in scene!");
+                Debug.LogWarning("[ThoughtBubbleManager] No DialogueRunner in scene.");
+                FinishCurrentThought();
                 return;
             }
 
             runner.StartDialogue(thought.yarnNodeName);
+
+            // Let ThoughtBubbleView_New call EndInteractiveSession when finished
             return;
         }
 
-        Debug.LogWarning($"[ThoughtBubbleManager] Thought '{thought.name}' has no Yarn node defined, skipping spawn.");
+        // Automatic Thought with no Yarn
+        // Optional: show a default bubble here if you want
+        StartCoroutine(WaitAndFinishAutomatic());
     }
+
+    private IEnumerator WaitAndFinishAutomatic()
+    {
+        // Wait for default duration
+        yield return new WaitForSeconds(3f);
+
+        FinishCurrentThought();
+    }
+
+    public void EndInteractiveSession()
+    {
+        isInteractiveSession = false;
+
+        CancelInputDelay();
+        if (advancePrompt != null)
+            advancePrompt.Hide(true);
+
+        // Let bubbles float out naturally
+        allAtTop = false;
+        if (lastBubbleSpawned != null)
+            lastBubbleSpawned.TopTimer = 10f; // force completion
+
+        EnableInput();
+
+        FinishCurrentThought();
+    }
+
 
 
     private void SetSpeedFromThought(ThoughtData t)
@@ -598,28 +642,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         externalOptionSelectionCallback = null;
     }
 
-    public void EndInteractiveSession()
-    {
-        isInteractiveSession = false;
-
-        // cancel pending input enables
-        CancelInputDelay();
-
-        // hide prompt
-        if (advancePrompt != null)
-            advancePrompt.Hide(true);
-
-        // Once interactive session ends, allow bubbles to auto-complete:
-        allAtTop = false; // reset so manager will recalc and eventually set allAtTop and mark Done
-        // Optionally mark lastBubbleSpawned TopTimer large to force completion:
-        if (lastBubbleSpawned != null)
-            lastBubbleSpawned.TopTimer = lastBubbleSpawned.Duration + 0.1f;
-
-        // re-enable LineAdvancer so normal input works outside of interactive session
-        if (lineAdvancer != null)
-            lineAdvancer.enabled = true;
-    }
-
     /// <summary>
     /// Public accessor for RunOptionsAsync to check selection state and read index.
     /// </summary>
@@ -678,6 +700,19 @@ public class ThoughtBubbleManager_New : MonoBehaviour
             lineAdvancer.enabled = false; // prevent space input
         if (advancePrompt != null)
             advancePrompt.Hide(true);
+    }
+
+    private void FinishCurrentThought()
+    {
+        isThoughtActive = false;
+        hasFiredBubbleFinished = false;
+
+        // Start next thought if any
+        if (thoughtQueue.Count > 0)
+        {
+            var nextThought = thoughtQueue.Dequeue();
+            StartThoughtInternal(nextThought);
+        }
     }
 
     // -------------------------

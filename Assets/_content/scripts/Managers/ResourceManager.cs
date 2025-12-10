@@ -36,7 +36,9 @@ public class ResourceManager : MonoBehaviour
     public TMP_Text stressText;
     public int maxStress = 100;
     [SerializeField]
+    private int startingStress = 60;
     private int currentStress = 0;
+
 
     [Header("Hope")]
     public Slider hopeBar;
@@ -47,9 +49,10 @@ public class ResourceManager : MonoBehaviour
     public List<HopeLevelData> hopeLevels = new List<HopeLevelData>();
 
     // runtime hope values
-    [SerializeField]
     private int currentHope = 0;
     private int hopeLevel = 0;
+    [SerializeField]
+    private int startingHope;
 
     [Header("Spoons")]
     public SpoonDrawer spoonDrawer;
@@ -101,8 +104,8 @@ public class ResourceManager : MonoBehaviour
 
     void Start()
     {
-        currentStress = 0;
-        currentHope = 0;
+        currentStress = startingStress;
+        currentHope = startingHope;
         hopeLevel = 0;
 
         SetupBars();

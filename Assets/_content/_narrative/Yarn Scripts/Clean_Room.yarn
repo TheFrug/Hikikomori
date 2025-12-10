@@ -14,17 +14,13 @@
 <<wait  3.0>>
 {$Goblin}: I've not seen the boss that angry since... well, we don't talk about it.
 <<wait  3.0>>
-{$Hiki}: The boss? Who's this 'boss' you keep referring to?
-<<wait  3.0>>
-{$Goblin}: Is that some kinda joke? You're livin in 'im.
-<<wait  2.0>>
-{$Hiki}: Oh, like, the room? Is the room our boss?
+{$Hiki}: Oh the room? Is the room our boss?
 <<wait  3.0>>
 {$Goblin}: ...
 <<wait  3.0>>
-{$Goblin}: You're serious, aren't you? The boss is, well... How to put this...
+{$Goblin}: You're serious, aren't you?
 <<wait  3.0>>
-{$Goblin}: The dipshit we all live inside of.
+{$Goblin}: The boss is the dipshit we all live inside of.
 <<wait  2.0>>
 {$Hiki}: We live inside a person? That's weird!
 <<wait  2.0>>

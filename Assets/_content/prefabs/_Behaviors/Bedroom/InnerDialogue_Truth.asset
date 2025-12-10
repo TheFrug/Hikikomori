@@ -15,7 +15,7 @@ MonoBehaviour:
   behaviorName: InnerDialogue
   behaviorDescription: Short fun behavior Description.
   repeatable: 0
-  startsLocked: 1
+  startsLocked: 0
   unlocked: 0
   durationMinutes: 30
   spoonsCost: 1

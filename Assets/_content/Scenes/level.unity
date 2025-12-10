@@ -1505,7 +1505,7 @@ MonoBehaviour:
     partType: Firefighter
     partDescription: 'Hiki''s hedonism. The Goblin encourages Hiki to indulge his
       basest wants, and often does so '
-    nameRevealed: 0
+    nameRevealed: 1
     bond: 20
     baseColor: {r: 0.29803923, g: 0.81960785, b: 0.21568628, a: 1}
     textColor: {r: 0.108935565, g: 0.1262329, b: 0.1509434, a: 1}
@@ -4052,7 +4052,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1869561952630563580, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: startsUnlocked
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1869561952630563580, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: behaviorManager
@@ -4065,7 +4065,7 @@ PrefabInstance:
     - target: {fileID: 1869561952630563580, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: behaviors.Array.data[0]
       value: 
-      objectReference: {fileID: 11400000, guid: 6e850be11124b5141971238b303dc0f0, type: 2}
+      objectReference: {fileID: 11400000, guid: 0ca80140c458db24682d1c2b36f1b7e3, type: 2}
     - target: {fileID: 2091373909121519720, guid: 3f0807a5c6f9d0f4ea2edda6f4ed0695, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -23833,7 +23833,7 @@ PrefabInstance:
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: hopeLevels.Array.data[0].thoughtToSpawn
       value: 
-      objectReference: {fileID: 11400000, guid: 276a08bf6616e0949afc3734e27f7c9b, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: hopeLevels.Array.data[1].thoughtToSpawn
       value: 
