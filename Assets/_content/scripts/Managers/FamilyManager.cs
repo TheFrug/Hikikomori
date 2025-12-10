@@ -30,6 +30,13 @@ public class FamilyManager : MonoBehaviour
         public float bondMax = 10f;
     }
 
+    [Header("Global Bond Thresholds")]
+    public float bondToStartColor = 20f;
+    public float bondToRevealFont = 35f;
+    public float bondToRevealName = 50f;
+    public TMP_FontAsset defaultFont; // shared font when not revealed
+    public Color defaultTextColor;
+
     [Header("parts")]
     public List<PartInfo> parts = new List<PartInfo>();
 
@@ -45,57 +52,89 @@ public class FamilyManager : MonoBehaviour
     }
 
     // --- Core Logic ---
-
-    public Color GetBubbleColor(string key)
+    public Color GetBubbleColor(string key, bool useDisplayKey = false)
     {
-        var part = parts.Find(p => p.key == key);
-        if (part == null) return Color.white;
+        // If useDisplayKey=true, it might pass '???'—convert it back to real key
+        if (useDisplayKey && key == "???")
+        {
+            Debug.LogWarning("[FamilyManager] GetBubbleColor received '???', returning default color");
+            return Color.gray; // fallback for completely unknown
+        }
 
-        // Normalize bond (whole number) into 0..1 based on part.bondMax
+        // Always find by real key
+        var part = parts.Find(p => p.key == key);
+
+        if (part == null)
+        {
+            Debug.Log($"[FamilyManager] GetBubbleColor: part not found for key='{key}'");
+            return Color.white;
+        }
+
+        Debug.Log($"[FamilyManager] GetBubbleColor: key='{key}', bond={part.bond}, nameRevealed={part.nameRevealed}");
+
+        // Gate by bond threshold for tinting
+        if (part.bond <= bondToStartColor)
+            return part.baseColor;
+
         float normalizedBond = 0f;
         if (part.bondMax > 0f)
             normalizedBond = Mathf.Clamp01(part.bond / part.bondMax);
-        else
-            normalizedBond = 0f;
 
-        // Evaluate saturation modifier from the curve (curve expects 0..1 input)
         float saturationValue = part.bondToSaturation.Evaluate(normalizedBond);
 
-        // Take the part's baseColor, convert to HSV, set saturation from curve,
-        // then convert back to RGB. This keeps hue and value but changes saturation.
         Color.RGBToHSV(part.baseColor, out float h, out float s, out float v);
-
         s = Mathf.Clamp01(saturationValue);
 
-        Color result = Color.HSVToRGB(h, s, v);
-        return result;
+        return Color.HSVToRGB(h, s, v);
     }
+
 
     public TMP_FontAsset GetFontAsset(string key)
     {
         var part = parts.Find(p => p.key == key);
-        if (part != null && part.font != null)
-            return part.font;
-        return null;
+        if (part == null)
+            return defaultFont;
+
+        // Gate font behind bond
+        if (part.bond < bondToRevealFont)
+            return defaultFont;
+
+        return part.font != null ? part.font : defaultFont;
+    }
+
+    public Color GetTextColor(string key)
+    {
+        var part = parts.Find(p => p.key == key);
+        if (part == null)
+            return defaultTextColor;
+
+        // Gate text color behind the same threshold as font
+        if (part.bond < bondToRevealFont)
+            return defaultTextColor;
+
+        return part.textColor;
     }
 
     public bool IsNameRevealed(string key)
     {
         var part = parts.Find(p => p.key == key);
-        return part != null && part.nameRevealed;
+        if (part == null) return false;
+
+        // Automatic gating: name reveals at a threshold OR manually revealed
+        if (part.bond >= bondToRevealName)
+            return true;
+
+        return part.nameRevealed;
     }
 
     public string GetDisplayName(string key)
     {
-        //Debug.Log("Getting Display name for" + key);
         var part = parts.Find(p => p.key == key);
         if (part == null)
-            return "???";
+            return "???"; // display text only, do NOT touch the key
 
-        if (part.nameRevealed)
-            return part.realName;
-
-        return "???";
+        // Only hide the name text; keep the key for color logic
+        return IsNameRevealed(key) ? part.realName : "???";
     }
 
     public void RevealName(string key)

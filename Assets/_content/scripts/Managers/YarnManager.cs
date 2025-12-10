@@ -19,7 +19,6 @@ public class YarnManager : MonoBehaviour
     }
 
     // FamilyManager Methods
-
     [YarnCommand("reveal_name")]
     public static void Yarn_RevealName(string key)
     {
@@ -55,5 +54,23 @@ public class YarnManager : MonoBehaviour
     public static void Yarn_ReseedDailySpoons()
     {
         ResourceManager.Instance?.LoadDailySpoons();
+    }
+
+    // -----------------------------
+    // BehaviorUnlockManager Methods
+    // -----------------------------
+
+    // Unlock a behavior choice by ID
+    [YarnCommand("unlock_behavior")]
+    public static void Yarn_UnlockBehavior(string behaviorID)
+    {
+        BehaviorUnlockManager.Instance?.UnlockBehavior(behaviorID);
+    }
+
+    // Unlock a behavior icon by ID
+    [YarnCommand("unlock_icon")]
+    public static void Yarn_UnlockIcon(string iconID)
+    {
+        BehaviorUnlockManager.Instance?.UnlockIcon(iconID);
     }
 }

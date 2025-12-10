@@ -1,0 +1,20 @@
+﻿title: Stress
+---
+<<set $Goblin = GetPartDisplayName("Goblin")>>
+<<set $Wiki = GetPartDisplayName("Wiki")>>
+<<set $Soldier = GetPartDisplayName("Soldier")>>
+<<set $Lady = GetPartDisplayName("Lady")>>
+<<set $Hiki = GetPartDisplayName("Hiki")>>
+
+{$Goblin}: Oh jeez, boss-man is close to boiling over.
+<<wait  2.0>>
+{$Hiki}: Oh no! Is that what that stress bar is for at the top?
+<<wait  2.0>>
+{$Goblin}: Oh yeah, that. I think one of our siblings got it installed for me.
+<<wait  2.0>>
+{$Goblin}: "Watch the Stress meter, Goblin. Its all you're good for."
+<<wait  2.0>>
+{$Hiki}: That's not nice! Why do they call you Goblin?
+<<wait  3.0>>
+{$Goblin}: Heh, because the boss-man and I are close buddies like that. He gave me a name!
+===

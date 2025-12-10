@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b9f10a67163fe6f46a7bcde6b5c6919b, type: 3}
-  m_Name: CleanRoom
+  m_Name: StartThought
   m_EditorClassIdentifier: 
-  speed: 0
+  speed: 1
   type: 0
-  yarnScript: {fileID: -8253061345870894857, guid: 811e00363a2c83c4699b582cbd8930da, type: 3}
-  yarnNodeName: Clean_Room
+  yarnScript: {fileID: -8253061345870894857, guid: 398f3b3d75d9b7a419e24bd820949eb4, type: 3}
+  yarnNodeName: Start

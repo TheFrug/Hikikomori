@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5017668b7b4300e488c71bcfd87b5ab0, type: 3}
   m_Name: Clean Room
   m_EditorClassIdentifier: 
-  behaviorName: Clean the Desk
-  behaviorDescription: Clean your puter, pig
+  behaviorName: Clean Room
+  behaviorDescription: It's like a sty in here, and what's that foul smell?
   repeatable: 0
   startsLocked: 0
+  unlocked: 1
   durationMinutes: 90
   spoonsCost: 2
   hideSpoonsCost: 1
-  hopeImpact: 0
-  stressImpact: 0
+  hopeImpact: 1
+  stressImpact: 15
   icon: {fileID: 0}
   thought: {fileID: 11400000, guid: d713413d9a5fb144f857db48985531a5, type: 2}

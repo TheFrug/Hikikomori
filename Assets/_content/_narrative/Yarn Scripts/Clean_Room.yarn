@@ -1,0 +1,32 @@
+﻿title: Clean_Room
+---
+<<set $Goblin = GetPartDisplayName("Goblin")>>
+<<set $Wiki = GetPartDisplayName("Wiki")>>
+<<set $Soldier = GetPartDisplayName("Soldier")>>
+<<set $Lady = GetPartDisplayName("Lady")>>
+<<set $Hiki = GetPartDisplayName("Hiki")>>
+
+{$Goblin}: Oh man, the boss did some serious damage.
+<<wait  2.0>>
+{$Hiki}: Is that why there're takeout boxes everywhere?
+<<wait  3.0>>
+{$Goblin}: Huh? Oh, no. Those are normal 'round here! But look at that spot on the wall. That stain is new. I'd know.
+<<wait  3.0>>
+{$Goblin}: I've not seen the boss that angry since... well, we don't talk about it.
+<<wait  3.0>>
+{$Hiki}: The boss? Who's this 'boss' you keep referring to?
+<<wait  3.0>>
+{$Goblin}: Is that some kinda joke? You're livin in 'im.
+<<wait  2.0>>
+{$Hiki}: Oh, like, the room? Is the room our boss?
+<<wait  3.0>>
+{$Goblin}: ...
+<<wait  3.0>>
+{$Goblin}: You're serious, aren't you? The boss is, well... How to put this...
+<<wait  3.0>>
+{$Goblin}: The dipshit we all live inside of.
+<<wait  2.0>>
+{$Hiki}: We live inside a person? That's weird!
+<<wait  2.0>>
+{$Goblin}: ... You really were born a few minutes ago, huh?
+===

@@ -35,6 +35,7 @@ public class ResourceManager : MonoBehaviour
     public Slider stressBar;
     public TMP_Text stressText;
     public int maxStress = 100;
+    [SerializeField]
     private int currentStress = 0;
 
     [Header("Hope")]

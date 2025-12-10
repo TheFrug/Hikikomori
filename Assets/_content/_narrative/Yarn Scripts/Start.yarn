@@ -7,12 +7,31 @@
 <<declare $Hiki = "You">>
 
 <<set $Goblin = GetPartDisplayName("Goblin")>>
+<<set $Wiki = GetPartDisplayName("Wiki")>>
+<<set $Soldier = GetPartDisplayName("Soldier")>>
+<<set $Lady = GetPartDisplayName("Lady")>>
+<<set $Hiki = GetPartDisplayName("Hiki")>>
 
-{$Goblin}: Wakey-wakeyyyyyyyyy
-{$Goblin}: ...
-{$Goblin}: WAKE UP, LAZY-ASS!
--> Volition: *GASP* I'm awake!
-    {$Goblin}: About damn time!
--> Volition: Five more minutes, please...
-    {$Goblin}: Jeez, you suck at waking up.
+{$Soldier}: Oh God, how long were we out?
+<<wait  3.0>>
+{$Wiki}: Judging by the clock, we were blissfully asleep for three hours.
+<<wait  3.0>>
+{$Soldier}: Three hours? Over a text? Disgraceful.
+<<wait  3.0>>
+{$Soldier}: Alright, family roll-call.
+<<wait 5.0>>
+{$Lady}:  I'm here!
+<<wait  3.0>>
+{$Wiki}: Presense affirmative.
+<<wait  2.0>>
+{$Goblin}: Begrudingly here.
+<<wait  2.0>>
+{$Hiki}: Here!
+<<wait  4.0>>
+{$Goblin}: Who the fuck are you?
+<<wait  3.0>>
+{$Soldier}: Just what we needed... Goblin, show them the ropes. Get this place spruced up.
+<<wait  3.0>>
+{$Goblin}: Aye-aye, captain dickhead.
+<<unlock_icon "Floor">>
 ===

@@ -53,10 +53,9 @@ public class ThoughtBubble_New : MonoBehaviour
     }
 
     public void InitializeAutomatic(
-        string text, Color bubbleColor, TMP_FontAsset font,
-        string speakerKey, Color textColor)
+    string text, Color fallbackBubbleColor, TMP_FontAsset font,
+    string speakerKey, Color textColor)
     {
-        // ensure option UI is disabled for non-option bubbles
         IsOption = false;
         onOptionSelected = null;
         optionIndex = -1;
@@ -65,19 +64,25 @@ public class ThoughtBubble_New : MonoBehaviour
         if (optionButton != null) optionButton.gameObject.SetActive(false);
 
         ApplyText(text, font);
-        ApplyColor(bubbleColor);
+
+        var fm = FamilyManager.Instance;
+
+        Color finalBubbleColor = fallbackBubbleColor;
+        if (fm != null)
+            finalBubbleColor = fm.GetBubbleColor(speakerKey);
+
+        ApplyColor(finalBubbleColor);
 
         if (bodyText != null)
             bodyText.color = textColor;
 
-        var fm = FamilyManager.Instance;
         bool showName = false;
-        string displayName = string.Empty;
+        string displayName = "";
 
         if (fm != null)
         {
             var part = fm.parts.Find(p => p.key == speakerKey);
-            if (part != null && part.nameRevealed)
+            if (part != null && fm.IsNameRevealed(speakerKey))
             {
                 showName = true;
                 displayName = part.realName;
@@ -91,6 +96,7 @@ public class ThoughtBubble_New : MonoBehaviour
             {
                 nameText.text = displayName;
                 if (font != null) nameText.font = font;
+
                 if (fm != null)
                 {
                     var part = fm.parts.Find(p => p.key == speakerKey);
@@ -103,15 +109,16 @@ public class ThoughtBubble_New : MonoBehaviour
         if (autoSize)
             ResizeToFitText();
 
-        HasSpeaker = namePanel != null && namePanel.activeSelf;
+        HasSpeaker = showName;
         TopTimer = 0f;
         SwayTimer = 0f;
         Done = false;
-        Duration = Duration <= 0f ? 3f : Duration;
+        Duration = Duration <= 0 ? 3f : Duration;
 
         if (canvasGroup != null)
-            canvasGroup.alpha = 1f;
+            canvasGroup.alpha = 1;    
     }
+
 
     public void InitializeOption(
         string text, Color bubbleColor, TMP_FontAsset font,
@@ -184,9 +191,10 @@ public class ThoughtBubble_New : MonoBehaviour
 
     private void ApplyColor(Color c)
     {
-        if (background != null) background.color = c;
-        if (nameText != null) nameText.color = c;
+        if (background != null)
+            background.color = c;
     }
+
 
     public CanvasGroup CanvasGroup => canvasGroup;
 

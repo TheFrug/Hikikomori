@@ -54,7 +54,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     public bool IsInteractiveSession => isInteractiveSession;
 
     [Header("Debug")]
-    [SerializeField] private ThoughtData debugThought;
+    [SerializeField] private ThoughtData startThought;
 
     public List<ThoughtBubble_New> _pool;
     public List<ThoughtBubble_New> _active;
@@ -111,6 +111,11 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     }
 
+    private void Start()
+    {
+        StartThought(startThought);
+    }
+
     private void InitPool()
     {
         _pool = new List<ThoughtBubble_New>(poolSize);
@@ -157,9 +162,6 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha5) && debugThought != null)
-            StartThought(debugThought);
-
         // Update regular active bubbles (skip options in floating logic)
         int indexForFloating = 0;
         for (int i = 0; i < _active.Count; i++)
@@ -425,21 +427,18 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
         Color bubbleColor = FamilyManager.Instance != null ? FamilyManager.Instance.GetBubbleColor(speakerKey) : Color.white;
         TMP_FontAsset font = FamilyManager.Instance != null ? FamilyManager.Instance.GetFontAsset(speakerKey) : null;
-        Color textColor = Color.white;
+        
+        Color textColor = FamilyManager.Instance != null
+            ? FamilyManager.Instance.GetTextColor(speakerKey)
+            : Color.white;
 
-        if (FamilyManager.Instance != null)
-        {
-            var part = FamilyManager.Instance.parts.Find(p => p.key == speakerKey);
-            if (part != null)
-                textColor = part.textColor;
-        }
 
         bubble.InitializeAutomatic(
             text,
             bubbleColor,
             font,
             speakerKey,
-            textColor // <-- pass textColor here
+            textColor
         );
 
         bubble.Duration = lifetime > 0f ? lifetime : 3f;
