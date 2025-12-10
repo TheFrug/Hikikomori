@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9f10a67163fe6f46a7bcde6b5c6919b, type: 3}
   m_Name: StartThought
   m_EditorClassIdentifier: 
-  speed: 1
+  speed: 2
   type: 0
   yarnScript: {fileID: -8253061345870894857, guid: 398f3b3d75d9b7a419e24bd820949eb4, type: 3}
   yarnNodeName: Start

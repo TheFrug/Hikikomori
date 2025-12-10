@@ -37,6 +37,8 @@ public class FamilyManager : MonoBehaviour
     public TMP_FontAsset defaultFont; // shared font when not revealed
     public Color defaultTextColor;
 
+    private Color unknownSpeakerColor = Color.gray;
+
     [Header("parts")]
     public List<PartInfo> parts = new List<PartInfo>();
 
@@ -54,27 +56,28 @@ public class FamilyManager : MonoBehaviour
     // --- Core Logic ---
     public Color GetBubbleColor(string key, bool useDisplayKey = false)
     {
-        // If useDisplayKey=true, it might pass '???'—convert it back to real key
         if (useDisplayKey && key == "???")
         {
-            Debug.LogWarning("[FamilyManager] GetBubbleColor received '???', returning default color");
-            return Color.gray; // fallback for completely unknown
+            Debug.LogWarning("[FamilyManager] GetBubbleColor received '???' (useDisplayKey). Returning neutral color.");
+            return unknownSpeakerColor;
         }
 
-        // Always find by real key
+        // If caller passed the ambiguous display name "???", don't try to match parts by display name.
+        if (key == "???")
+        {
+            Debug.Log("[FamilyManager] GetBubbleColor: received ambiguous display '???'. Returning neutral color.");
+            return unknownSpeakerColor;
+        }
+
+        // existing resolution: try key, then realName (but NOT GetDisplayName fallback)
         var part = parts.Find(p => p.key == key);
+        if (part == null) part = parts.Find(p => p.realName == key);
 
         if (part == null)
         {
-            Debug.Log($"[FamilyManager] GetBubbleColor: part not found for key='{key}'");
+            Debug.Log($"[FamilyManager] GetBubbleColor: part not found for key/display='{key}'");
             return Color.white;
         }
-
-        Debug.Log($"[FamilyManager] GetBubbleColor: key='{key}', bond={part.bond}, nameRevealed={part.nameRevealed}");
-
-        // Gate by bond threshold for tinting
-        if (part.bond <= bondToStartColor)
-            return part.baseColor;
 
         float normalizedBond = 0f;
         if (part.bondMax > 0f)
@@ -88,10 +91,15 @@ public class FamilyManager : MonoBehaviour
         return Color.HSVToRGB(h, s, v);
     }
 
-
     public TMP_FontAsset GetFontAsset(string key)
     {
+        // Find by internal key
         var part = parts.Find(p => p.key == key);
+
+        // Fallbacks
+        if (part == null) part = parts.Find(p => p.realName == key);
+        if (part == null) part = parts.Find(p => GetDisplayName(p.key) == key);
+
         if (part == null)
             return defaultFont;
 
@@ -105,6 +113,11 @@ public class FamilyManager : MonoBehaviour
     public Color GetTextColor(string key)
     {
         var part = parts.Find(p => p.key == key);
+
+        // Fallbacks
+        if (part == null) part = parts.Find(p => p.realName == key);
+        if (part == null) part = parts.Find(p => GetDisplayName(p.key) == key);
+
         if (part == null)
             return defaultTextColor;
 
@@ -118,7 +131,8 @@ public class FamilyManager : MonoBehaviour
     public bool IsNameRevealed(string key)
     {
         var part = parts.Find(p => p.key == key);
-        if (part == null) return false;
+        if (part == null)
+            return false;
 
         // Automatic gating: name reveals at a threshold OR manually revealed
         if (part.bond >= bondToRevealName)

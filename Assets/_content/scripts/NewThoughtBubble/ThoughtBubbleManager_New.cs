@@ -481,6 +481,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         var bubble = GetFromPool();
         bubble.gameObject.SetActive(true);
 
+
         Color bubbleColor = FamilyManager.Instance != null ? FamilyManager.Instance.GetBubbleColor(speakerKey) : Color.white;
         TMP_FontAsset font = FamilyManager.Instance != null ? FamilyManager.Instance.GetFontAsset(speakerKey) : null;
         

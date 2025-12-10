@@ -1,4 +1,4 @@
-﻿title: InnerDialogue_Truth
+title: InnerDialogue_Truth
 ---
 <<set $Lady = GetPartDisplayName("Lady")>>
 <<set $Hiki = GetPartDisplayName("Hiki")>>

@@ -23834,7 +23834,7 @@ PrefabInstance:
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: hopeLevels.Array.data[0].thoughtToSpawn
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 276a08bf6616e0949afc3734e27f7c9b, type: 2}
     - target: {fileID: 3410478400280318337, guid: 3872e2c0a5a36344d805cc05332cc639, type: 3}
       propertyPath: hopeLevels.Array.data[1].thoughtToSpawn
       value: 

@@ -69,6 +69,7 @@ public class ThoughtBubbleView_New : DialoguePresenterBase
     // ----- LINES -----
     public override async YarnTask RunLineAsync(LocalizedLine line, LineCancellationToken token)
     {
+
         string speaker = line.CharacterName ?? string.Empty;
         string processedText = line.TextWithoutCharacterName.Text ?? line.RawText ?? string.Empty;
 
@@ -78,6 +79,8 @@ public class ThoughtBubbleView_New : DialoguePresenterBase
             // Nothing to show; complete the task so the runner can continue.
             return;
         }
+
+        Debug.Log($"[TBView] RunLineAsync: CharacterName='{line.CharacterName}', SpeakerVarExpanded='{speaker}', ProcessedText='{processedText}'");
 
         // Show the bubble visually
         mgr.ShowBubble(speaker, processedText);
