@@ -33,7 +33,7 @@ public class ThoughtBubble_New : MonoBehaviour
     public bool Done;
 
     public bool IsOption { get; private set; } = false;
-    private Action<int>? onOptionSelected;
+    private Action<int> onOptionSelected;
     private int optionIndex = -1;
 
     private void Awake()

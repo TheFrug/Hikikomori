@@ -6,9 +6,14 @@
 <<set $Soldier = GetPartDisplayName("Soldier")>>
 <<set $Wiki = GetPartDisplayName("Wiki")>>
 {$Goblin}: Finally, we get to have fun!
+<<wait 1.0>>
 {$Soldier}: You've had plenty of fun today. We should be working.
+<<wait 1.0>>
 {$Goblin}: Nonsense! A guy's gotta live a little. Wadya want to watch, Hiki?
+<<wait 1.0>>
 {$Lady}: Something cozy! 
+<<wait 1.0>>
 {$Wiki}: Something informative
+<<wait 2.0>>
 {$Soldier}: Something with bloodshed. 
 ===

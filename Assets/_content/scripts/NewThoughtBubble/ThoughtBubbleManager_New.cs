@@ -68,10 +68,46 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     private List<ThoughtBubble_New> currentOptionBubbles = new List<ThoughtBubble_New>();
     private DialogueOption[] lastPresentedOptions = null;
 
+    // External callback provided by RunOptionsAsync (presenter) — invoke when an option is chosen
+    private Action<int>? externalOptionSelectionCallback = null;
+
+    private bool hasFiredBubbleFinished = false;
+
+    // -----------------------
+    // Interactive input prompt
+    // -----------------------
+    [Header("Interactive Input / Prompt")]
+    [Tooltip("Seconds to wait after spawning a bubble before enabling SPACE input")]
+    [SerializeField] private float inputDelaySeconds = 2.5f;
+
+    [Tooltip("Controller for the bottom 'Press SPACE to Advance' prompt (assign in inspector)")]
+    [SerializeField] private AdvancePromptController advancePrompt = null;
+
+    // runtime
+    private bool inputEnabled = false;
+    private Coroutine inputEnableRoutine = null;
+    private LineAdvancer lineAdvancer = null; // cached to enable/disable space input
+
     private void Awake()
     {
         Instance = this;
         InitPool();
+
+        // cache LineAdvancer so we can disable/enable space input while delay is running
+        lineAdvancer = FindObjectOfType<LineAdvancer>();
+        if (lineAdvancer == null)
+        {
+            Debug.LogWarning("[ThoughtBubbleManager] No LineAdvancer found in scene. SPACE enabling/disabling will be skipped.");
+        }
+        else
+        {
+            // ensure it's enabled by default
+            lineAdvancer.enabled = true;
+        }
+
+        // ensure prompt hidden at start
+        if (advancePrompt != null)
+            advancePrompt.Hide(true);
     }
 
     private void InitPool()
@@ -145,6 +181,42 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         // Position option bubbles inside optionsPanel if any
         if (currentOptionBubbles.Count > 0 && optionsPanel != null)
             LayoutOptions();
+
+        // --------------------------
+        // NEW: cleanup finished bubbles that have floated off-screen
+        // --------------------------
+        if (_active.Count > 0)
+        {
+            // We'll collect indices to remove so we don't mutate the list while iterating
+            for (int i = _active.Count - 1; i >= 0; i--)
+            {
+                var b = _active[i];
+
+                // Only consider non-option bubbles for automatic removal
+                if (b == null || b.IsOption)
+                    continue;
+
+                // If bubble was marked Done and has moved beyond the top boundary sufficiently, return it to pool
+                float topY = topPoint.position.y;
+                float threshold = topY + (b.RectTransform.rect.height * 0.5f);
+
+                if (b.Done && b.RectTransform.position.y >= threshold)
+                {
+                    ReturnBubbleToPool(b);
+                    // removing from _active happens inside ReturnBubbleToPool
+                }
+            }
+        }
+
+        // --------------------------
+        // NEW: If nothing remains (no non-option active bubbles, no option bubbles) -> fire BubbleFinished once
+        // --------------------------
+        var remainingNonOption = _active.Where(x => !x.IsOption).ToList();
+        if (remainingNonOption.Count == 0 && currentOptionBubbles.Count == 0 && !hasFiredBubbleFinished)
+        {
+            hasFiredBubbleFinished = true;
+            BubbleFinished?.Invoke();
+        }
     }
 
     // -------------------------
@@ -281,12 +353,21 @@ public class ThoughtBubbleManager_New : MonoBehaviour
             return;
         }
 
+        // Reset per-session flag
+        hasFiredBubbleFinished = false;
+
         // Set interactive flag for this session so presenter/manager know how to behave.
         isInteractiveSession = (thought.type == ThoughtData.ThoughtType.Interactive);
 
         // Reset state for a new session
         allAtTop = false;
         lastBubbleSpawned = null;
+
+        // If interactive, ensure input is disabled until the first delay expires
+        if (isInteractiveSession)
+        {
+            DisableInputImmediate();
+        }
 
         if (!string.IsNullOrEmpty(thought.yarnNodeName))
         {
@@ -365,6 +446,12 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         SpawnBubbleAtStartPosition(bubble);
 
         lastBubbleSpawned = bubble;
+
+        // start the input delay that gates SPACE input for interactive sessions
+        if (isInteractiveSession)
+        {
+            StartInputDelay();
+        }
     }
 
     // -------------------------
@@ -390,6 +477,9 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         selectedOptionIndex = -1;
         lastPresentedOptions = options;
 
+        // store the external callback so we can notify the presenter when an option is chosen
+        externalOptionSelectionCallback = onSelected;
+
         // Spawn bubbles for each option and place them under optionsPanel (we keep them in _active so pooling works)
         for (int i = 0; i < options.Length; i++)
         {
@@ -411,51 +501,68 @@ public class ThoughtBubbleManager_New : MonoBehaviour
                 OnOptionClickedInternal
             );
 
-
             // Parent to optionsPanel so it's positioned by LayoutOptions()
             b.RectTransform.SetParent(optionsPanel, false);
 
             currentOptionBubbles.Add(b);
         }
+
+        // Show selection prompt immediately (options are click-driven)
+        CancelInputDelay(); // cancel any pending auto-enable
+        DisableInputImmediate(); // make sure SPACE is disabled during option selection
+        if (advancePrompt != null)
+            advancePrompt.Show("Select a number to choose", immediate: true);
     }
 
     private void OnOptionClickedInternal(int optionIdx)
     {
-        if (!awaitingOptionSelection) return;
+        if (!awaitingOptionSelection)
+            return;
 
-        selectedOptionIndex = optionIdx;
         awaitingOptionSelection = false;
+        selectedOptionIndex = optionIdx;
 
-        // Fade out the other options immediately
+        // Hide prompt (selection just occurred)
+        if (advancePrompt != null)
+            advancePrompt.Hide(true);
+
+        // Capture the selected bubble BEFORE we mutate the list
+        ThoughtBubble_New selectedBubble = (optionIdx >= 0 && optionIdx < currentOptionBubbles.Count)
+            ? currentOptionBubbles[optionIdx]
+            : null;
+
+        // Remove all non-selected option bubbles
         for (int i = currentOptionBubbles.Count - 1; i >= 0; i--)
         {
             var b = currentOptionBubbles[i];
-            if (b == null) continue;
-            if (b.IsOption && currentOptionBubbles.IndexOf(b) != optionIdx)
+            if (b == null)
+                continue;
+
+            if (i != optionIdx) // remove non-selected
             {
-                // simple fade and return - instant for now
                 if (b.CanvasGroup != null)
-                {
                     b.CanvasGroup.alpha = 0f;
-                }
+
                 ReturnBubbleToPool(b);
                 currentOptionBubbles.RemoveAt(i);
             }
         }
 
-        // Keep the selected bubble visible for a moment, then return it as well (or let Yarn handle showing subsequent lines)
-        // We'll just return it immediately to the pool so dialogue continues cleanly.
-        var selectedBubble = currentOptionBubbles.FirstOrDefault(b => b.IsOption && currentOptionBubbles.IndexOf(b) == optionIdx);
+        // Remove the selected bubble as well
         if (selectedBubble != null)
         {
-            // leave a tiny delay could be added; for now return immediately
             ReturnBubbleToPool(selectedBubble);
             currentOptionBubbles.Remove(selectedBubble);
         }
 
-        // Clear option list
+        // Reset option state
         lastPresentedOptions = null;
+
+        // Notify the Yarn presenter
+        externalOptionSelectionCallback?.Invoke(optionIdx);
+        externalOptionSelectionCallback = null;
     }
+
 
     private void LayoutOptions()
     {
@@ -486,17 +593,31 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         awaitingOptionSelection = false;
         selectedOptionIndex = -1;
         lastPresentedOptions = null;
+
+        // Also clear any external callback so it doesn't get invoked later accidentally
+        externalOptionSelectionCallback = null;
     }
 
     public void EndInteractiveSession()
     {
         isInteractiveSession = false;
 
+        // cancel pending input enables
+        CancelInputDelay();
+
+        // hide prompt
+        if (advancePrompt != null)
+            advancePrompt.Hide(true);
+
         // Once interactive session ends, allow bubbles to auto-complete:
         allAtTop = false; // reset so manager will recalc and eventually set allAtTop and mark Done
         // Optionally mark lastBubbleSpawned TopTimer large to force completion:
         if (lastBubbleSpawned != null)
             lastBubbleSpawned.TopTimer = lastBubbleSpawned.Duration + 0.1f;
+
+        // re-enable LineAdvancer so normal input works outside of interactive session
+        if (lineAdvancer != null)
+            lineAdvancer.enabled = true;
     }
 
     /// <summary>
@@ -506,9 +627,62 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     public int SelectedOptionIndex => selectedOptionIndex;
 
     // -------------------------
+    // Input delay helpers
+    // -------------------------
+    private void StartInputDelay()
+    {
+        CancelInputDelay();
+
+        DisableInputImmediate();
+
+        if (advancePrompt != null)
+            advancePrompt.Hide(true);
+
+        inputEnableRoutine = StartCoroutine(InputEnableCoroutine());
+    }
+
+    private void CancelInputDelay()
+    {
+        if (inputEnableRoutine != null)
+        {
+            StopCoroutine(inputEnableRoutine);
+            inputEnableRoutine = null;
+        }
+    }
+
+    private System.Collections.IEnumerator InputEnableCoroutine()
+    {
+        float end = Time.time + Mathf.Max(0f, inputDelaySeconds);
+        while (Time.time < end)
+        {
+            yield return null;
+        }
+
+        EnableInput();
+        inputEnableRoutine = null;
+    }
+
+    private void EnableInput()
+    {
+        inputEnabled = true;
+        if (lineAdvancer != null)
+            lineAdvancer.enabled = true; // allow space input
+        if (advancePrompt != null)
+            advancePrompt.Show("Press SPACE to advance");
+    }
+
+    private void DisableInputImmediate()
+    {
+        inputEnabled = false;
+        if (lineAdvancer != null)
+            lineAdvancer.enabled = false; // prevent space input
+        if (advancePrompt != null)
+            advancePrompt.Hide(true);
+    }
+
+    // -------------------------
     // Cleanup / utility
     // -------------------------
-
     public void ClearAll()
     {
         allAtTop = false;
@@ -516,5 +690,20 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         for (int i = _active.Count - 1; i >= 0; i--)
             ReturnBubbleToPool(_active[i]);
         _active.Clear();
+
+        // Ensure listeners are notified when ClearAll is used to terminate the session.
+        if (!hasFiredBubbleFinished)
+        {
+            hasFiredBubbleFinished = true;
+            BubbleFinished?.Invoke();
+        }
+
+        // Cancel any input gating
+        CancelInputDelay();
+        if (advancePrompt != null)
+            advancePrompt.Hide(true);
+
+        if (lineAdvancer != null)
+            lineAdvancer.enabled = true;
     }
 }

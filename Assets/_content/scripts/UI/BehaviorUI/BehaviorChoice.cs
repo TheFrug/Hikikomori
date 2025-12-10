@@ -11,6 +11,7 @@ public class BehaviorChoice : MonoBehaviour
     public TMP_Text timeText;
     public TMP_Text spoonsText;
     public TMP_Text hopeText;
+    public TMP_Text behaviorTypeText;
     public Image iconImage;
 
     [Header("Hook-ins")]
@@ -23,12 +24,16 @@ public class BehaviorChoice : MonoBehaviour
     public Slider oneShotProgressBar;
     public float defaultOneShotSeconds = 0.6f;
 
+    // optional: if you want a dedicated grey overlay object, assign it here (optional)
+    [Header("Optional visuals")]
+    [SerializeField] private GameObject greyOverlay;
+
     private BehaviorData data;
     public SpoonPanel currentSpoonPanel;
     private Coroutine progressRoutine;
     private ThoughtData myThought;
 
-    public bool usedToday = false;
+    // removed: per-instance usedToday flag -- persistence is centralized in BehaviorManager
 
     public BehaviorData BehaviorData { get { return data; } }
 
@@ -47,16 +52,109 @@ public class BehaviorChoice : MonoBehaviour
 
         hopeText.text = $"Hope: {behaviorData.hopeImpact}";
 
+        if (data.repeatable)
+        {
+            behaviorTypeText.text = "-Repeatable Action-";
+        }
+        else
+        {
+            behaviorTypeText.text = "-Critical Action-";
+        }
+
         if (iconImage != null)
             iconImage.sprite = behaviorData.icon;
 
         selectButton.onClick.RemoveAllListeners();
         selectButton.onClick.AddListener(OnSelected);
 
+        // Initialize one-shot bar
         if (oneShotProgressBar != null)
         {
             oneShotProgressBar.gameObject.SetActive(false);
             oneShotProgressBar.value = 0f;
+        }
+
+        // Ensure grey overlay state reset if present
+        if (greyOverlay != null) greyOverlay.SetActive(false);
+
+        // Refresh UI based on central state
+        RefreshState();
+    }
+
+    // Refresh UI interactability/visuals from BehaviorManager central record
+    public void RefreshState()
+    {
+        if (behaviorManager == null || data == null)
+            return;
+
+        bool alreadyUsed = behaviorManager.IsBehaviorUsedToday(data);
+        bool canSelect = data.repeatable || !alreadyUsed;
+
+        selectButton.interactable = canSelect;
+
+        // If the behavior is a one-shot already used today, visually disable it
+        if (alreadyUsed && !data.repeatable)
+        {
+            // change button text to indicate completed (assumes there's a TMP child)
+            var tmp = selectButton.GetComponentInChildren<TMP_Text>();
+            if (tmp != null)
+                tmp.text = "Completed";
+
+            ApplyGreyOut();
+        }
+        else
+        {
+            // restore normal label if available (use behavior name or "Select")
+            var tmp = selectButton.GetComponentInChildren<TMP_Text>();
+            if (tmp != null)
+                tmp.text = "Select";
+            RemoveGreyOut();
+        }
+    }
+
+    private void ApplyGreyOut()
+    {
+        // If a dedicated overlay GameObject provided, use that
+        if (greyOverlay != null)
+        {
+            greyOverlay.SetActive(true);
+            return;
+        }
+
+        // Otherwise tint images/texts to look disabled
+        foreach (var img in GetComponentsInChildren<Image>())
+        {
+            // skip overlay or other UI that shouldn't be tinted if necessary
+            if (img == iconImage) // keep small icon slightly visible
+                img.color = new Color(img.color.r, img.color.g, img.color.b, 0.6f);
+            else
+                img.color = new Color(img.color.r, img.color.g, img.color.b, 0.4f);
+        }
+
+        foreach (var tmp in GetComponentsInChildren<TMP_Text>())
+        {
+            tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, 0.5f);
+        }
+    }
+
+    private void RemoveGreyOut()
+    {
+        if (greyOverlay != null)
+        {
+            greyOverlay.SetActive(false);
+            return;
+        }
+
+        // Attempt to restore to fully opaque; if you need to preserve original colors,
+        // consider caching them on Configure()
+        foreach (var img in GetComponentsInChildren<Image>())
+        {
+            img.color = new Color(img.color.r, img.color.g, img.color.b, 1f);
+        }
+
+        foreach (var tmp in GetComponentsInChildren<TMP_Text>())
+        {
+            tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, 1f);
         }
     }
 
@@ -64,6 +162,15 @@ public class BehaviorChoice : MonoBehaviour
     {
         if (behaviorManager == null || data == null)
             return;
+
+        // prevent opening spoon panel / running behavior if one-shot already used today
+        if (!data.repeatable && behaviorManager.IsBehaviorUsedToday(data))
+        {
+            behaviorManager?.ShowTooltip("You can't do that again today.");
+            // Make sure the UI reflects the state
+            RefreshState();
+            return;
+        }
 
         // If zero-cost behavior, run immediately
         if (data.spoonsCost <= 0)
@@ -87,7 +194,6 @@ public class BehaviorChoice : MonoBehaviour
             // Now the static is definitely clear
             SpoonPanel.ActivePanel = null;
         }
-
 
         // Spawn new SpoonPanel
         if (spoonPanelPrefab == null)
@@ -139,6 +245,10 @@ public class BehaviorChoice : MonoBehaviour
         {
             behaviorManager.RunBehavior(this);
 
+            // Immediately reflect used state in UI so player cannot re-open SpoonPanel
+            behaviorManager.MarkBehaviorUsed(data);
+            RefreshState();
+
             if (panel != null)
                 panel.ClosePanel();
 
@@ -159,6 +269,10 @@ public class BehaviorChoice : MonoBehaviour
         }
 
         behaviorManager.RunBehavior(this);
+
+        // Immediately reflect used state in UI so player cannot re-open SpoonPanel
+        behaviorManager.MarkBehaviorUsed(data);
+        RefreshState();
 
         if (panel != null)
             panel.ClosePanel();

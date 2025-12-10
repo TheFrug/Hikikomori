@@ -14,17 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorName: Midpoint - 10
   behaviorDescription: More time asleep means less time thinking.
-  isDefault: 0
+  repeatable: 0
   startsLocked: 0
   durationMinutes: 20
-  isToggle: 0
   spoonsCost: 0
   hideSpoonsCost: 0
-  hungerImpact: 10
-  cashCost: 0
+  hopeImpact: 30
+  stressImpact: 10
   icon: {fileID: 0}
-  yarnTrigger:
-  - yarnNodeName: Test
-    triggerTime: 0
-    triggerMinute: 0
-    pauseClock: 1
+  thought: {fileID: 0}

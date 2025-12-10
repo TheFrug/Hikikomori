@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using ProjectHiki.UI;
 using System;
@@ -15,12 +16,45 @@ public class BehaviorManager : MonoBehaviour
 
     public static event Action OnBehaviorStarted;
 
+    [SerializeField]
+    private BlackoutOverlayController blackout;
+
+    // ---------- NEW: persistent used-today tracking ----------
+    // Use a HashSet keyed by a stable identifier for the behavior. Using behaviorName for now,
+    // but consider adding a dedicated ID field on BehaviorData in future.
+    private HashSet<string> usedTodayBehaviors = new HashSet<string>();
+
+    public bool IsBehaviorUsedToday(BehaviorData data)
+    {
+        if (data == null) return false;
+        return usedTodayBehaviors.Contains(data.behaviorName);
+    }
+
+    public void MarkBehaviorUsed(BehaviorData data)
+    {
+        if (data == null) return;
+        if (!data.repeatable)
+            usedTodayBehaviors.Add(data.behaviorName);
+    }
+
+    // Call this when your game's day advances
+    public void ResetDailyBehaviors()
+    {
+        usedTodayBehaviors.Clear();
+    }
+
     // -----------------------------------------------------------------
     // BUSY TOOLTIP
     // -----------------------------------------------------------------
     public void ShowBusyTooltip()
     {
         tooltipPanel?.ShowBusyMessage("Hiki is busy!");
+    }
+
+    // new: generic message helper so callers can display a specific message
+    public void ShowTooltip(string message)
+    {
+        tooltipPanel?.ShowBusyMessage(message);
     }
 
     // -----------------------------------------------------------------
@@ -41,14 +75,10 @@ public class BehaviorManager : MonoBehaviour
             return;
         }
 
-        // STEP 1: VALIDATION
-        if (!Validate(choice))
-            return;
-
-        // STEP 2: APPLY BASE COSTS
+        // STEP 1: APPLY BASE COSTS
         ApplyBaseCosts(choice);
 
-        // STEP 3: SPAWN THOUGHT
+        // STEP 2: SPAWN THOUGHT
         var thought = choice.BehaviorData.thought;
         if (thought == null)
         {
@@ -67,42 +97,13 @@ public class BehaviorManager : MonoBehaviour
         else
         {
             // Interactive Thought: wait for event
+            blackout?.FadeIn();
+
             pendingChoice = choice;
             ThoughtBubbleManager_New.BubbleFinished.AddListener(OnInteractiveThoughtFinished);
 
             ThoughtBubbleManager_New.Instance?.StartThought(thought);
         }
-    }
-
-    // -----------------------------------------------------------------
-    // VALIDATION
-    // -----------------------------------------------------------------
-    private bool Validate(BehaviorChoice choice)
-    {
-        var data = choice.BehaviorData;
-
-        // Check spoon cost (SpoonDrawer usually ensures enough spoons are placed)
-        if (!resourceManager.HasEnoughSpoons(data.spoonsCost))
-        {
-            tooltipPanel?.ShowBusyMessage("Not enough spoons.");
-            return false;
-        }
-
-        // Stress check
-        if (resourceManager.CurrentStress >= resourceManager.MaxStress)
-        {
-            tooltipPanel?.ShowBusyMessage("Too stressed to continue.");
-            return false;
-        }
-
-        // Cooldowns / once-per-day lockouts
-        if (!data.repeatable && choice.usedToday)
-        {
-            print("You can't do that again today.");
-            return false;
-        }
-
-        return true;
     }
 
     // -----------------------------------------------------------------
@@ -120,6 +121,8 @@ public class BehaviorManager : MonoBehaviour
     {
         ThoughtBubbleManager_New.BubbleFinished.RemoveListener(OnInteractiveThoughtFinished);
 
+        blackout?.FadeOut();
+
         if (pendingChoice != null)
         {
             FinishBehavior(pendingChoice);
@@ -134,9 +137,9 @@ public class BehaviorManager : MonoBehaviour
     {
         var data = choice.BehaviorData;
 
-        // Mark non-repeatable behavior used
+        // Centralized persistence
         if (!data.repeatable)
-            choice.usedToday = true;
+            MarkBehaviorUsed(data);
 
         // Apply any dialogue-driven resource changes (handled externally)
         resourceManager.ApplyPendingDialogueChanges();
@@ -152,5 +155,4 @@ public class BehaviorManager : MonoBehaviour
     {
         // OPTION B: simple removal (no pooled cleanup yet)
     }
-
 }

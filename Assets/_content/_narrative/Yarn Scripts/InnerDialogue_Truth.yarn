@@ -9,6 +9,7 @@
 {$Hiki}: Hello? Who's speaking to me?
 {$Lady}: You’ve come far... but you’re still hiding something.
 -> “I’m not hiding anything.” 
+    {$Hiki}: I'm not hiding anything.
     {$Lady}: Lies are heavier when you believe them.
 -> “Maybe you’re right.”
     {$Lady}: Then why keep walking in circles?
