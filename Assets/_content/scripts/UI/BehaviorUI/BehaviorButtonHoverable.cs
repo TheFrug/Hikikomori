@@ -19,8 +19,8 @@ public class BehaviorButtonHoverable : MonoBehaviour, IPointerEnterHandler, IPoi
         parentPanel = panel;
 
         // Check global unlock manager
-        bool globallyUnlocked = BehaviorUnlockManager.Instance?.IsUnlocked(behaviorData.behaviorName) ?? false;
-        isLocked = behaviorData.startsLocked && !globallyUnlocked;
+        //bool globallyUnlocked = BehaviorUnlockManager.Instance?.IsUnlocked(behaviorData.behaviorName) ?? false;
+        //isLocked = behaviorData.startsLocked && !globallyUnlocked;
 
         label.text = isLocked ? "" : behaviorData.behaviorName;
 
@@ -56,7 +56,7 @@ public class BehaviorButtonHoverable : MonoBehaviour, IPointerEnterHandler, IPoi
         if (lockOverlay != null)
             lockOverlay.SetActive(false);
 
-        BehaviorUnlockManager.Instance?.Unlock(behaviorData.behaviorName);
+        //BehaviorUnlockManager.Instance?.Unlock(behaviorData.behaviorName);
     }
 
     public string GetBehaviorName() => behaviorData?.behaviorName ?? "";

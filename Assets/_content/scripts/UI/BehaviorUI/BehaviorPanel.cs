@@ -169,7 +169,7 @@ public class BehaviorPanel : MonoBehaviour
             if (data != null)
             {
                 data.startsLocked = false;
-                BehaviorUnlockManager.Instance?.Unlock(data.behaviorName);
+                //BehaviorUnlockManager.Instance?.Unlock(data.behaviorName);
                 Debug.Log($"[Yarn] Unlocked '{behaviorName}' in data; will appear unlocked when room is revisited.");
                 return;
             }

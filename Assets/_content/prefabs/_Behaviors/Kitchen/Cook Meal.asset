@@ -14,11 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorName: Cook Meal
   behaviorDescription: I miss mom's cooking
-  isDefault: 0
-  isToggle: 0
+  repeatable: 0
+  startsLocked: 1
+  unlocked: 0
   durationMinutes: 60
   spoonsCost: 2
   hideSpoonsCost: 0
-  hungerImpact: -30
-  cashCost: 0
+  hopeImpact: 0
+  stressImpact: 0
   icon: {fileID: 0}
+  thought: {fileID: 0}

@@ -1,4 +1,3 @@
-// BehaviorIconUI.cs
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -18,6 +17,11 @@ public class BehaviorIconUI : MonoBehaviour
     public BehaviorManager behaviorManager;
     public BehaviorIconRoomController roomCtrl;
 
+    [Header("Unlock")]
+    public bool startsUnlocked = true; // can be set in inspector
+    [HideInInspector] public bool unlocked = false;
+    public string iconID;
+
     private List<BehaviorChoice> activePanels = new();
     private bool isOpen = false;
     private CanvasGroup group;
@@ -25,19 +29,47 @@ public class BehaviorIconUI : MonoBehaviour
     void Start()
     {
         roomCtrl = FindObjectOfType<BehaviorIconRoomController>();
+        ApplyUnlockState();
+    }
+
+    public void ApplyUnlockState()
+    {
+        if (!unlocked)
+            return;
+
+        if (roomCtrl != null &&
+            roomCtrl.CurrentRoom == roomType && // use the helper
+            !IsAnyChoiceOpen())
+        {
+            SetVisible(true);
+        }
+        else
+        {
+            SetVisible(false);
+        }
+    }
+
+
+    // Helper to check if any BehaviorChoice panel is open
+    private bool IsAnyChoiceOpen()
+    {
+        return activePanels.Count > 0 || isOpen;
     }
 
     public void SetVisible(bool visible)
     {
+        // Locked icons cannot appear
+        if (!unlocked)
+            visible = false;
+
         StopAllCoroutines();
-        StartCoroutine(Fade(visible ? 1 : 0));
+        StartCoroutine(Fade(visible ? 1f : 0f));
     }
 
     IEnumerator Fade(float target)
     {
         if (group == null)
-            group = gameObject.GetComponent<CanvasGroup>()
-                ?? gameObject.AddComponent<CanvasGroup>();
+            group = gameObject.GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
 
         float start = group.alpha;
         float t = 0;
@@ -55,39 +87,31 @@ public class BehaviorIconUI : MonoBehaviour
 
     public void OnClick()
     {
-        // NEW: consult UIStateController before opening an icon
+        if (!unlocked) return; // cannot interact if locked
+
         if (UIStateController.Instance != null && !UIStateController.Instance.CanOpenIcon)
             return;
 
         if (isOpen) return;
 
-        BehaviorIconRoomController roomCtrl = FindObjectOfType<BehaviorIconRoomController>();
         roomCtrl.Focus(this);
-
-        // Tell UIStateController an icon is open (locks camera)
         UIStateController.Instance?.EnterIconOpen(this);
 
-        // Fade out all icons INCLUDING this one
         foreach (var icon in roomCtrl.icons)
             icon.SetVisible(false);
 
-        // Camera zoom-in goes here — not implemented yet but placeholder:
-        // cameraManager.ZoomTo(anchorObject);
-
-        // After zoom, open choices
         StartCoroutine(OpenAfterCamera());
     }
 
     IEnumerator OpenAfterCamera()
     {
-        yield return new WaitForSeconds(0.2f); // replace later with actual camera event
+        yield return new WaitForSeconds(0.2f);
         OpenChoices();
     }
 
     private void OpenChoices()
     {
         isOpen = true;
-
         float radius = 1.5f;
         float step = behaviors.Count > 0 ? 360f / behaviors.Count : 360f;
 
@@ -96,6 +120,7 @@ public class BehaviorIconUI : MonoBehaviour
             float angle = i * step * Mathf.Deg2Rad;
             Vector3 offset = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
 
+            // Instantiate card
             BehaviorChoice card = Instantiate(
                 choicePrefab,
                 transform.position + offset,
@@ -103,9 +128,15 @@ public class BehaviorIconUI : MonoBehaviour
                 behaviorGridParent
             );
 
+            // Configure card with data and manager
             card.Configure(behaviors[i], behaviorManager);
+
+            // Immediately refresh state to reflect unlocked/locked status
+            card.RefreshState();
+
             activePanels.Add(card);
         }
+
         roomCtrl.backButton.gameObject.SetActive(true);
     }
 
@@ -116,18 +147,11 @@ public class BehaviorIconUI : MonoBehaviour
 
     private void CloseChoices()
     {
-        Debug.Log("Closing Choices");
         isOpen = false;
-
         foreach (var c in activePanels)
-        {
-            Debug.Log("Destroying: " + c.name + " @ " + c.transform.position);
             Destroy(c.gameObject);
-        }
 
         activePanels.Clear();
-
-        // Restore UI state now that choices are closed
         UIStateController.Instance?.ExitIconOpen();
     }
 }

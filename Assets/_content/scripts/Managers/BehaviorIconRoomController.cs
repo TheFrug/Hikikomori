@@ -35,6 +35,17 @@ public class BehaviorIconRoomController : MonoBehaviour
         }
     }
 
+    public RoomType CurrentRoom
+    {
+        get
+        {
+            // Convert camManager.currentCamIndex to RoomType
+            // Assuming your existing UpdateIcons logic: (int)icon.roomType + 1 == activeRoom
+            // Then current room = camManager.currentCamIndex - 1 as RoomType
+            return (RoomType)(camManager.currentCamIndex - 1);
+        }
+    }
+
     public void DebugCloseCommand()
     {
         if (focusedIcon == null)

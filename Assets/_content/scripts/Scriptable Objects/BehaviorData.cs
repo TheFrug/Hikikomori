@@ -8,7 +8,8 @@ public class BehaviorData : ScriptableObject
     public string behaviorName = "New Action";
     [TextArea(2, 4)] public string behaviorDescription = "Short fun behavior Description.";
     public bool repeatable;
-    public bool startsLocked; // Controls if player can use it right away
+    public bool startsLocked = false; // Controls if player can use it right away
+    public bool unlocked = false;
 
     [Header("Time")]
     public int durationMinutes = 30;            // used to calculate clock change

@@ -27,6 +27,7 @@ public class BehaviorChoice : MonoBehaviour
     // optional: if you want a dedicated grey overlay object, assign it here (optional)
     [Header("Optional visuals")]
     [SerializeField] private GameObject greyOverlay;
+    [SerializeField] private GameObject lockOverlayPanel;
 
     private BehaviorData data;
     public SpoonPanel currentSpoonPanel;
@@ -90,27 +91,35 @@ public class BehaviorChoice : MonoBehaviour
         bool alreadyUsed = behaviorManager.IsBehaviorUsedToday(data);
         bool canSelect = data.repeatable || !alreadyUsed;
 
-        selectButton.interactable = canSelect;
-
-        // If the behavior is a one-shot already used today, visually disable it
-        if (alreadyUsed && !data.repeatable)
-        {
-            // change button text to indicate completed (assumes there's a TMP child)
-            var tmp = selectButton.GetComponentInChildren<TMP_Text>();
-            if (tmp != null)
-                tmp.text = "Completed";
-
-            ApplyGreyOut();
-        }
+        // Disable selection if behavior is locked
+        if (!data.unlocked)
+            selectButton.interactable = false;
         else
+            selectButton.interactable = canSelect;
+
+        // Update text label
+        var tmp = selectButton.GetComponentInChildren<TMP_Text>();
+        if (tmp != null)
         {
-            // restore normal label if available (use behavior name or "Select")
-            var tmp = selectButton.GetComponentInChildren<TMP_Text>();
-            if (tmp != null)
+            if (!data.unlocked)
+                tmp.text = "Locked"; // locked behavior text
+            else if (alreadyUsed && !data.repeatable)
+                tmp.text = "Completed";
+            else
                 tmp.text = "Select";
-            RemoveGreyOut();
         }
+
+        // Grey out for one-shot used behaviors only
+        if (alreadyUsed && !data.repeatable)
+            ApplyGreyOut();
+        else
+            RemoveGreyOut();
+
+        // Show or hide lock overlay panel
+        if (lockOverlayPanel != null)
+            StartCoroutine(FadeLockOverlay(!data.unlocked));
     }
+
 
     private void ApplyGreyOut()
     {
@@ -156,6 +165,31 @@ public class BehaviorChoice : MonoBehaviour
         {
             tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, 1f);
         }
+    }
+
+    // Lock panel fade coroutine
+    private IEnumerator FadeLockOverlay(bool show)
+    {
+        CanvasGroup cg = lockOverlayPanel.GetComponent<CanvasGroup>();
+        if (cg == null)
+            cg = lockOverlayPanel.AddComponent<CanvasGroup>();
+
+        float startAlpha = cg.alpha;
+        float targetAlpha = show ? 1f : 0f;
+        float t = 0f;
+        float duration = 0.15f;
+
+        lockOverlayPanel.SetActive(true); // ensure active for fading
+
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            cg.alpha = Mathf.Lerp(startAlpha, targetAlpha, t / duration);
+            yield return null;
+        }
+
+        cg.alpha = targetAlpha;
+        lockOverlayPanel.SetActive(show); // hide completely if not showing
     }
 
     private void OnSelected()
