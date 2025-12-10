@@ -13,6 +13,10 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     public static ThoughtBubbleManager_New Instance { get; private set; }
     public static UnityEvent BubbleFinished = new UnityEvent();
 
+    private UnityEngine.Events.UnityAction bubbleFinishedOneShot;
+    private bool waitingForVisualsToFinish = false;
+
+
     [Header("References")]
     [SerializeField] private RectTransform spawnPoint;
     [SerializeField] private RectTransform topPoint;
@@ -96,6 +100,8 @@ public class ThoughtBubbleManager_New : MonoBehaviour
     {
         Instance = this;
         InitPool();
+
+        bubbleFinishedOneShot = new UnityEngine.Events.UnityAction(OnBubbleFinishedForCurrentThought);
 
         // cache LineAdvancer so we can disable/enable space input while delay is running
         lineAdvancer = FindObjectOfType<LineAdvancer>();
@@ -366,6 +372,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         if (isThoughtActive)
         {
             thoughtQueue.Enqueue(thought);
+            print("Thought Queued!");
             return;
         }
 
@@ -374,6 +381,7 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     private void StartThoughtInternal(ThoughtData thought)
     {
+        print("{thought} playing now");
         isThoughtActive = true;
         allAtTop = false;
         lastBubbleSpawned = null;
@@ -426,9 +434,13 @@ public class ThoughtBubbleManager_New : MonoBehaviour
         if (lastBubbleSpawned != null)
             lastBubbleSpawned.TopTimer = 10f; // force completion
 
-        EnableInput();
+        // re-enable LineAdvancer so normal input works outside of interactive session
+        if (lineAdvancer != null)
+            lineAdvancer.enabled = true;
 
-        FinishCurrentThought();
+        // Instead of finishing the thought immediately, wait for visuals to finish.
+        // This makes interactive and automatic flows consistent.
+        NotifyDialogueRunnerFinished_WaitForVisuals();
     }
 
 
@@ -704,16 +716,43 @@ public class ThoughtBubbleManager_New : MonoBehaviour
 
     private void FinishCurrentThought()
     {
+        // defensive unsubscribe (in case)
+        try { BubbleFinished.RemoveListener(bubbleFinishedOneShot); } catch { }
+
         isThoughtActive = false;
         hasFiredBubbleFinished = false;
 
-        // Start next thought if any
         if (thoughtQueue.Count > 0)
         {
             var nextThought = thoughtQueue.Dequeue();
             StartThoughtInternal(nextThought);
         }
     }
+
+    private void OnBubbleFinishedForCurrentThought()
+    {
+        // only handle if we were waiting for visuals
+        if (!waitingForVisualsToFinish)
+            return;
+
+        // Unsubscribe (one-shot)
+        BubbleFinished.RemoveListener(bubbleFinishedOneShot);
+        waitingForVisualsToFinish = false;
+
+        // Now finish the thought and continue the queue
+        FinishCurrentThought();
+    }
+
+    public void NotifyDialogueRunnerFinished_WaitForVisuals()
+    {
+        // Defensive: if already waiting, do nothing
+        if (waitingForVisualsToFinish)
+            return;
+
+        waitingForVisualsToFinish = true;
+        BubbleFinished.AddListener(bubbleFinishedOneShot);
+    }
+
 
     // -------------------------
     // Cleanup / utility

@@ -42,9 +42,18 @@ public class ThoughtBubbleView_New : DialoguePresenterBase
 
         var mgr = ThoughtBubbleManager_New.Instance;
         if (mgr != null)
-            mgr.EndInteractiveSession();
+        {
+            // If the manager thinks this was interactive, we still run EndInteractiveSession
+            // (that will schedule the wait-for-visuals). If not interactive, notify manager
+            // the runner finished so manager can wait for visuals too.
+            if (mgr.IsInteractiveSession)
+                mgr.EndInteractiveSession();
+            else
+                mgr.NotifyDialogueRunnerFinished_WaitForVisuals();
+        }
 
         TryClearIfDone();
+
         return YarnTask.CompletedTask;
     }
 
