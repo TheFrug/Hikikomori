@@ -17,4 +17,5 @@
 {$Hiki}: That's not nice! Why do they call you Goblin?
 <<wait  3.0>>
 {$Goblin}: The boss-man and I are close buddies like that. He gave me a name!
+<<wait  2.0>>
 ===

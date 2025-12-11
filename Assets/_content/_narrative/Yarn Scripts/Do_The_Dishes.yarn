@@ -1,0 +1,16 @@
+﻿title: Do_The_Dishes
+---
+<<set $Goblin = GetPartDisplayName("Goblin")>>
+<<set $Lady = GetPartDisplayName("Lady")>>
+<<set $Soldier = GetPartDisplayName("Soldier")>>
+<<set $Wiki = GetPartDisplayName("Wiki")>>
+<<set $Hiki = GetPartDisplayName("Hiki")>>
+
+{$Soldier}: There is no reason these dishes should be this piled-up.
+{$Goblin}: Cool your jets, jarhead! We're doing our best here.
+{$Soldier}: You and I both know that isn't true.
+{$Lady}: I think that Goblin and our new friend are doing wonderfully!
+{$Lady}: In fact, I think we'll be out of the house in no time!
+{$Wiki}: Likelihood of that being true: 13%.
+{$Goblin}: Thanks for that, ya fuckin nerd.
+===

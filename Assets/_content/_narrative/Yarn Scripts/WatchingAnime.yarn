@@ -5,15 +5,40 @@
 <<set $Lady = GetPartDisplayName("Lady")>>
 <<set $Soldier = GetPartDisplayName("Soldier")>>
 <<set $Wiki = GetPartDisplayName("Wiki")>>
-{$Goblin}: Finally, we get to have fun!
-<<wait 1.0>>
-{$Soldier}: You've had plenty of fun today. We should be working.
-<<wait 1.0>>
-{$Goblin}: Nonsense! A guy's gotta live a little. Wadya want to watch, Hiki?
-<<wait 1.0>>
+<<set $Hiki = GetPartDisplayName("Hiki")>>
+
+{$Goblin}: Would you look at this beauty. Isn't it wonderful?
+{$Hiki}: I think I've seen this before. Its a computer!
+{$Goblin}: Bingo-bongo, kid. This baby's a one-stop anime machine!
+{$Hiki}: Anime?
+{$Soldier}: What is the meaning of this, Goblin? Have you forgotten your task?
+{$Goblin}: Relax, stiff. Boss needs the relief.
+{$Goblin}: What should we watch, Hiki?
 {$Lady}: Something cozy! 
-<<wait 1.0>>
 {$Wiki}: Something informative
-<<wait 2.0>>
-{$Soldier}: Something with bloodshed. 
+{$Soldier}: Something with bloodshed.
+-> Something cozy
+    <<jump SomethingCozy>>
+-> Something informative
+    <<jump SomethingInformative>>
+-> Something bloody
+    <<jump SomethingBloody>>
+===
+
+title: SomethingCozy
+---
+<<add_bond "Lady" 10>>
+{$Lady}: Wonderful! Let's watch "Snooze Cafe in Another World"!
+{$Goblin}: God, that sounds dull.
+{$Lady}: Just you wait until the pirate shows up. He's my favorite!
+===
+
+title: SomethingInformative
+---
+
+===
+
+title: SomethingBloody
+---
+
 ===

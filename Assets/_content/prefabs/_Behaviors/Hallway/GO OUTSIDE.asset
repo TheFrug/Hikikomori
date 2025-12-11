@@ -13,11 +13,14 @@ MonoBehaviour:
   m_Name: GO OUTSIDE
   m_EditorClassIdentifier: 
   behaviorName: GO OUTSIDE
-  behaviorDescription: You know you should.
-  isToggle: 0
+  behaviorDescription: You know you should. If only you could
+  repeatable: 0
+  startsLocked: 0
+  unlocked: 1
   durationMinutes: 0
   spoonsCost: 10
-  hideSpoonsCost: 1
-  hungerImpact: 0
-  cashCost: 0
+  hideSpoonsCost: 0
+  hopeImpact: 3
+  stressImpact: 0
   icon: {fileID: 0}
+  thought: {fileID: 0}

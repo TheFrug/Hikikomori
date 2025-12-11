@@ -37,7 +37,8 @@ public class FamilyManager : MonoBehaviour
     public TMP_FontAsset defaultFont; // shared font when not revealed
     public Color defaultTextColor;
 
-    private Color unknownSpeakerColor = Color.gray;
+    [SerializeField]
+    private Color unknownSpeakerColor;
 
     [Header("parts")]
     public List<PartInfo> parts = new List<PartInfo>();

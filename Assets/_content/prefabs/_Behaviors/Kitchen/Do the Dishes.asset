@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5017668b7b4300e488c71bcfd87b5ab0, type: 3}
-  m_Name: Watch Anime
+  m_Name: Do the Dishes
   m_EditorClassIdentifier: 
-  behaviorName: Watch Anime
-  behaviorDescription: I'll never forgive the Japanese for inventing Anime!
+  behaviorName: Do the Dishes
+  behaviorDescription: Short fun behavior Description.
   repeatable: 0
   startsLocked: 0
   unlocked: 1
-  durationMinutes: 20
-  spoonsCost: 0
+  durationMinutes: 30
+  spoonsCost: 1
   hideSpoonsCost: 0
-  hopeImpact: 0
-  stressImpact: -35
-  icon: {fileID: 0}
-  thought: {fileID: 11400000, guid: 538e1133d1c0d0c4699a400be98f9422, type: 2}
+  hopeImpact: 1
+  stressImpact: 10
+  icon: {fileID: 21300000, guid: 2b62f169ad6c04c2d9a3fa4e8c3aa694, type: 3}
+  thought: {fileID: 0}

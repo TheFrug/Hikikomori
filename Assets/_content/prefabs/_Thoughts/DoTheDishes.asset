@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b9f10a67163fe6f46a7bcde6b5c6919b, type: 3}
-  m_Name: WatchingAnime
+  m_Name: DoTheDishes
   m_EditorClassIdentifier: 
   speed: 1
-  type: 1
-  yarnScript: {fileID: -8253061345870894857, guid: f496a0692dd104d49a83d7258292b182, type: 3}
-  yarnNodeName: WatchingAnime
+  type: 0
+  yarnScript: {fileID: -8253061345870894857, guid: 53baec00dcfe39d49b3233bf631f9aab, type: 3}
+  yarnNodeName: Do_The_Dishes

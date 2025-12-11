@@ -18,8 +18,8 @@ MonoBehaviour:
   startsLocked: 0
   unlocked: 1
   durationMinutes: 90
-  spoonsCost: 2
-  hideSpoonsCost: 1
+  spoonsCost: 0
+  hideSpoonsCost: 0
   hopeImpact: 1
   stressImpact: 15
   icon: {fileID: 0}
